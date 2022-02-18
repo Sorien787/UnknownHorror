@@ -49,7 +49,7 @@ private:
 	IInteractableInterface* m_pCurrentFocusedInteractable = nullptr;
 
 	void ClearCurrentInteractable();
-	void RaycastToInteractable();
+	FVector TryRaycastToNearestPosition();
 	bool IsActorInView(AActor* pActor) const;
 	void SetNewInteractable(IInteractableInterface* newInteractable);
 
@@ -60,6 +60,15 @@ public:
 	UPROPERTY(EditAnywhere)
 		bool m_bShouldTriggerWidgets{ true };
 
+	UPROPERTY(EditAnywhere)
+		bool m_bNeedsRaycastToDetectInteractionProximity{true};
+
+	UPROPERTY(EditAnywhere)
+		bool m_bIsPlayerInteractionUser{true};
+
+	UPROPERTY(EditAnywhere)
+		float m_fInteractionRange{4.0f};
+	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_pEnterBox;
 

@@ -36,9 +36,12 @@ void UInteractionUserComponent::AddInteractionExitBox(UBoxComponent* pBox)
 void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	const FVector parentLocation = GetOwner()->GetActorLocation();
+	
 	float distance = FLT_MAX;
+	FVector desiredLocation = GetOwner()->GetActorLocation();
+
+	if (m_bIsPlayerInteractionUser)
+		desiredLocation = TryRaycastToNearestPosition();
 
 	IInteractableInterface* pClosestInteractable = nullptr;
 	for(IInteractableInterface* pInteractable : m_InteractionCandidates)
@@ -46,7 +49,7 @@ void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		if (!pInteractable->IsInteractionAvailable(this))
 			continue;
 
-		float distanceToInteractable = (pInteractable->GetCurrentLocation() - parentLocation).SizeSquared();
+		float distanceToInteractable = (pInteractable->GetCurrentLocation() - desiredLocation).SizeSquared();
 
 		if (distanceToInteractable >= distance)
 			continue;
@@ -86,15 +89,14 @@ bool UInteractionUserComponent::IsActorInView(AActor* pActor) const
 	return true;
 }
 
-void UInteractionUserComponent::RaycastToInteractable()
+FVector UInteractionUserComponent::TryRaycastToNearestPosition()
 {
 	FVector playerViewPointLocation;
 	FRotator playerRotationInformation;
-
+	
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT playerViewPointLocation, OUT playerRotationInformation);
-
-	float raycastRange = 100.0f;
-	FVector lineTraceEnd = playerViewPointLocation + playerRotationInformation.Vector() * raycastRange;
+	
+	FVector lineTraceEnd = playerViewPointLocation + playerRotationInformation.Vector() * m_fInteractionRange;
 
 	FHitResult hit;
 	// false to ignore complex collisions
@@ -104,10 +106,15 @@ void UInteractionUserComponent::RaycastToInteractable()
 		OUT hit,
 		playerViewPointLocation,
 		lineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_Visibility),
 		traceParams);
 
 	AActor* pActorHit = hit.GetActor();
+	
+	if (!pActorHit)
+		return lineTraceEnd;
+	
+	return  hit.Location;
 }
 
 void UInteractionUserComponent::SetNewInteractable(IInteractableInterface* pNewInteractable)
