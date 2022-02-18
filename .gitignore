@@ -1,0 +1,9 @@
+.vs/
+.idea/
+Config/
+Saved/
+Intermediate/
+DerivedDataCache/
+*.sln
+*.sdf
+*.suo
