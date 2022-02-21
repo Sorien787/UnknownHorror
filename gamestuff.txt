@@ -1,0 +1,18 @@
+The intrinsic problem is that we need animations to sort of
+share data without us explicitly doing so?
+
+As in, they need to know where the animations will be positioning to, etc.
+
+Pick up / Put down
+Open / Close
+Enter / Exit
+Emplace / Turn / One shot use, etc
+
+Now, these can be different per creature using them
+So I'd like the animations to be in the entity using them
+Can do that - but here's the catch
+I want the animations to have a "goal location"
+
+
+
+Maybe expos

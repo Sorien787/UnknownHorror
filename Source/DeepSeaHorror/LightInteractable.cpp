@@ -33,6 +33,7 @@ void ALightInteractable::BeginPlay()
 {
 	Super::BeginPlay();
 
+	m_LightModifier->AddLightToControlGroup(m_Light);
 	SetLightStateBasedOnData();
 }
 
@@ -51,11 +52,11 @@ void ALightInteractable::SetLightStateBasedOnData()
 {
 	if (m_IsSwitchOn)
 	{
-		m_Light->SetIntensity(m_LightOnIntensity);
+		m_LightModifier->SwitchOn();
 	}
 	else
 	{
-		m_Light->SetIntensity(0);
+		m_LightModifier->SwitchOff();
 	}
 }
 
@@ -74,11 +75,11 @@ bool ALightInteractable::IsInteractionAvailable(UInteractionUserComponent* pInte
 
 void ALightInteractable::OnShowInteractionWidget() 
 {
-
+	m_LightSwitchMesh->SetRenderCustomDepth(true);
 }
 
 void ALightInteractable::OnHideInteractionWidget() 
 {
-
+	m_LightSwitchMesh->SetRenderCustomDepth(false);
 }
 

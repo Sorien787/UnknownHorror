@@ -21,9 +21,9 @@ public:
 	// Sets default values for this actor's properties
 	ALightInteractable();
 
-	virtual void OnInteract(UInteractionUserComponent* pInteractable) override;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractable) override;
 
-	virtual bool IsInteractionAvailable(UInteractionUserComponent* pInteractable) const override;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable, OUT int type) const override;
 
 	virtual void OnShowInteractionWidget() override;
 

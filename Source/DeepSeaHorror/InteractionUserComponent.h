@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Components/BoxComponent.h"
 #include "InteractableInterface.h"
+#include "InteractableObjectTypes.h"
 #include "InteractionUserComponent.generated.h"
 
 
@@ -30,6 +31,14 @@ public:
 
 	void OnInteractWithFocusedInteractable();
 
+	float GetDropRange() const;
+	
+	void TriggerInteraction();
+	
+	IInteractableInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
+	
+	bool HasInteractionAnim(InteractableObjectType type) const;
+
 	void AddInteractionEnterBox(UBoxComponent* pBox);
 
 	void AddInteractionExitBox(UBoxComponent* pBox);
@@ -42,16 +51,17 @@ private:
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	TSet<IInteractableInterface*> m_InteractionCandidates;
-
-	bool m_InteractionUse{ false };
+	
 	bool m_bInteractionsEnabled{ false };
-	bool m_bCurrentFocusedInteractableInUse{ false };
+	
 	IInteractableInterface* m_pCurrentFocusedInteractable = nullptr;
+	IInteractableInterface* m_pCurrentUsingInteractable = nullptr;
 
-	void ClearCurrentInteractable();
-	FVector TryRaycastToNearestPosition();
-	bool IsActorInView(AActor* pActor) const;
-	void SetNewInteractable(IInteractableInterface* newInteractable);
+	void ClearFocusedInteractable();
+	
+	void FocusedInteractionUpdate();
+	
+	void SetNewFocusedInteractable(IInteractableInterface* pNewInteractable);
 
 public:
 	UFUNCTION()
@@ -67,7 +77,10 @@ public:
 		bool m_bIsPlayerInteractionUser{true};
 
 	UPROPERTY(EditAnywhere)
-		float m_fInteractionRange{4.0f};
+		float m_DropRange{3000.0f};
+	
+	UPROPERTY(EditAnywhere)
+		float m_fInteractionRange{3000.0f};
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_pEnterBox;
