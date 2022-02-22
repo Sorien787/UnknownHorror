@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
+#include "InteractableObjectBase.h"
 #include "InteractableObjectTypes.h"
 #include "InteractableObject.generated.h"
 
 UCLASS()
-class DEEPSEAHORROR_API AInteractableObject : public AActor, public IInteractableInterface
+class DEEPSEAHORROR_API AInteractableObject : public AInteractableObjectBase
 {
 	GENERATED_BODY()
 private:
@@ -31,14 +32,6 @@ public:
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const override;
-	
-	virtual void OnShowInteractionWidget() override;
-
-	virtual int GetInteractionPriority() override;
-
-	virtual void OnHideInteractionWidget() override;
-
-	virtual FVector GetCurrentLocation() const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,10 +40,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	UPROPERTY(EditAnywhere)
-		int m_InteractionPriority;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "State Switch Event")
-		void OnStateChanged()
+		void OnStateChanged();
 };

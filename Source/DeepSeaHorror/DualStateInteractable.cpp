@@ -40,24 +40,6 @@ void ADualStateInteractable::OnInteractionFinished(UInteractionUserComponent* pI
 	OnChangeState(m_CurrentState);
 }
 
-void ADualStateInteractable::OnShowInteractionWidget()
-{
-	
-}
-
-int ADualStateInteractable::GetInteractionPriority()
-{
-	return 0;
-}
-
-void ADualStateInteractable::OnHideInteractionWidget()
-{
-}
-
-FVector ADualStateInteractable::GetCurrentLocation() const
-{
-	return GetOwner()->GetActorLocation();
-}
 
 
 

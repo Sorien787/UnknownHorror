@@ -6,14 +6,12 @@
 #include "GameFramework/Actor.h"
 #include "Components/PointLightComponent.h"
 #include "Components/WidgetComponent.h"
-#include "InteractableInterface.h"
+#include "InteractableObjectBase.h"
 #include "LightModifierComponent.h"
 #include "LightInteractable.generated.h"
 
 UCLASS()
-class DEEPSEAHORROR_API ALightInteractable 
-	: public AActor
-	, public IInteractableInterface
+class DEEPSEAHORROR_API ALightInteractable : public AInteractableObjectBase
 {
 	GENERATED_BODY()
 	
@@ -25,11 +23,7 @@ public:
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable, OUT int type) const override;
 
-	virtual void OnShowInteractionWidget() override;
-
-	virtual void OnHideInteractionWidget() override;
-
-	virtual FVector GetCurrentLocation() const override;
+	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override {};
 
 protected:
 	// Called when the game starts or when spawned
@@ -51,9 +45,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 		ULightModifierComponent* m_LightModifier;
-
-	UPROPERTY(EditAnywhere)
-		UWidgetComponent* m_pInteractionWidget;
 
 	UPROPERTY(EditAnywhere)
 		float m_LightOnIntensity;

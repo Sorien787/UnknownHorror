@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionUserComponent.h"
 #include "UObject/Interface.h"
 #include "InteractableInterface.generated.h"
 
 class UInteractionUserComponent;
+enum InteractableObjectType;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)

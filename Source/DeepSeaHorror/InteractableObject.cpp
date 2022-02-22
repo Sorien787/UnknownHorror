@@ -4,6 +4,7 @@
 #include "InteractableObject.h"
 
 #include "UnrealUtilities.h"
+#include "InteractionUserComponent.h"
 
 
 void AInteractableObject::BeginPlay()
@@ -52,7 +53,7 @@ bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent
 	{
 		type = 0;
 		const FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), pInteractionUser->GetDropRange(), GetWorld()->GetFirstPlayerController()->GetOwner());
-		return hit.GetActor();
+		return hit.GetActor() != nullptr;
 	}
 	else
 	{
@@ -61,26 +62,5 @@ bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent
 	}
 }
 
-int AInteractableObject::GetInteractionPriority()
-{
-	return m_InteractionPriority;
-}
 
-
-void AInteractableObject::OnShowInteractionWidget()
-{
-	
-}
-
-
-void AInteractableObject::OnHideInteractionWidget()
-{
-	
-}
-
-
-FVector AInteractableObject::GetCurrentLocation() const
-{
-	return GetOwner()->GetActorLocation();
-}
 

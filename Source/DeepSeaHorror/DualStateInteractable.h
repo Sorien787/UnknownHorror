@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
+#include "InteractableObjectBase.h"
 #include "DualStateInteractable.generated.h"
 
 UENUM()
@@ -17,13 +18,10 @@ enum DualStateObjectState
 DualStateObjectState m_CurrentState = DualStateObjectState::Closed;
 
 UCLASS()
-class DEEPSEAHORROR_API ADualStateInteractable : public AActor, public IInteractableInterface
+class DEEPSEAHORROR_API ADualStateInteractable : public AInteractableObjectBase
 {
 	GENERATED_BODY()
 
-private:
-
-	
 public:	
 	// Sets default values for this actor's properties
 	ADualStateInteractable();
@@ -39,14 +37,6 @@ public:
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const override;
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
-
-	virtual void OnShowInteractionWidget() override;
-
-	virtual int GetInteractionPriority() override;
-
-	virtual void OnHideInteractionWidget() override;
-
-	virtual FVector GetCurrentLocation() const override;
 
 	UPROPERTY(EditAnywhere)
 		USkeletalMeshComponent* m_DualStateSkeletalMesh;
