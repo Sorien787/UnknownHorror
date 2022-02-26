@@ -32,16 +32,26 @@ public:
 	virtual bool IsCombinedInteractionAvailable(const UInteractionUserComponent* pInteractionUser, InteractableObjectType combinedType) const { return false; }
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
-
-	virtual void OnShowInteractionWidget() = 0;
-
+	
 	virtual int GetInteractionPriority() = 0;
-
-	virtual void OnShowFocusedInteractionWidget() = 0;
-
-	virtual void OnHideFocusedInteractionWidget() = 0;
-
-	virtual void OnHideInteractionWidget() = 0;
-
+	
 	virtual FVector GetCurrentLocation() const = 0;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void RevealWidget();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void HideWidget();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void ShowInteraction();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void HideInteraction();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnInstantInteract();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAnimInteract();
 };

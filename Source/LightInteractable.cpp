@@ -11,11 +11,11 @@ ALightInteractable::ALightInteractable()
 	
 	m_LightSwitchMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Component"));
 	check(m_LightSwitchMesh != nullptr);
-	m_LightSwitchMesh->SetupAttachment(m_RootComponent);
+	m_LightSwitchMesh->SetupAttachment(RootComponent);
 
 	m_Light = CreateDefaultSubobject<UPointLightComponent>(TEXT("Light To Switch"));
 	check(m_Light != nullptr);
-	m_Light->SetupAttachment(m_RootComponent);
+	m_Light->SetupAttachment(RootComponent);
 
 	m_LightModifier = CreateDefaultSubobject<ULightModifierComponent>(TEXT("Light Modifier"));
 	check(m_LightModifier != nullptr);

@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Components/BoxComponent.h"
 #include "InteractableInterface.h"
+#include "InteractableObjectBase.h"
 #include "InteractableObjectTypes.h"
 #include "InteractionUserComponent.generated.h"
 
@@ -35,7 +36,7 @@ public:
 	
 	void TriggerInteraction();
 	
-	IInteractableInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
+	AInteractableObjectBase* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
 	
 	bool HasInteractionAnim(InteractableObjectType type) const;
 
@@ -50,18 +51,18 @@ private:
 	UFUNCTION()
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	TSet<IInteractableInterface*> m_InteractionCandidates;
+	TSet<AInteractableObjectBase*> m_InteractionCandidates;
 	
 	bool m_bInteractionsEnabled{ false };
 	
-	IInteractableInterface* m_pCurrentFocusedInteractable = nullptr;
-	IInteractableInterface* m_pCurrentUsingInteractable = nullptr;
+	AInteractableObjectBase* m_pCurrentFocusedInteractable = nullptr;
+	AInteractableObjectBase* m_pCurrentUsingInteractable = nullptr;
 
 	void ClearFocusedInteractable();
 	
 	void FocusedInteractionUpdate();
 	
-	void SetNewFocusedInteractable(IInteractableInterface* pNewInteractable);
+	void SetNewFocusedInteractable(AInteractableObjectBase* pNewInteractable);
 
 public:
 	UFUNCTION()

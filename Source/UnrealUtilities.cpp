@@ -62,3 +62,10 @@ FHitResult UnrealUtilities::RaycastActorToWorldHit(const UWorld* world, const fl
 	return hit;
 }
 
+FRotator UnrealUtilities::GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation)
+{
+	FVector cameraLocation = world->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
+
+	return (cameraLocation - objectLocation).Rotation();
+}
+

@@ -35,9 +35,6 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-		USceneComponent* m_RootComponent;
-
-	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* m_LightSwitchMesh;
 
 	UPROPERTY(EditAnywhere)

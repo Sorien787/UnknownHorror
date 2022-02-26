@@ -15,14 +15,8 @@ class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInterac
 	
 public:	
 	AInteractableObjectBase();
-	
-	virtual void OnShowInteractionWidget() override;
 
-	virtual void OnHideInteractionWidget() override;
-
-	virtual void OnShowFocusedInteractionWidget() override;
-
-	virtual void OnHideFocusedInteractionWidget() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	virtual int GetInteractionPriority() override;
 
@@ -40,17 +34,11 @@ public:
 		UWidgetComponent* m_pInteractWidget;
 
 	UPROPERTY(EditAnywhere)
+		USceneComponent* m_pWidgetAttachment;
+
+	UPROPERTY(EditAnywhere)
+		USceneComponent* m_pRootComponent;
+
+	UPROPERTY(EditAnywhere)
 		int m_InteractionPriority;
-	
-	UFUNCTION(BlueprintImplementableEvent)
-		void RevealWidget();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void HideWidget();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void ShowInteraction();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void HideInteraction();
 };
