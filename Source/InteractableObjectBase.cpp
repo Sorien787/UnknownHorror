@@ -8,21 +8,15 @@ AInteractableObjectBase::AInteractableObjectBase()
 	m_pRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	check(m_pRootComponent != nullptr);
 	RootComponent = m_pRootComponent;
-	
-	m_pWidgetAttachment = CreateDefaultSubobject<USceneComponent>(TEXT("Widget Attachment Object"));
-	check(m_pWidgetAttachment != nullptr);
-	m_pWidgetAttachment->SetupAttachment(RootComponent);
-	
+
 	m_pInteractWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Interaction Widget"));
 	check(m_pInteractWidget != nullptr);
-	m_pInteractWidget->SetupAttachment(m_pWidgetAttachment);
-}
+	m_pInteractWidget->SetupAttachment(GetRootComponent());
 
-void AInteractableObjectBase::Tick(float DeltaSeconds)
-{
-	m_pInteractWidget->SetRelativeRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
+	m_TriggerBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Trigger Box"));
+	check(m_TriggerBoxComponent != nullptr);
+	m_TriggerBoxComponent->SetupAttachment(GetRootComponent());
 }
-
 
 int AInteractableObjectBase::GetInteractionPriority()
 {

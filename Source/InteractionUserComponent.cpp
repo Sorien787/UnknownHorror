@@ -21,7 +21,8 @@ void UInteractionUserComponent::BeginPlay()
 void UInteractionUserComponent::TriggerInteraction()
 {
 	// currently not implemented - finish the interaction immediately
-	m_pCurrentUsingInteractable->OnInteractionFinished(this);
+	if (m_pCurrentUsingInteractable)
+		m_pCurrentUsingInteractable->OnInteractionFinished(this);
 }
 
 bool UInteractionUserComponent::HasInteractionAnim(InteractableObjectType type) const
@@ -35,8 +36,24 @@ AInteractableObjectBase* UInteractionUserComponent::ClosestInteractionQuery(bool
 	float highestInteractionPriority = 0;
 	FVector desiredLocation = GetOwner()->GetActorLocation();
 
-	if (m_bIsPlayerInteractionUser)
-		desiredLocation = UnrealUtilities::RaycastActorToWorldPosition(GetWorld(), m_fInteractionRange, GetOwner());
+	// bool hasHitInteractableBox = false;
+	//
+	if (!m_bIsPlayerInteractionUser)
+		return nullptr;
+	
+	FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
+	
+	if (!hit.GetActor())
+		return nullptr;
+
+	AInteractableObjectBase* pInteractableObject = Cast<AInteractableObjectBase>(hit.GetActor());
+	
+	if (!pInteractableObject)
+		return nullptr;
+
+	return pInteractableObject;
+	
+	desiredLocation = UnrealUtilities::RaycastActorToWorldPosition(GetWorld(), m_fInteractionRange, GetOwner());
 	
 	AInteractableObjectBase* pClosestInteractable = nullptr;
 	for(AInteractableObjectBase* pInteractable : m_InteractionCandidates)
@@ -69,6 +86,9 @@ void UInteractionUserComponent::FocusedInteractionUpdate()
 {
 	// only ignore the closest interactable if the current using interactable is not null (since that one will be closest)
 	AInteractableObjectBase* pClosestInteractable = ClosestInteractionQuery();
+
+	if (!m_InteractionCandidates.Contains(pClosestInteractable))
+		pClosestInteractable = nullptr;
 	
 	if (pClosestInteractable == m_pCurrentFocusedInteractable)
 		return;
@@ -111,7 +131,7 @@ void UInteractionUserComponent::OnDisengageWithInteraction()
 void UInteractionUserComponent::OnInteractButtonPressed()
 {
 	int interactionType = 0;
-	if (!m_pCurrentFocusedInteractable || m_pCurrentFocusedInteractable->IsInteractionAvailable(this, OUT interactionType))
+	if (!m_pCurrentFocusedInteractable || !m_pCurrentFocusedInteractable->IsInteractionAvailable(this, OUT interactionType))
 		return;
 	OnInteractWithFocusedInteractable();
 }
@@ -148,12 +168,12 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 {
 	AInteractableObjectBase* pInteractable = Cast<AInteractableObjectBase>(OtherActor);
 
-	if (!pInteractable)
+	if (!pInteractable || m_InteractionCandidates.Contains(pInteractable))
 		return;
 
 	m_InteractionCandidates.Add(pInteractable);
 
-	pInteractable->Execute_RevealWidget(pInteractable);
+ 	pInteractable->Execute_RevealWidget(pInteractable);
 }
 
 
@@ -161,7 +181,7 @@ void UInteractionUserComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedC
 {
 	AInteractableObjectBase* pInteractable = Cast<AInteractableObjectBase>(OtherActor);
 
-	if (!pInteractable)
+	if (!pInteractable || !m_InteractionCandidates.Contains(pInteractable))
 		return;
 
 	m_InteractionCandidates.Remove(pInteractable);

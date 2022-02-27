@@ -13,6 +13,9 @@ ULightModifierComponent::ULightModifierComponent()
 void ULightModifierComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	SetComponentTickEnabled(false);
+	SetLightIntensity(0.0f);
+	m_IsFlickering = false;
 	// light is polled 
 }
 
@@ -20,6 +23,7 @@ void ULightModifierComponent::SwitchOn()
 {
 	if(m_IsOn)
 		return;
+	m_IsOn = true;
 	SetComponentTickEnabled(true);
 	SetLightIntensity(1.0f);
 }
@@ -28,6 +32,7 @@ void ULightModifierComponent::SwitchOff()
 {
 	if (!m_IsOn)
 		return;
+	m_IsOn = false;
 	SetComponentTickEnabled(false);
 	SetLightIntensity(0.0f);
 	m_IsFlickering = false;

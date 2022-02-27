@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
+#include "Components/BoxComponent.h"
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
 
@@ -16,8 +17,6 @@ class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInterac
 public:	
 	AInteractableObjectBase();
 
-	virtual void Tick(float DeltaSeconds) override;
-
 	virtual int GetInteractionPriority() override;
 
 	virtual FVector GetCurrentLocation() const override;
@@ -27,10 +26,16 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override {}
 
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override{}
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override
+	{
+		if (m_bIsQuickInteraction)
+			Execute_OnInstantInteract(this);
+		else
+			Execute_OnAnimInteract(this);
+	}
 	// no implementation in the base
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UWidgetComponent* m_pInteractWidget;
 
 	UPROPERTY(EditAnywhere)
@@ -38,6 +43,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		USceneComponent* m_pRootComponent;
+
+	UPROPERTY(EditAnywhere)
+	    UBoxComponent* m_TriggerBoxComponent;
+
+	UPROPERTY(EditAnywhere)
+		bool m_bIsQuickInteraction{true};
 
 	UPROPERTY(EditAnywhere)
 		int m_InteractionPriority;

@@ -22,7 +22,7 @@ FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const 
 
 	FHitResult hit;
 	// false to ignore complex collisions
-	FCollisionQueryParams traceParams(FName(TEXT("Raycast To Interactable")), false, pIgnoreActor);
+	FCollisionQueryParams traceParams(FName(TEXT("Raycast To Interactable")), true, pIgnoreActor);
 
 	world->LineTraceSingleByObjectType(
 		OUT hit,
@@ -39,7 +39,7 @@ FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const 
 	return  hit.Location;
 }
 
-FHitResult UnrealUtilities::RaycastActorToWorldHit(const UWorld* world, const float range, const AActor* pIgnoreActor)
+FHitResult UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor)
 {
 	FVector playerViewPointLocation;
 	FRotator playerRotationInformation;
@@ -50,13 +50,17 @@ FHitResult UnrealUtilities::RaycastActorToWorldHit(const UWorld* world, const fl
 
 	FHitResult hit;
 	// false to ignore complex collisions
-	FCollisionQueryParams traceParams(FName(TEXT("Raycast To Interactable")), false, pIgnoreActor);
 
+	static FName TraceTag = TEXT("TraceTag");
+	world->DebugDrawTraceTag = TraceTag;
+	FCollisionQueryParams traceParams(TraceTag, false, pIgnoreActor);
+	
+	
 	world->LineTraceSingleByObjectType(
 		OUT hit,
 		playerViewPointLocation,
 		lineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_Visibility),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic),
 		traceParams);
 	
 	return hit;

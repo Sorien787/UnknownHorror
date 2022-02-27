@@ -21,6 +21,7 @@ AInteractableObject::AInteractableObject()
 void AInteractableObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
 }
 
 void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
