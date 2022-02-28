@@ -52,7 +52,6 @@ FHitResult UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float ra
 	// false to ignore complex collisions
 
 	static FName TraceTag = TEXT("TraceTag");
-	world->DebugDrawTraceTag = TraceTag;
 	FCollisionQueryParams traceParams(TraceTag, false, pIgnoreActor);
 	
 	

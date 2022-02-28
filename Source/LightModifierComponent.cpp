@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#pragma optimize("", off)
 #include "LightModifierComponent.h"
 
 // Sets default values for this component's properties
@@ -14,23 +14,26 @@ void ULightModifierComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	SetComponentTickEnabled(false);
-	SetLightIntensity(0.0f);
 	m_IsFlickering = false;
+	if (m_DefaultOn)
+		SwitchOn(true);
+	else
+		SwitchOff(true);
 	// light is polled 
 }
 
-void ULightModifierComponent::SwitchOn()
+void ULightModifierComponent::SwitchOn(bool force /* = false */)
 {
-	if(m_IsOn)
+	if(m_IsOn && !force)
 		return;
 	m_IsOn = true;
 	SetComponentTickEnabled(true);
 	SetLightIntensity(1.0f);
 }
 
-void ULightModifierComponent::SwitchOff()
+void ULightModifierComponent::SwitchOff(bool force /* = false */)
 {
-	if (!m_IsOn)
+	if (!m_IsOn && !force)
 		return;
 	m_IsOn = false;
 	SetComponentTickEnabled(false);
@@ -40,6 +43,7 @@ void ULightModifierComponent::SwitchOff()
 
 void ULightModifierComponent::SetLightIntensity(float intensity)
 {
+	m_CurrentIntensity = intensity;
 	for (auto pLightComponent : m_pLightComponentsArray)
 	{
 		pLightComponent->SetIntensity(intensity * m_DefaultBrightness);
@@ -49,6 +53,7 @@ void ULightModifierComponent::SetLightIntensity(float intensity)
 void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComponent)
 {
 	m_pLightComponentsArray.Add(pLightComponent);
+	pLightComponent->SetIntensity(m_CurrentIntensity * m_DefaultBrightness);
 }
 
 void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

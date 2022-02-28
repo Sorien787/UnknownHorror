@@ -19,6 +19,7 @@ ALightInteractable::ALightInteractable()
 
 	m_LightModifier = CreateDefaultSubobject<ULightModifierComponent>(TEXT("Light Modifier"));
 	check(m_LightModifier != nullptr);
+	m_LightModifier->RegisterComponent();
 }
 
 void ALightInteractable::BeginPlay()

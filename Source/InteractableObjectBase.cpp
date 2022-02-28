@@ -28,3 +28,9 @@ FVector AInteractableObjectBase::GetCurrentLocation() const
 	return GetActorLocation();
 }
 
+void AInteractableObjectBase::Tick(float DeltaSeconds)
+{
+	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
+}
+
+

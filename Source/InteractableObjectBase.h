@@ -13,13 +13,14 @@ UCLASS(Abstract)
 class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
-	
 public:	
 	AInteractableObjectBase();
 
 	virtual int GetInteractionPriority() override;
 
 	virtual FVector GetCurrentLocation() const override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 	// no implementation in the base
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const override {return false; }
