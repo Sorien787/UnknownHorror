@@ -9,12 +9,29 @@
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
 
+enum class CurrentWidgetState
+{
+	Hidden,
+	Revealed,
+	Interactable
+};
+	
 UCLASS(Abstract)
 class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
+
+
 public:	
 	AInteractableObjectBase();
+
+	virtual void TryRevealWidget() override;
+	
+	virtual void TryHideWidget() override;
+	
+	virtual void TryFocusWidget() override;
+	
+	virtual void TryUnfocusWidget() override;
 
 	virtual int GetInteractionPriority() override;
 
@@ -27,14 +44,7 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override {}
 
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override
-	{
-		if (m_bIsQuickInteraction)
-			Execute_OnInstantInteract(this);
-		else
-			Execute_OnAnimInteract(this);
-	}
-	// no implementation in the base
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UWidgetComponent* m_pInteractWidget;
@@ -53,4 +63,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		int m_InteractionPriority;
+
+	CurrentWidgetState m_CurrentWidgetState{CurrentWidgetState::Hidden};
 };

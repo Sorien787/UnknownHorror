@@ -18,6 +18,34 @@ AInteractableObjectBase::AInteractableObjectBase()
 	m_TriggerBoxComponent->SetupAttachment(GetRootComponent());
 }
 
+void AInteractableObjectBase::TryRevealWidget()
+{
+	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
+		return;
+	RevealWidget();
+}
+
+void AInteractableObjectBase::TryHideWidget()
+{
+	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
+		return;
+	HideWidget();
+}
+
+void AInteractableObjectBase::TryFocusWidget()
+{
+	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
+		return;
+	ShowInteraction();
+}
+
+void AInteractableObjectBase::TryUnfocusWidget()
+{
+	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
+		return;
+	HideInteraction();
+}
+
 int AInteractableObjectBase::GetInteractionPriority()
 {
 	return m_InteractionPriority;
@@ -31,6 +59,17 @@ FVector AInteractableObjectBase::GetCurrentLocation() const
 void AInteractableObjectBase::Tick(float DeltaSeconds)
 {
 	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
+}
+
+void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
+{
+	if (m_bIsQuickInteraction)
+	{
+		OnInstantInteract();
+		return;
+	}
+	OnAnimInteract();
+	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 }
 
 

@@ -112,7 +112,7 @@ void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 void UInteractionUserComponent::ClearFocusedInteractable()
 {
 	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractable->Execute_HideInteraction(m_pCurrentFocusedInteractable);
+		m_pCurrentFocusedInteractable->TryUnfocusWidget();
 	m_pCurrentFocusedInteractable = nullptr;
 }
 
@@ -120,7 +120,7 @@ void UInteractionUserComponent::SetNewFocusedInteractable(AInteractableObjectBas
 {
 	m_pCurrentFocusedInteractable = pNewInteractable;
 	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractable->Execute_ShowInteraction(pNewInteractable);
+		m_pCurrentFocusedInteractable->TryFocusWidget();
 }
 
 void UInteractionUserComponent::OnDisengageWithInteraction()
@@ -173,7 +173,7 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 
 	m_InteractionCandidates.Add(pInteractable);
 
- 	pInteractable->Execute_RevealWidget(pInteractable);
+ 	pInteractable->TryRevealWidget();
 }
 
 
@@ -186,7 +186,7 @@ void UInteractionUserComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedC
 
 	m_InteractionCandidates.Remove(pInteractable);
 
-	pInteractable->Execute_HideWidget(pInteractable);
+	pInteractable->TryHideWidget();
 }
 /////////////////////////////////////
 
