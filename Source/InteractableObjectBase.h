@@ -20,8 +20,9 @@ UCLASS(Abstract)
 class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
+private:
 
-
+	CurrentWidgetState m_CurrentWidgetState{CurrentWidgetState::Hidden};
 public:	
 	AInteractableObjectBase();
 
@@ -32,8 +33,6 @@ public:
 	virtual void TryFocusWidget() override;
 	
 	virtual void TryUnfocusWidget() override;
-
-	virtual int GetInteractionPriority() override;
 
 	virtual FVector GetCurrentLocation() const override;
 
@@ -46,23 +45,40 @@ public:
 
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UWidgetComponent* m_pInteractWidget;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pWidgetAttachment;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Components")
 	    UBoxComponent* m_TriggerBoxComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 		bool m_bIsQuickInteraction{true};
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 		int m_InteractionPriority;
 
-	CurrentWidgetState m_CurrentWidgetState{CurrentWidgetState::Hidden};
+	UPROPERTY(Transient, EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_RevealWidgetAnimation;
+
+	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_HideWidgetAnimation;
+
+	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_FocusWidgetAnimation;
+
+	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_UnfocusWidgetAnimation;
+
+	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_InteractFastWidgetAnimation;
+
+	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
+		UWidgetAnimation* m_InteractSlowWidgetAnimation;
+
 };

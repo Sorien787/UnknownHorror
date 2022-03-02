@@ -33,8 +33,6 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
 	
-	virtual int GetInteractionPriority() = 0;
-
 	virtual void TryRevealWidget() = 0;
 	
 	virtual void TryHideWidget() = 0;
@@ -44,22 +42,4 @@ public:
 	virtual void TryUnfocusWidget() = 0;
 	
 	virtual FVector GetCurrentLocation() const = 0;
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void RevealWidget();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void HideWidget();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void ShowInteraction();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void HideInteraction();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnInstantInteract();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnAnimInteract();
 };

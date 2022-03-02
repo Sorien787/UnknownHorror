@@ -22,33 +22,28 @@ void AInteractableObjectBase::TryRevealWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
 		return;
-	RevealWidget();
+	m_pInteractWidget->GetWidget()->PlayAnimation(m_RevealWidgetAnimation);
 }
 
 void AInteractableObjectBase::TryHideWidget()
 {
 	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
 		return;
-	HideWidget();
+	m_pInteractWidget->GetWidget()->PlayAnimation(m_HideWidgetAnimation);
 }
 
 void AInteractableObjectBase::TryFocusWidget()
 {
 	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
 		return;
-	ShowInteraction();
+	m_pInteractWidget->GetWidget()->PlayAnimation(m_FocusWidgetAnimation);
 }
 
 void AInteractableObjectBase::TryUnfocusWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
 		return;
-	HideInteraction();
-}
-
-int AInteractableObjectBase::GetInteractionPriority()
-{
-	return m_InteractionPriority;
+	m_pInteractWidget->GetWidget()->PlayAnimation(m_UnfocusWidgetAnimation);
 }
 
 FVector AInteractableObjectBase::GetCurrentLocation() const
@@ -65,10 +60,10 @@ void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pI
 {
 	if (m_bIsQuickInteraction)
 	{
-		OnInstantInteract();
+		m_pInteractWidget->GetWidget()->PlayAnimation(m_InteractFastWidgetAnimation);
 		return;
 	}
-	OnAnimInteract();
+	m_pInteractWidget->GetWidget()->PlayAnimation(m_InteractSlowWidgetAnimation);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 }
 

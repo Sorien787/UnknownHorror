@@ -52,34 +52,34 @@ AInteractableObjectBase* UInteractionUserComponent::ClosestInteractionQuery(bool
 		return nullptr;
 
 	return pInteractableObject;
-	
-	desiredLocation = UnrealUtilities::RaycastActorToWorldPosition(GetWorld(), m_fInteractionRange, GetOwner());
-	
-	AInteractableObjectBase* pClosestInteractable = nullptr;
-	for(AInteractableObjectBase* pInteractable : m_InteractionCandidates)
-	{
-		if (ignoreCurrentInteractable && pInteractable == m_pCurrentUsingInteractable)
-			continue;
-
-		int interactionType = 0;
-		if (!pInteractable->IsInteractionAvailable(this, interactionType))
-			continue;
-
-		const float distanceToInteractableSquared = (pInteractable->GetCurrentLocation() - desiredLocation).SizeSquared();
-		const int interactionPriority = pInteractable->GetInteractionPriority();
-
-		if (interactionPriority < highestInteractionPriority)
-			continue;
-
-		// only skip the distance check if this interaction's priority is higher than the highest so far.
-		if (distanceToInteractableSquared >= distanceSquared && (interactionPriority < highestInteractionPriority))
-			continue;
-		
-		highestInteractionPriority = interactionPriority;
-		distanceSquared = distanceToInteractableSquared;
-		pClosestInteractable = pInteractable;
-	}
-	return pClosestInteractable;
+	//
+	// desiredLocation = UnrealUtilities::RaycastActorToWorldPosition(GetWorld(), m_fInteractionRange, GetOwner());
+	//
+	// AInteractableObjectBase* pClosestInteractable = nullptr;
+	// for(AInteractableObjectBase* pInteractable : m_InteractionCandidates)
+	// {
+	// 	if (ignoreCurrentInteractable && pInteractable == m_pCurrentUsingInteractable)
+	// 		continue;
+	//
+	// 	int interactionType = 0;
+	// 	if (!pInteractable->IsInteractionAvailable(this, interactionType))
+	// 		continue;
+	//
+	// 	const float distanceToInteractableSquared = (pInteractable->GetCurrentLocation() - desiredLocation).SizeSquared();
+	// 	const int interactionPriority = pInteractable->GetInteractionPriority();
+	//
+	// 	if (interactionPriority < highestInteractionPriority)
+	// 		continue;
+	//
+	// 	// only skip the distance check if this interaction's priority is higher than the highest so far.
+	// 	if (distanceToInteractableSquared >= distanceSquared && (interactionPriority < highestInteractionPriority))
+	// 		continue;
+	// 	
+	// 	highestInteractionPriority = interactionPriority;
+	// 	distanceSquared = distanceToInteractableSquared;
+	// 	pClosestInteractable = pInteractable;
+	// }
+	// return pClosestInteractable;
 }
 
 void UInteractionUserComponent::FocusedInteractionUpdate()
