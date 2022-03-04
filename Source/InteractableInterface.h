@@ -40,6 +40,24 @@ public:
 	virtual void TryFocusWidget() = 0;
 	
 	virtual void TryUnfocusWidget() = 0;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetReveal();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetHide();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetFocus();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetUnfocus();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetInteractFast();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InteractionWidgetInteractSlow();
 	
 	virtual FVector GetCurrentLocation() const = 0;
 };

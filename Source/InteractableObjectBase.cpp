@@ -1,6 +1,6 @@
 
 #include "InteractableObjectBase.h"
-
+#pragma optimize("", off)
 #include "UnrealUtilities.h"
 
 AInteractableObjectBase::AInteractableObjectBase()
@@ -22,28 +22,32 @@ void AInteractableObjectBase::TryRevealWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
 		return;
-	m_pInteractWidget->GetWidget()->PlayAnimation(m_RevealWidgetAnimation);
+	m_CurrentWidgetState = CurrentWidgetState::Revealed;
+	Execute_InteractionWidgetReveal(this);
 }
 
 void AInteractableObjectBase::TryHideWidget()
 {
 	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
 		return;
-	m_pInteractWidget->GetWidget()->PlayAnimation(m_HideWidgetAnimation);
+	m_CurrentWidgetState = CurrentWidgetState::Hidden;
+	Execute_InteractionWidgetHide(this);
 }
 
 void AInteractableObjectBase::TryFocusWidget()
 {
 	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
 		return;
-	m_pInteractWidget->GetWidget()->PlayAnimation(m_FocusWidgetAnimation);
+	m_CurrentWidgetState = CurrentWidgetState::Interactable;
+	Execute_InteractionWidgetFocus(this);
 }
 
 void AInteractableObjectBase::TryUnfocusWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
 		return;
-	m_pInteractWidget->GetWidget()->PlayAnimation(m_UnfocusWidgetAnimation);
+	m_CurrentWidgetState = CurrentWidgetState::Revealed;
+	Execute_InteractionWidgetUnfocus(this);
 }
 
 FVector AInteractableObjectBase::GetCurrentLocation() const
@@ -60,10 +64,10 @@ void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pI
 {
 	if (m_bIsQuickInteraction)
 	{
-		m_pInteractWidget->GetWidget()->PlayAnimation(m_InteractFastWidgetAnimation);
+		Execute_InteractionWidgetInteractFast(this);
 		return;
 	}
-	m_pInteractWidget->GetWidget()->PlayAnimation(m_InteractSlowWidgetAnimation);
+	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 }
 

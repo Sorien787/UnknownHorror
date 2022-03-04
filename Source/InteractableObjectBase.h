@@ -59,26 +59,4 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 		bool m_bIsQuickInteraction{true};
-
-	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
-		int m_InteractionPriority;
-
-	UPROPERTY(Transient, EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_RevealWidgetAnimation;
-
-	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_HideWidgetAnimation;
-
-	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_FocusWidgetAnimation;
-
-	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_UnfocusWidgetAnimation;
-
-	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_InteractFastWidgetAnimation;
-
-	UPROPERTY(EditAnywhere, Category = "Widget Anims", meta = (BindWidgetAnim))
-		UWidgetAnimation* m_InteractSlowWidgetAnimation;
-
 };
