@@ -2,7 +2,6 @@
 #pragma optimize("", off)
 
 #include "InteractionUserComponent.h"
-
 #include "UnrealUtilities.h"
 
 // Sets default values for this component's properties
@@ -18,26 +17,8 @@ void UInteractionUserComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UInteractionUserComponent::TriggerInteraction()
+AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
 {
-	// currently not implemented - finish the interaction immediately
-	if (m_pCurrentUsingInteractable)
-		m_pCurrentUsingInteractable->OnInteractionFinished(this);
-}
-
-bool UInteractionUserComponent::HasInteractionAnim(InteractableObjectType type) const
-{
-	return true;
-}
-
-AInteractableObjectBase* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
-{
-	float distanceSquared = m_fInteractionRange * m_fInteractionRange;
-	float highestInteractionPriority = 0;
-	FVector desiredLocation = GetOwner()->GetActorLocation();
-
-	// bool hasHitInteractableBox = false;
-	//
 	if (!m_bIsPlayerInteractionUser)
 		return nullptr;
 	
@@ -46,55 +27,27 @@ AInteractableObjectBase* UInteractionUserComponent::ClosestInteractionQuery(bool
 	if (!hit.GetActor())
 		return nullptr;
 
-	AInteractableObjectBase* pInteractableObject = Cast<AInteractableObjectBase>(hit.GetActor());
+	AInteractionPoint* pInteractableObject = Cast<AInteractionPoint>(hit.GetActor());
 	
-	if (!pInteractableObject)
+	if (!pInteractableObject || !pInteractableObject->HasLinkedInteractable())
 		return nullptr;
 
 	return pInteractableObject;
-	//
-	// desiredLocation = UnrealUtilities::RaycastActorToWorldPosition(GetWorld(), m_fInteractionRange, GetOwner());
-	//
-	// AInteractableObjectBase* pClosestInteractable = nullptr;
-	// for(AInteractableObjectBase* pInteractable : m_InteractionCandidates)
-	// {
-	// 	if (ignoreCurrentInteractable && pInteractable == m_pCurrentUsingInteractable)
-	// 		continue;
-	//
-	// 	int interactionType = 0;
-	// 	if (!pInteractable->IsInteractionAvailable(this, interactionType))
-	// 		continue;
-	//
-	// 	const float distanceToInteractableSquared = (pInteractable->GetCurrentLocation() - desiredLocation).SizeSquared();
-	// 	const int interactionPriority = pInteractable->GetInteractionPriority();
-	//
-	// 	if (interactionPriority < highestInteractionPriority)
-	// 		continue;
-	//
-	// 	// only skip the distance check if this interaction's priority is higher than the highest so far.
-	// 	if (distanceToInteractableSquared >= distanceSquared && (interactionPriority < highestInteractionPriority))
-	// 		continue;
-	// 	
-	// 	highestInteractionPriority = interactionPriority;
-	// 	distanceSquared = distanceToInteractableSquared;
-	// 	pClosestInteractable = pInteractable;
-	// }
-	// return pClosestInteractable;
 }
 
 void UInteractionUserComponent::FocusedInteractionUpdate()
 {
 	// only ignore the closest interactable if the current using interactable is not null (since that one will be closest)
-	AInteractableObjectBase* pClosestInteractable = ClosestInteractionQuery();
+	AInteractionPoint* pClosestInteractable = ClosestInteractionQuery();
 
 	if (!m_InteractionCandidates.Contains(pClosestInteractable))
 		pClosestInteractable = nullptr;
 	
-	if (pClosestInteractable == m_pCurrentFocusedInteractable)
+	if (pClosestInteractable == m_pCurrentFocusedInteractionPoint)
 		return;
 
 	// if we had an interactable nearby and it's different, clear it
-	if (m_pCurrentFocusedInteractable)
+	if (m_pCurrentFocusedInteractionPoint)
 		ClearFocusedInteractable();
 
 	// if we have an interactable nearby, set that as our usable one
@@ -112,26 +65,26 @@ void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 void UInteractionUserComponent::ClearFocusedInteractable()
 {
 	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractable->TryUnfocusWidget();
-	m_pCurrentFocusedInteractable = nullptr;
+		m_pCurrentFocusedInteractionPoint->TryUnfocusWidget();
+	m_pCurrentFocusedInteractionPoint = nullptr;
 }
 
-void UInteractionUserComponent::SetNewFocusedInteractable(AInteractableObjectBase* pNewInteractable)
+void UInteractionUserComponent::SetNewFocusedInteractable(AInteractionPoint* pNewInteractable)
 {
-	m_pCurrentFocusedInteractable = pNewInteractable;
+	m_pCurrentFocusedInteractionPoint = pNewInteractable;
 	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractable->TryFocusWidget();
+		m_pCurrentFocusedInteractionPoint->TryFocusWidget();
 }
 
-void UInteractionUserComponent::OnDisengageWithInteraction()
+
+void UInteractionUserComponent::OnInteractionFinished()
 {
-	m_pCurrentUsingInteractable = nullptr;
+	EnableInteractions();
 }
 
 void UInteractionUserComponent::OnInteractButtonPressed()
 {
-	int interactionType = 0;
-	if (!m_pCurrentFocusedInteractable || !m_pCurrentFocusedInteractable->IsInteractionAvailable(this, OUT interactionType))
+	if (!m_pCurrentFocusedInteractionPoint || !m_bInteractionsEnabled)
 		return;
 	OnInteractWithFocusedInteractable();
 }
@@ -139,16 +92,30 @@ void UInteractionUserComponent::OnInteractButtonPressed()
 
 void UInteractionUserComponent::OnInteractWithFocusedInteractable()
 {
-	m_pCurrentUsingInteractable = m_pCurrentFocusedInteractable;
-	m_pCurrentUsingInteractable->OnInteractionStarted(this);
-	TriggerInteraction();
+	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
+	DisableInteractions();
+	m_pCurrentUsingInteractionPoint->TryInteract(this);
 }
 
-float UInteractionUserComponent::GetDropRange() const
+void UInteractionUserComponent::DisableInteractions()
 {
-	return m_DropRange;
+	m_bInteractionsEnabled = false;
+	for (auto it = m_InteractionCandidates.CreateIterator(); it; ++it)
+	{
+		(*it)->TryHideWidget();
+	}
+	PrimaryComponentTick.SetTickFunctionEnable(false);
 }
 
+void UInteractionUserComponent::EnableInteractions()
+{
+	m_bInteractionsEnabled = true;
+	for (auto it = m_InteractionCandidates.CreateIterator(); it; ++it)
+    {
+    	(*it)->TryRevealWidget();
+    }
+	PrimaryComponentTick.SetTickFunctionEnable(true);
+}
 
 /////////////////////////////////////
 ///// Box overlap functions
@@ -166,27 +133,29 @@ void UInteractionUserComponent::AddInteractionExitBox(UBoxComponent* pBox)
 
 void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AInteractableObjectBase* pInteractable = Cast<AInteractableObjectBase>(OtherActor);
+	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
 
 	if (!pInteractable || m_InteractionCandidates.Contains(pInteractable))
 		return;
 
 	m_InteractionCandidates.Add(pInteractable);
 
- 	pInteractable->TryRevealWidget();
+	if (m_bInteractionsEnabled)
+ 		pInteractable->TryRevealWidget();
 }
 
 
 void UInteractionUserComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	AInteractableObjectBase* pInteractable = Cast<AInteractableObjectBase>(OtherActor);
+	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
 
 	if (!pInteractable || !m_InteractionCandidates.Contains(pInteractable))
 		return;
 
 	m_InteractionCandidates.Remove(pInteractable);
 
-	pInteractable->TryHideWidget();
+	if (m_bInteractionsEnabled)
+		pInteractable->TryHideWidget();
 }
 /////////////////////////////////////
 

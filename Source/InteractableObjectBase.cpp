@@ -1,74 +1,42 @@
 
 #include "InteractableObjectBase.h"
-#pragma optimize("", off)
-#include "UnrealUtilities.h"
+#include "InteractionUserComponent.h"
+#include "InteractionPoint.h"
 
 AInteractableObjectBase::AInteractableObjectBase()
 {
 	m_pRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	check(m_pRootComponent != nullptr);
 	RootComponent = m_pRootComponent;
-
-	m_pInteractWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Interaction Widget"));
-	check(m_pInteractWidget != nullptr);
-	m_pInteractWidget->SetupAttachment(GetRootComponent());
-
-	m_TriggerBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Trigger Box"));
-	check(m_TriggerBoxComponent != nullptr);
-	m_TriggerBoxComponent->SetupAttachment(GetRootComponent());
+	
+	TInlineComponentArray<AInteractionPoint*> pInteractionPoints;
+	GetComponents(pInteractionPoints);
+	for (auto it = pInteractionPoints.CreateIterator(); it; ++it)
+	{
+		(*it)->RegisterParent(this);
+	}
 }
 
-void AInteractableObjectBase::TryRevealWidget()
+bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const
 {
-	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
-		return;
-	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	Execute_InteractionWidgetReveal(this);
+	return m_pCurrentUser == nullptr;
 }
 
-void AInteractableObjectBase::TryHideWidget()
+void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
 {
-	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
-		return;
-	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	Execute_InteractionWidgetHide(this);
-}
-
-void AInteractableObjectBase::TryFocusWidget()
-{
-	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
-		return;
-	m_CurrentWidgetState = CurrentWidgetState::Interactable;
-	Execute_InteractionWidgetFocus(this);
-}
-
-void AInteractableObjectBase::TryUnfocusWidget()
-{
-	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
-		return;
-	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	Execute_InteractionWidgetUnfocus(this);
-}
-
-FVector AInteractableObjectBase::GetCurrentLocation() const
-{
-	return GetActorLocation();
-}
-
-void AInteractableObjectBase::Tick(float DeltaSeconds)
-{
-	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
+	m_pCurrentUser->OnInteractionFinished();
+	m_pCurrentUser = nullptr;
 }
 
 void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
 {
-	if (m_bIsQuickInteraction)
-	{
-		Execute_InteractionWidgetInteractFast(this);
-		return;
-	}
-	Execute_InteractionWidgetInteractSlow(this);
-	m_CurrentWidgetState = CurrentWidgetState::Hidden;
+	m_pCurrentUser = pInteractionUser;
 }
+
+bool AInteractableObjectBase::IsFastInteraction() const
+{
+	return m_bIsFastInteraction;
+}
+
 
 

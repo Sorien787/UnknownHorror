@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Components/BoxComponent.h"
 #include "InteractableInterface.h"
+#include "InteractionPoint.h"
 #include "InteractableObjectBase.h"
 #include "InteractableObjectTypes.h"
 #include "InteractionUserComponent.generated.h"
@@ -27,18 +28,16 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	void OnDisengageWithInteraction();
+	
+	void OnInteractionFinished();
 
 	void OnInteractWithFocusedInteractable();
 
-	float GetDropRange() const;
+	void DisableInteractions();
+
+	void EnableInteractions();
 	
-	void TriggerInteraction();
-	
-	AInteractableObjectBase* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
-	
-	bool HasInteractionAnim(InteractableObjectType type) const;
+	AInteractionPoint* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
 
 	void AddInteractionEnterBox(UBoxComponent* pBox);
 
@@ -50,19 +49,18 @@ private:
 	
 	UFUNCTION()
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	TSet<AInteractableObjectBase*> m_InteractionCandidates;
 	
 	bool m_bInteractionsEnabled{ false };
 	
-	AInteractableObjectBase* m_pCurrentFocusedInteractable = nullptr;
-	AInteractableObjectBase* m_pCurrentUsingInteractable = nullptr;
+	TSet<AInteractionPoint*> m_InteractionCandidates;
+	AInteractionPoint* m_pCurrentFocusedInteractionPoint = nullptr;
+	AInteractionPoint* m_pCurrentUsingInteractionPoint = nullptr;
 
 	void ClearFocusedInteractable();
 	
 	void FocusedInteractionUpdate();
 	
-	void SetNewFocusedInteractable(AInteractableObjectBase* pNewInteractable);
+	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable);
 
 public:
 	UFUNCTION()
@@ -76,9 +74,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		bool m_bIsPlayerInteractionUser{true};
-
-	UPROPERTY(EditAnywhere)
-		float m_DropRange{3000.0f};
 	
 	UPROPERTY(EditAnywhere)
 		float m_fInteractionRange{3000.0f};

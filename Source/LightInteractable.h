@@ -23,8 +23,6 @@ public:
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable, OUT int type) const override;
 
-	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override {};
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

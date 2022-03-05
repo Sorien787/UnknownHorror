@@ -33,31 +33,8 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
 	
-	virtual void TryRevealWidget() = 0;
-	
-	virtual void TryHideWidget() = 0;
-	
-	virtual void TryFocusWidget() = 0;
-	
-	virtual void TryUnfocusWidget() = 0;
+	virtual bool IsFastInteraction() const = 0;
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetReveal();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetHide();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetFocus();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetUnfocus();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetInteractFast();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetInteractSlow();
-	
-	virtual FVector GetCurrentLocation() const = 0;
+	UFUNCTION()
+		virtual void InteractionOnInteractFinished();
 };

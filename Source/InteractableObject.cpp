@@ -25,7 +25,7 @@ void AInteractableObject::Tick(float DeltaTime)
 
 void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
 {
-	
+	Super::OnInteractionStarted(pInteractionUser);
 }
 
 // we could do a sort of interaction animation callback?
@@ -55,17 +55,7 @@ void AInteractableObject::OnInteractionFinished(UInteractionUserComponent* pInte
 bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const
 {
 	// interaction is only available
-	if (m_CurrentState == InteractableObjectState::PickedUp)
-	{
-		type = 0;
-		const FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), pInteractionUser->GetDropRange(), GetWorld()->GetFirstPlayerController()->GetOwner());
-		return hit.GetActor() != nullptr;
-	}
-	else
-	{
-		type = 1;
-		return true;
-	}
+	return false;
 }
 
 

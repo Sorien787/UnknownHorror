@@ -9,54 +9,33 @@
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
 
-enum class CurrentWidgetState
-{
-	Hidden,
-	Revealed,
-	Interactable
-};
-	
 UCLASS(Abstract)
 class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
 private:
 
-	CurrentWidgetState m_CurrentWidgetState{CurrentWidgetState::Hidden};
+
 public:	
 	AInteractableObjectBase();
-
-	virtual void TryRevealWidget() override;
 	
-	virtual void TryHideWidget() override;
-	
-	virtual void TryFocusWidget() override;
-	
-	virtual void TryUnfocusWidget() override;
-
-	virtual FVector GetCurrentLocation() const override;
-
-	virtual void Tick(float DeltaSeconds) override;
-
 	// no implementation in the base
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const override {return false; }
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const override;
 
-	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override {}
+	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-		UWidgetComponent* m_pInteractWidget;
-
+	virtual bool IsFastInteraction() const override;
+	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pWidgetAttachment;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Components")
-	    UBoxComponent* m_TriggerBoxComponent;
+		bool m_bIsFastInteraction;
 
-	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
-		bool m_bIsQuickInteraction{true};
+	UInteractionUserComponent* m_pCurrentUser {nullptr};
 };
