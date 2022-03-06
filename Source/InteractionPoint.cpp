@@ -10,9 +10,17 @@ AInteractionPoint::AInteractionPoint()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	m_RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	check(m_RootComponent != nullptr);
+	SetRootComponent(m_RootComponent);
+
+	m_WidgetAttachmentPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Widget Attachment Point"));
+	check(m_WidgetAttachmentPoint != nullptr);
+	m_WidgetAttachmentPoint->SetupAttachment(GetRootComponent());
+
 	m_pInteractWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Interaction Widget"));
 	check(m_pInteractWidget != nullptr);
-	m_pInteractWidget->SetupAttachment(GetRootComponent());
+	m_pInteractWidget->SetupAttachment(m_WidgetAttachmentPoint);
 
 	m_TriggerBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Trigger Box"));
 	check(m_TriggerBoxComponent != nullptr);
@@ -30,8 +38,9 @@ void AInteractionPoint::TryRevealWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
 		return;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Revealing Widget!"));
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	InteractionWidgetReveal();
+	Execute_InteractionWidgetReveal(this);
 }
 
 void AInteractionPoint::TryHideWidget()
@@ -39,7 +48,8 @@ void AInteractionPoint::TryHideWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	InteractionWidgetHide();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Hiding Widget!"));
+	Execute_InteractionWidgetHide(this);
 }
 
 void AInteractionPoint::TryFocusWidget()
@@ -47,7 +57,8 @@ void AInteractionPoint::TryFocusWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Interactable;
-	InteractionWidgetFocus();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Focusing Widget!"));
+	Execute_InteractionWidgetFocus(this);
 }
 
 void AInteractionPoint::TryUnfocusWidget()
@@ -55,7 +66,8 @@ void AInteractionPoint::TryUnfocusWidget()
 	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	InteractionWidgetFocus();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Unfocusing Widget!"));
+	Execute_InteractionWidgetFocus(this);
 }
 
 FVector AInteractionPoint::GetCurrentLocation() const
@@ -81,7 +93,7 @@ void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 		InteractionWidgetInteractFast();
 		return;
 	}
-	InteractionWidgetInteractSlow();
+	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 }
 

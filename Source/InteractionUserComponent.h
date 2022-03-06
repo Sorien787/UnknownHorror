@@ -50,7 +50,7 @@ private:
 	UFUNCTION()
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
-	bool m_bInteractionsEnabled{ false };
+	bool m_bInteractionsEnabled{ true };
 	
 	TSet<AInteractionPoint*> m_InteractionCandidates;
 	AInteractionPoint* m_pCurrentFocusedInteractionPoint = nullptr;

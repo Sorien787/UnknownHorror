@@ -8,7 +8,7 @@ ALightInteractable::ALightInteractable()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+	UE_LOG(LogTemp, Display, TEXT("Light Interactable"));
 	m_LightSwitchMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Component"));
 	check(m_LightSwitchMesh != nullptr);
 	m_LightSwitchMesh->SetupAttachment(RootComponent);
@@ -19,7 +19,7 @@ ALightInteractable::ALightInteractable()
 
 	m_LightModifier = CreateDefaultSubobject<ULightModifierComponent>(TEXT("Light Modifier"));
 	check(m_LightModifier != nullptr);
-	m_LightModifier->RegisterComponent();
+	//m_LightModifier->RegisterComponent();
 }
 
 void ALightInteractable::BeginPlay()

@@ -34,7 +34,5 @@ public:
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
 	
 	virtual bool IsFastInteraction() const = 0;
-
-	UFUNCTION()
-		virtual void InteractionOnInteractFinished();
+	
 };

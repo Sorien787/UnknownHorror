@@ -7,6 +7,7 @@
 #include "Components/WidgetComponent.h"
 #include "Components/BoxComponent.h"
 #include "InteractableInterface.h"
+#include "InteractionPointInterface.h"
 #include "InteractionPoint.generated.h"
 
 enum class CurrentWidgetState
@@ -17,7 +18,7 @@ enum class CurrentWidgetState
 };
 	
 UCLASS()
-class DEEPSEAHORROR_API AInteractionPoint : public AActor
+class DEEPSEAHORROR_API AInteractionPoint : public AActor, public IInteractionPointInterface
 {
 private:
 	GENERATED_BODY()
@@ -51,30 +52,19 @@ public:
 	bool HasLinkedInteractable() const;
 
 	FVector GetCurrentLocation() const;
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetReveal();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetHide();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetFocus();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetUnfocus();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetInteractFast();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void InteractionWidgetInteractSlow();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	UWidgetComponent* m_pInteractWidget;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UBoxComponent* m_TriggerBoxComponent;
+
+	UPROPERTY()
+	USceneComponent* m_RootComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+	USceneComponent* m_WidgetAttachmentPoint;
+	
 	
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 	bool m_bIsQuickInteraction{true};

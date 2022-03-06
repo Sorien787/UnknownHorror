@@ -21,7 +21,7 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 	// Enable the pawn to control camera rotation.
 	m_CharacterCamera->bUsePawnControlRotation = true;
 	
-	m_InteractionComponent = CreateDefaultSubobject<UInteractionUserComponent>(TEXT("InteractionUser"));
+	m_InteractionComponent = CreateDefaultSubobject<UInteractionUserComponent>(TEXT("Interaction User"));
 	check(m_InteractionComponent != nullptr);
 	
 	m_EnterBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Enter Box"));
@@ -90,6 +90,7 @@ void AFirstPersonPlayerCharacter::StopJump()
 
 void AFirstPersonPlayerCharacter::StartInteractions()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("A"));
 	m_InteractionComponent->OnInteractButtonPressed();
 }
 

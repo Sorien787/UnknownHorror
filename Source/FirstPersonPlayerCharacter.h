@@ -53,13 +53,13 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		UCameraComponent* m_CharacterCamera;
 
-	UPROPERTY(VisibleAnywhere)
-		UInteractionUserComponent* m_InteractionComponent;
-
-	UPROPERTY(VisibleAnywhere)
-		UBoxComponent* m_EnterBoxComponent;
+	UPROPERTY(EditAnywhere)
+	UInteractionUserComponent* m_InteractionComponent;
 	
-	UPROPERTY(VisibleAnywhere)
-		UBoxComponent* m_ExitBoxComponent;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* m_EnterBoxComponent;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* m_ExitBoxComponent;
 };
 

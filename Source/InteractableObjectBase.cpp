@@ -8,12 +8,23 @@ AInteractableObjectBase::AInteractableObjectBase()
 	m_pRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	check(m_pRootComponent != nullptr);
 	RootComponent = m_pRootComponent;
-	
+}
+
+void AInteractableObjectBase::BeginPlay()
+{
+	Super::BeginPlay();
+
 	TInlineComponentArray<AInteractionPoint*> pInteractionPoints;
-	GetComponents(pInteractionPoints);
-	for (auto it = pInteractionPoints.CreateIterator(); it; ++it)
+	TArray<AActor*> pActorChildren;
+	GetAttachedActors(pActorChildren);
+	for (int i = 0; i < pActorChildren.Num(); i++)
 	{
-		(*it)->RegisterParent(this);
+		AActor* pActor = pActorChildren[i];
+		AInteractionPoint* pInteractionPoint = Cast<AInteractionPoint>(pActor);
+		if (!pInteractionPoint)
+			continue;
+
+		pInteractionPoint->RegisterParent(this);
 	}
 }
 

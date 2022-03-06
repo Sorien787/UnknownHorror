@@ -18,7 +18,8 @@ private:
 
 public:	
 	AInteractableObjectBase();
-	
+
+	virtual void BeginPlay() override;
 	// no implementation in the base
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const override;
 
