@@ -67,7 +67,7 @@ void AInteractionPoint::TryUnfocusWidget()
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Unfocusing Widget!"));
-	Execute_InteractionWidgetFocus(this);
+	Execute_InteractionWidgetUnfocus(this);
 }
 
 FVector AInteractionPoint::GetCurrentLocation() const
@@ -90,7 +90,7 @@ void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 	m_pInteractableInterface->OnInteractionStarted(pUser);
 	if (m_pInteractableInterface->IsFastInteraction())
 	{
-		InteractionWidgetInteractFast();
+		Execute_InteractionWidgetInteractFast(this);
 		return;
 	}
 	Execute_InteractionWidgetInteractSlow(this);
@@ -100,4 +100,9 @@ void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 bool AInteractionPoint::HasLinkedInteractable() const
 {
 	return m_pInteractableInterface != nullptr;
+}
+
+bool AInteractionPoint::IsFastInteractable() const
+{
+	return m_pInteractableInterface && m_pInteractableInterface->IsFastInteraction();
 }

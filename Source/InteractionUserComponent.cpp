@@ -103,12 +103,15 @@ void UInteractionUserComponent::OnInteractWithFocusedInteractable()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Interact with focused interactable"));
 	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
-	DisableInteractions();
+	if (!m_pCurrentUsingInteractionPoint->IsFastInteractable())
+		DisableInteractions();
 	m_pCurrentUsingInteractionPoint->TryInteract(this);
 }
 
 void UInteractionUserComponent::DisableInteractions()
 {
+	if (!m_bInteractionsEnabled)
+		return;
 	m_bInteractionsEnabled = false;
 	for (auto it = m_InteractionCandidates.CreateIterator(); it; ++it)
 	{
@@ -119,6 +122,8 @@ void UInteractionUserComponent::DisableInteractions()
 
 void UInteractionUserComponent::EnableInteractions()
 {
+	if (m_bInteractionsEnabled)
+		return;
 	m_bInteractionsEnabled = true;
 	for (auto it = m_InteractionCandidates.CreateIterator(); it; ++it)
     {

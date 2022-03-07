@@ -51,6 +51,8 @@ public:
 
 	bool HasLinkedInteractable() const;
 
+	bool IsFastInteractable() const;
+
 	FVector GetCurrentLocation() const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
