@@ -23,9 +23,9 @@ void AInteractableObject::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
+void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	Super::OnInteractionStarted(pInteractionUser);
+	Super::OnInteractionStarted(pInteractionUser, interactorId);
 }
 
 // we could do a sort of interaction animation callback?

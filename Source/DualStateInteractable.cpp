@@ -18,9 +18,9 @@ void ADualStateInteractable::BeginPlay()
 	
 }
 
-void ADualStateInteractable::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
+void ADualStateInteractable::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	Super::OnInteractionStarted(pInteractionUser);
+	Super::OnInteractionStarted(pInteractionUser, interactorId);
 	// for now, immediately finish the interaction - we'll sort out the proper animation delay later.
 }
 

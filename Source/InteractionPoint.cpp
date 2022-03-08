@@ -102,7 +102,7 @@ void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInte
 
 void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 {
-	m_pInteractableInterface->OnInteractionStarted(pUser, );
+	m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
 	if (m_pInteractableInterface->IsFastInteraction())
 	{
 		Execute_InteractionWidgetInteractFast(this);

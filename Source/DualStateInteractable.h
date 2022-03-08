@@ -33,7 +33,7 @@ private:
 
 public:	
 	
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const override;
 
