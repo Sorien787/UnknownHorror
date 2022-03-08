@@ -24,6 +24,7 @@ void AInteractableObjectBase::BeginPlay()
 		if (!pInteractionPoint)
 			continue;
 
+		m_pInteractionPoints.Add(pInteractionPoint);
 		pInteractionPoint->RegisterParent(this);
 	}
 }
@@ -39,14 +40,28 @@ void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* p
 	m_pCurrentUser = nullptr;
 }
 
-void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser)
+void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
 	m_pCurrentUser = pInteractionUser;
+
+	
 }
 
 bool AInteractableObjectBase::IsFastInteraction() const
 {
 	return m_bIsFastInteraction;
+}
+
+void AInteractableObjectBase::OnInteractorIdEnabledSet(int id, bool enabled)
+{
+	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
+	{
+		if (m_pInteractionPoints[i]->GetInteractorId() != id)
+			continue;
+		
+		m_pInteractionPoints[i]->SetIsEnabled(enabled);
+		return;
+	}
 }
 
 

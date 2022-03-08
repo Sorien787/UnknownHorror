@@ -75,6 +75,21 @@ FVector AInteractionPoint::GetCurrentLocation() const
 	return GetActorLocation();
 }
 
+int AInteractionPoint::GetInteractorId() const
+{
+	return m_interactorId;
+}
+
+bool AInteractionPoint::GetIsEnabled() const
+{
+	return m_bIsCurrentlyActive;
+}
+
+void AInteractionPoint::SetIsEnabled(bool enabled)
+{
+	m_bIsCurrentlyActive = enabled;
+}
+
 void AInteractionPoint::Tick(float DeltaSeconds)
 {
 	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
@@ -87,7 +102,7 @@ void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInte
 
 void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 {
-	m_pInteractableInterface->OnInteractionStarted(pUser);
+	m_pInteractableInterface->OnInteractionStarted(pUser, );
 	if (m_pInteractableInterface->IsFastInteraction())
 	{
 		Execute_InteractionWidgetInteractFast(this);

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
+#include "InteractionPoint.h"
 #include "Components/BoxComponent.h"
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
@@ -25,7 +26,7 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) override;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	virtual bool IsFastInteraction() const override;
 	
@@ -34,9 +35,17 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnInteractWithInteractorId();
+
+	UFUNCTION(BlueprintCallable)
+		void OnInteractorIdEnabledSet(int id, bool enabled);
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		bool m_bIsFastInteraction;
 
 	UInteractionUserComponent* m_pCurrentUser {nullptr};
+
+	TArray<AInteractionPoint*> m_pInteractionPoints;
 };

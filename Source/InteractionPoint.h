@@ -39,6 +39,10 @@ public:
 
 	void RegisterParent(IInteractableInterface* pInteractableInterface);
 
+	void EnableInteractor();
+
+	void DisableInteractor();
+
 	void TryRevealWidget();
 	
 	void TryHideWidget();
@@ -54,6 +58,15 @@ public:
 	bool IsFastInteractable() const;
 
 	FVector GetCurrentLocation() const;
+
+	int GetInteractorId() const;
+
+	bool GetIsEnabled() const;
+
+	void SetIsEnabled(bool enabled);
+
+	bool m_bIsCurrentlyActive{true};
+
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	UWidgetComponent* m_pInteractWidget;
@@ -67,6 +80,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	USceneComponent* m_WidgetAttachmentPoint;
 	
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	int m_interactorId{0};
 	
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 	bool m_bIsQuickInteraction{true};

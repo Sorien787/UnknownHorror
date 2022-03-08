@@ -19,7 +19,7 @@ public:
 	// Sets default values for this actor's properties
 	ALightInteractable();
 
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractable) override;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractable, int interactorId) override;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable, OUT int type) const override;
 

@@ -25,7 +25,7 @@ class DEEPSEAHORROR_API IInteractableInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser) = 0;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) = 0;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const = 0;
 

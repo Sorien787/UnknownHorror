@@ -49,9 +49,9 @@ void ALightInteractable::SetLightStateBasedOnData()
 }
 
 
-void ALightInteractable::OnInteractionStarted(UInteractionUserComponent* pInteractable) 
+void ALightInteractable::OnInteractionStarted(UInteractionUserComponent* pInteractable, int interactorId) 
 {
-	Super::OnInteractionStarted(pInteractable);
+	Super::OnInteractionStarted(pInteractable, interactorId);
 	m_IsSwitchOn = !m_IsSwitchOn;
 	SetLightStateBasedOnData();
 	OnInteractionFinished(pInteractable);

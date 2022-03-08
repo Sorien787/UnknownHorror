@@ -32,7 +32,7 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 	if (!pInteractableObject)
 		return nullptr;
 
-	if(!pInteractableObject->HasLinkedInteractable())
+	if(!pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled())
 		return nullptr;
 
 	return pInteractableObject;
