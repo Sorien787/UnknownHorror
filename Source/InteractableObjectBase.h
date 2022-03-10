@@ -37,10 +37,16 @@ public:
 		USceneComponent* m_pRootComponent;
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnInteractWithInteractorId();
+		void OnInteractWithInteractorId(int interactorId);
 
 	UFUNCTION(BlueprintCallable)
+		void OnAnimationFinished();
+	
+	UFUNCTION(BlueprintCallable)
 		void OnInteractorIdEnabledSet(int id, bool enabled);
+
+	UFUNCTION(BlueprintCallable)
+		void DisableInteractors();
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		bool m_bIsFastInteraction;
