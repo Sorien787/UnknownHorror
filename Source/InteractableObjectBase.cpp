@@ -52,15 +52,47 @@ bool AInteractableObjectBase::IsFastInteraction() const
 	return m_bIsFastInteraction;
 }
 
-void AInteractableObjectBase::OnInteractorIdEnabledSet(int id, bool enabled)
+
+void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 {
 	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
 	{
 		if (m_pInteractionPoints[i]->GetInteractorId() != id)
 			continue;
 		
-		m_pInteractionPoints[i]->SetIsEnabled(enabled);
+		m_pInteractionPoints[i]->SetIsEnabled(true);
 		return;
+	}
+}
+
+// void AInteractableObjectBase::OnInteractorIdsEnabledSet_Implementation(TArray<int> ids)
+// {
+// 	for (int j = 0; j < ids.Num(); j++)
+// 	{
+// 		const int id = ids[j];
+// 		for (int i = 0; i < m_pInteractionPoints.Num(); i++)
+// 		{
+// 			if (m_pInteractionPoints[i]->GetInteractorId() != id)
+// 				continue;
+// 		
+// 			m_pInteractionPoints[i]->SetIsEnabled(true);
+// 			return;
+// 		}
+// 	}
+//
+// }
+
+void AInteractableObjectBase::OnAnimationFinished_Implementation()
+{
+	
+}
+
+
+void AInteractableObjectBase::DisableInteractors_Implementation()
+{
+	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
+	{
+		m_pInteractionPoints[i]->SetIsEnabled(false);		
 	}
 }
 

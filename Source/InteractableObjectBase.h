@@ -35,22 +35,18 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnInteractWithInteractorId(int interactorId);
-
-	UFUNCTION(BlueprintCallable)
-		void OnAnimationFinished();
-	
-	UFUNCTION(BlueprintCallable)
-		void OnInteractorIdEnabledSet(int id, bool enabled);
-
-	UFUNCTION(BlueprintCallable)
-		void DisableInteractors();
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		bool m_bIsFastInteraction;
 
+	void OnAnimationFinished_Implementation() override;
+
+	void DisableInteractors_Implementation() override;
+
+	void OnInteractorIdEnabledSet_Implementation(int id) override;
+
+	// void OnInteractorIdsEnabledSet_Implementation(TArray<int> ids) override;
+	
 	UInteractionUserComponent* m_pCurrentUser {nullptr};
 
 	TArray<AInteractionPoint*> m_pInteractionPoints;

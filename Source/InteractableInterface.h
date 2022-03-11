@@ -35,5 +35,18 @@ public:
 	
 	virtual bool IsFastInteraction() const = 0;
 
-	// implement the setup for removing interaciton points here
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnInteractWithInteractorId(int interactorId);
+	
+	// UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	// void OnInteractorIdsEnabledSet(TArray<int> ids);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnAnimationFinished();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DisableInteractors();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnInteractorIdEnabledSet(int id);
 };
