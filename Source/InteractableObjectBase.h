@@ -50,4 +50,6 @@ public:
 	UInteractionUserComponent* m_pCurrentUser {nullptr};
 
 	TArray<AInteractionPoint*> m_pInteractionPoints;
+
+	TSet<int> m_EnabledInteractionPoints;
 };

@@ -58,16 +58,26 @@ void UInteractionUserComponent::FocusedInteractionUpdate()
 		SetNewFocusedInteractable(pClosestInteractable);
 }
 
+void UInteractionUserComponent::RevealInteractionUpdate()
+{
+	for (const auto& element : m_InteractionCandidates)
+	{
+		element->TryRevealWidget();
+	}
+}
+
 void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
 	FocusedInteractionUpdate();
+	
+	RevealInteractionUpdate();
 }
 
 void UInteractionUserComponent::ClearFocusedInteractable()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Focused interaction cleared"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focused interaction cleared"));
 	if (m_bShouldTriggerWidgets)
 		m_pCurrentFocusedInteractionPoint->TryUnfocusWidget();
 	m_pCurrentFocusedInteractionPoint = nullptr;
@@ -75,7 +85,7 @@ void UInteractionUserComponent::ClearFocusedInteractable()
 
 void UInteractionUserComponent::SetNewFocusedInteractable(AInteractionPoint* pNewInteractable)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("New Focused interaction"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("New Focused interaction"));
 	m_pCurrentFocusedInteractionPoint = pNewInteractable;
 	if (m_bShouldTriggerWidgets)
 		m_pCurrentFocusedInteractionPoint->TryFocusWidget();
@@ -89,23 +99,20 @@ void UInteractionUserComponent::OnInteractionFinished()
 
 void UInteractionUserComponent::OnInteractButtonPressed()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("B"));
-	if (!m_pCurrentFocusedInteractionPoint)
+	if (!m_pCurrentFocusedInteractionPoint || !m_bInteractionsEnabled)
 		return;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("C"));
-	if (!m_bInteractionsEnabled)
-		return;
+
 	OnInteractWithFocusedInteractable();
 }
 
 
 void UInteractionUserComponent::OnInteractWithFocusedInteractable()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Interact with focused interactable"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Interact with focused interactable"));
 	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
+	m_pCurrentUsingInteractionPoint->TryInteract(this);
 	if (!m_pCurrentUsingInteractionPoint->IsFastInteractable())
 		DisableInteractions();
-	m_pCurrentUsingInteractionPoint->TryInteract(this);
 }
 
 void UInteractionUserComponent::DisableInteractions()
@@ -125,9 +132,9 @@ void UInteractionUserComponent::EnableInteractions()
 	if (m_bInteractionsEnabled)
 		return;
 	m_bInteractionsEnabled = true;
-	for (auto it = m_InteractionCandidates.CreateIterator(); it; ++it)
+	for (auto& it : m_InteractionCandidates)
     {
-    	(*it)->TryRevealWidget();
+    	it->TryRevealWidget();
     }
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 }
@@ -149,13 +156,12 @@ void UInteractionUserComponent::AddInteractionExitBox(UBoxComponent* pBox)
 void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Joined Enter Box"));
+
 	if (!pInteractable || m_InteractionCandidates.Contains(pInteractable))
 		return;
-
 	m_InteractionCandidates.Add(pInteractable);
 
-	if (!m_bInteractionsEnabled)
+	if (!m_bInteractionsEnabled || !pInteractable->GetIsEnabled())
 		return;
 
 	pInteractable->TryRevealWidget();
@@ -165,13 +171,12 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 void UInteractionUserComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Left Exit Box"));
 	if (!pInteractable || !m_InteractionCandidates.Contains(pInteractable))
 		return;
 	
 	m_InteractionCandidates.Remove(pInteractable);
 
-	if (!m_bInteractionsEnabled)
+	if (!m_bInteractionsEnabled || !pInteractable->GetIsEnabled())
 		return;
 	pInteractable->TryHideWidget();
 }

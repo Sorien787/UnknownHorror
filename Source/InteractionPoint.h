@@ -37,12 +37,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void RegisterParent(IInteractableInterface* pInteractableInterface);
+	void RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled);
 
-	void EnableInteractor();
-
-	void DisableInteractor();
-
+	bool IsShowingNothing() const;
+	
 	void TryRevealWidget();
 	
 	void TryHideWidget();

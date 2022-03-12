@@ -3,7 +3,7 @@
 
 #include "InteractionPoint.h"
 #include "UnrealUtilities.h"
-
+#pragma optimize("", off)
 // Sets default values
 AInteractionPoint::AInteractionPoint()
 {
@@ -36,9 +36,9 @@ void AInteractionPoint::BeginPlay()
 
 void AInteractionPoint::TryRevealWidget()
 {
-	if (m_CurrentWidgetState != CurrentWidgetState::Hidden)
+	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive)
 		return;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Revealing Widget!"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Revealing Widget!"));
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	Execute_InteractionWidgetReveal(this);
 }
@@ -48,7 +48,7 @@ void AInteractionPoint::TryHideWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Hiding Widget!"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Hiding Widget!"));
 	Execute_InteractionWidgetHide(this);
 }
 
@@ -57,7 +57,7 @@ void AInteractionPoint::TryFocusWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Interactable;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Focusing Widget!"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focusing Widget!"));
 	Execute_InteractionWidgetFocus(this);
 }
 
@@ -66,7 +66,7 @@ void AInteractionPoint::TryUnfocusWidget()
 	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Unfocusing Widget!"));
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Unfocusing Widget!"));
 	Execute_InteractionWidgetUnfocus(this);
 }
 
@@ -88,6 +88,8 @@ bool AInteractionPoint::GetIsEnabled() const
 void AInteractionPoint::SetIsEnabled(bool enabled)
 {
 	m_bIsCurrentlyActive = enabled;
+	if (!m_bIsCurrentlyActive && m_CurrentWidgetState != CurrentWidgetState::Hidden)
+		TryHideWidget();
 }
 
 void AInteractionPoint::Tick(float DeltaSeconds)
@@ -95,21 +97,29 @@ void AInteractionPoint::Tick(float DeltaSeconds)
 	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
 }
 
-void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInterface)
+void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled)
 {
 	m_pInteractableInterface = pInteractableInterface;
+	SetIsEnabled(shouldBeEnabled);
+}
+
+bool AInteractionPoint::IsShowingNothing() const
+{
+	return m_CurrentWidgetState == CurrentWidgetState::Hidden;
 }
 
 void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 {
-	m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
 	if (m_pInteractableInterface->IsFastInteraction())
 	{
 		Execute_InteractionWidgetInteractFast(this);
+		m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
 		return;
 	}
 	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
+	m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
+
 }
 
 bool AInteractionPoint::HasLinkedInteractable() const

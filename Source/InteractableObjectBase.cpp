@@ -25,7 +25,8 @@ void AInteractableObjectBase::BeginPlay()
 			continue;
 
 		m_pInteractionPoints.Add(pInteractionPoint);
-		pInteractionPoint->RegisterParent(this);
+		bool shouldEnable = m_EnabledInteractionPoints.Contains(pInteractionPoint->GetInteractorId());
+		pInteractionPoint->RegisterParent(this, shouldEnable);
 	}
 }
 
@@ -43,7 +44,7 @@ void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* p
 void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
 	m_pCurrentUser = pInteractionUser;
-
+	Execute_OnInteractWithInteractorId(this, interactorId);
 	
 }
 
@@ -55,6 +56,7 @@ bool AInteractableObjectBase::IsFastInteraction() const
 
 void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 {
+	m_EnabledInteractionPoints.Add(id);
 	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
 	{
 		if (m_pInteractionPoints[i]->GetInteractorId() != id)
@@ -84,12 +86,13 @@ void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 
 void AInteractableObjectBase::OnAnimationFinished_Implementation()
 {
-	
+	OnInteractionFinished(m_pCurrentUser);
 }
 
 
 void AInteractableObjectBase::DisableInteractors_Implementation()
 {
+	m_EnabledInteractionPoints.Empty();
 	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
 	{
 		m_pInteractionPoints[i]->SetIsEnabled(false);		

@@ -59,6 +59,8 @@ private:
 	void ClearFocusedInteractable();
 	
 	void FocusedInteractionUpdate();
+
+	void RevealInteractionUpdate();
 	
 	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable);
 
