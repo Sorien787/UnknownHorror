@@ -12,6 +12,8 @@
 #include "InteractionUserComponent.generated.h"
 
 
+class AInteractableObject;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UInteractionUserComponent : public UActorComponent
 {
@@ -42,6 +44,12 @@ public:
 	void AddInteractionEnterBox(UBoxComponent* pBox);
 
 	void AddInteractionExitBox(UBoxComponent* pBox);
+
+	bool IsHandFull() const;
+
+	bool AddObjectToHand(AInteractableObject* pInteractableObject);
+
+	AInteractableObject* RemoveCurrentObjectInHand();
 private:
 
 	UFUNCTION()
@@ -62,7 +70,7 @@ private:
 
 	void RevealInteractionUpdate();
 	
-	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable);
+	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable)
 
 public:
 	UFUNCTION()

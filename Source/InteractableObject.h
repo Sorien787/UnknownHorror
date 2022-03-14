@@ -21,7 +21,11 @@ private:
 		PutDown
 	};
 
+	virtual void TickActor(float DeltaTime, ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+
 	InteractableObjectState m_CurrentState = InteractableObjectState::PutDown;
+
+	bool IsDropActionValid() const;
 
 public:	
 	// Sets default values for this actor's properties
@@ -31,7 +35,7 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const override;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const override;
 
 protected:
 	// Called when the game starts or when spawned

@@ -30,7 +30,7 @@ void AInteractableObjectBase::BeginPlay()
 	}
 }
 
-bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const
+bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const
 {
 	return m_pCurrentUser == nullptr;
 }

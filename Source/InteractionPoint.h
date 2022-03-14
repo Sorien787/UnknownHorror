@@ -10,6 +10,8 @@
 #include "InteractionPointInterface.h"
 #include "InteractionPoint.generated.h"
 
+class UInteractionUserComponent;
+
 enum class CurrentWidgetState
 {
 	Hidden,
@@ -41,7 +43,7 @@ public:
 
 	bool IsShowingNothing() const;
 	
-	void TryRevealWidget();
+	void TryRevealWidget(UInteractionUserComponent* pUser);
 	
 	void TryHideWidget();
 	
@@ -62,6 +64,8 @@ public:
 	bool GetIsEnabled() const;
 
 	void SetIsEnabled(bool enabled);
+
+	bool CanInteract(const UInteractionUserComponent* pUser) const;
 
 	bool m_bIsCurrentlyActive{true};
 

@@ -34,9 +34,9 @@ void AInteractionPoint::BeginPlay()
 	
 }
 
-void AInteractionPoint::TryRevealWidget()
+void AInteractionPoint::TryRevealWidget(UInteractionUserComponent* pUser)
 {
-	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive)
+	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive || CanInteract(pUser))
 		return;
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Revealing Widget!"));
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
@@ -90,6 +90,11 @@ void AInteractionPoint::SetIsEnabled(bool enabled)
 	m_bIsCurrentlyActive = enabled;
 	if (!m_bIsCurrentlyActive && m_CurrentWidgetState != CurrentWidgetState::Hidden)
 		TryHideWidget();
+}
+
+bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) const
+{
+	return m_pInteractableInterface->IsInteractionAvailable(pUser);
 }
 
 void AInteractionPoint::Tick(float DeltaSeconds)

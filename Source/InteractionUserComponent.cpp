@@ -32,7 +32,7 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 	if (!pInteractableObject)
 		return nullptr;
 
-	if(!pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled())
+	if(!pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->CanInteract(this))
 		return nullptr;
 
 	return pInteractableObject;
@@ -62,7 +62,7 @@ void UInteractionUserComponent::RevealInteractionUpdate()
 {
 	for (const auto& element : m_InteractionCandidates)
 	{
-		element->TryRevealWidget();
+		element->TryRevealWidget(this);
 	}
 }
 
@@ -134,7 +134,7 @@ void UInteractionUserComponent::EnableInteractions()
 	m_bInteractionsEnabled = true;
 	for (auto& it : m_InteractionCandidates)
     {
-    	it->TryRevealWidget();
+    	it->TryRevealWidget(this);
     }
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 }
@@ -161,10 +161,10 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 		return;
 	m_InteractionCandidates.Add(pInteractable);
 
-	if (!m_bInteractionsEnabled || !pInteractable->GetIsEnabled())
+	if (!m_bInteractionsEnabled)
 		return;
 
-	pInteractable->TryRevealWidget();
+	pInteractable->TryRevealWidget(this);
 }
 
 

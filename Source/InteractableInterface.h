@@ -27,7 +27,7 @@ class DEEPSEAHORROR_API IInteractableInterface
 public:
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) = 0;
 
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, OUT int type) const = 0;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const = 0;
 
 	virtual bool IsCombinedInteractionAvailable(const UInteractionUserComponent* pInteractionUser, InteractableObjectType combinedType) const { return false; }
 
