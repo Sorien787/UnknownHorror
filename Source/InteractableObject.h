@@ -21,11 +21,12 @@ private:
 		PutDown
 	};
 
-	virtual void TickActor(float DeltaTime, ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
-
 	InteractableObjectState m_CurrentState = InteractableObjectState::PutDown;
 
-	bool IsDropActionValid() const;
+	bool UpdateDropActionAvailability() const;
+
+	FTransform m_RelevantCachedTransform;
+	
 
 public:	
 	// Sets default values for this actor's properties

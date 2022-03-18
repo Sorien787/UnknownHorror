@@ -39,24 +39,25 @@ void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInter
 // stage 1: start anim 
 void AInteractableObject::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
 {
-	// switch(m_CurrentState)
-	// {
-	// 	// move into putDown
-	// case(InteractableObjectState::PickedUp):
-	// 	m_CurrentState = InteractableObjectState::PutDown;
-	// 	pInteractionUser->AttachObjectToHand();
-	// 	break;
-	// 	// move into pickedUp
-	// case(InteractableObjectState::PutDown):
-	// 	pInteractionUser->DetachInteractableObject();
-	// 	m_CurrentState = InteractableObjectState::PickedUp;
-	// 	break;
-	// }
+	
+	switch(m_CurrentState)
+	{
+		// move into putDown
+	case(InteractableObjectState::PutDown):
+		m_CurrentState = InteractableObjectState::PickedUp;
+		pInteractionUser->AddObjectToHand(this);
+		break;
+		// move into pickedUp
+	case(InteractableObjectState::PickedUp):
+		pInteractionUser->RemoveCurrentObjectInHand();
+		m_CurrentState = InteractableObjectState::PutDown;
+		break;
+	}
 	// when the animation finishes, we want to detach/ attach to the actor that picked us up, i guess.
 }
 
 
-bool AInteractableObject::IsDropActionValid() const
+bool AInteractableObject::UpdateDropActionAvailability() const
 {
 	
 }
@@ -64,7 +65,14 @@ bool AInteractableObject::IsDropActionValid() const
 
 bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const
 {
-	return !pInteractionUser->IsHandFull() || IsDropActionValid();
+	if (!pInteractionUser->IsHandFull() && m_CurrentState != InteractableObjectState::PickedUp)
+		return true;
+
+	if (pInteractionUser->IsHandFull() && pInteractionUser->GetCurrentInObjectInHand() != this && TryUpdateDroppableInteracton())
+	{
+		return true;
+	}
+	return false;
 }
 
 

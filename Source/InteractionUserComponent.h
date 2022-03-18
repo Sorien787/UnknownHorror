@@ -49,6 +49,8 @@ public:
 
 	bool AddObjectToHand(AInteractableObject* pInteractableObject);
 
+	AInteractableObject* GetCurrentInObjectInHand() const;
+
 	AInteractableObject* RemoveCurrentObjectInHand();
 private:
 
@@ -59,6 +61,8 @@ private:
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
 	bool m_bInteractionsEnabled{ true };
+
+	AInteractableObject* m_pObjectInHand;
 	
 	TSet<AInteractionPoint*> m_InteractionCandidates;
 	AInteractionPoint* m_pCurrentFocusedInteractionPoint = nullptr;
@@ -93,4 +97,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_pExitBox;
+
+	UPROPERTY(EditAnywhere)
+		FVector m_DefaultHandOffset;
 };

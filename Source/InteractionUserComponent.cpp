@@ -2,6 +2,8 @@
 #pragma optimize("", off)
 
 #include "InteractionUserComponent.h"
+
+#include "InteractableObject.h"
 #include "UnrealUtilities.h"
 
 // Sets default values for this component's properties
@@ -125,6 +127,25 @@ void UInteractionUserComponent::DisableInteractions()
 		(*it)->TryHideWidget();
 	}
 	PrimaryComponentTick.SetTickFunctionEnable(false);
+}
+
+bool UInteractionUserComponent::IsHandFull() const
+{
+	return m_pObjectInHand != nullptr;
+}
+
+bool UInteractionUserComponent::AddObjectToHand(AInteractableObject* pInteractableObject)
+{
+	pInteractableObject->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("object_handAttachmentPoint"));
+	m_pObjectInHand = pInteractableObject;
+	return true;
+}
+
+AInteractableObject* UInteractionUserComponent::RemoveCurrentObjectInHand()
+{
+	AInteractableObject* temp = std::move(m_pObjectInHand);
+	m_pObjectInHand = nullptr;
+	return temp;
 }
 
 void UInteractionUserComponent::EnableInteractions()
