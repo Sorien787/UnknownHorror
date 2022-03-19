@@ -25,16 +25,33 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 		return nullptr;
 	
 	FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
+
+	AInteractionPoint* pInteractableObject = nullptr;
+
+	if (hit.GetActor())
+	{
+		pInteractableObject = Cast<AInteractionPoint>(hit.GetActor());
+	}
 	
-	if (!hit.GetActor())
-		return nullptr;
-
-	AInteractionPoint* pInteractableObject = Cast<AInteractionPoint>(hit.GetActor());
-
 	if (!pInteractableObject)
-		return nullptr;
+	{
+		float closestInteractableDistance = FLT_MAX;
+		for (auto& interactable : m_InteractionCandidates)
+		{
+			if (!interactable->ForceFocus())
+				continue;
+			
+			const float temp_interactableDistance = FVector::DistSquared(interactable->GetActorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
 
-	if(!pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->CanInteract(this))
+			if (temp_interactableDistance > closestInteractableDistance)
+				continue;
+			
+			closestInteractableDistance = temp_interactableDistance;
+			pInteractableObject = interactable;
+		}
+	}
+	
+	if(!pInteractableObject || !pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->CanInteract(this))
 		return nullptr;
 
 	return pInteractableObject;
@@ -134,6 +151,12 @@ bool UInteractionUserComponent::IsHandFull() const
 	return m_pObjectInHand != nullptr;
 }
 
+const float UInteractionUserComponent::GetInteractionRange() const
+{
+	return m_fInteractionRange;
+}
+
+
 bool UInteractionUserComponent::AddObjectToHand(AInteractableObject* pInteractableObject)
 {
 	pInteractableObject->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("object_handAttachmentPoint"));
@@ -141,9 +164,16 @@ bool UInteractionUserComponent::AddObjectToHand(AInteractableObject* pInteractab
 	return true;
 }
 
+AInteractableObject* UInteractionUserComponent::GetCurrentInObjectInHand() const
+{
+	return m_pObjectInHand;
+}
+
 AInteractableObject* UInteractionUserComponent::RemoveCurrentObjectInHand()
 {
+	
 	AInteractableObject* temp = std::move(m_pObjectInHand);
+	temp->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	m_pObjectInHand = nullptr;
 	return temp;
 }

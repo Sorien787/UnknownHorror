@@ -45,6 +45,8 @@ public:
 
 	void OnInteractorIdEnabledSet_Implementation(int id) override;
 
+	AInteractionPoint* FindInteractionPointById(int id);
+
 	// void OnInteractorIdsEnabledSet_Implementation(TArray<int> ids) override;
 	
 	UInteractionUserComponent* m_pCurrentUser {nullptr};

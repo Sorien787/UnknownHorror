@@ -23,7 +23,11 @@ private:
 
 	InteractableObjectState m_CurrentState = InteractableObjectState::PutDown;
 
-	bool UpdateDropActionAvailability() const;
+	bool IsDropActionValid() const;
+
+
+
+	bool m_bIsDropActionValid{false};
 
 	FTransform m_RelevantCachedTransform;
 	
@@ -31,12 +35,14 @@ private:
 public:	
 	// Sets default values for this actor's properties
 	AInteractableObject();
-
+	
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const override;
+
+	AInteractionPoint* GetDropInteractionPoint();
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,5 +53,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "State Switch Event")
-		void OnStateChanged();
+		void OnPickUp();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnDrop();
+
+	UPROPERTY(EditAnywhere)
+		int m_nDropInteractionPointId;
 };

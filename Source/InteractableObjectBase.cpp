@@ -67,22 +67,17 @@ void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 	}
 }
 
-// void AInteractableObjectBase::OnInteractorIdsEnabledSet_Implementation(TArray<int> ids)
-// {
-// 	for (int j = 0; j < ids.Num(); j++)
-// 	{
-// 		const int id = ids[j];
-// 		for (int i = 0; i < m_pInteractionPoints.Num(); i++)
-// 		{
-// 			if (m_pInteractionPoints[i]->GetInteractorId() != id)
-// 				continue;
-// 		
-// 			m_pInteractionPoints[i]->SetIsEnabled(true);
-// 			return;
-// 		}
-// 	}
-//
-// }
+AInteractionPoint* AInteractableObjectBase::FindInteractionPointById(int id)
+{
+	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
+	{
+		if (m_pInteractionPoints[i]->GetInteractorId() != id)
+			continue;
+		return m_pInteractionPoints[i];
+	}
+
+	return nullptr;
+}
 
 void AInteractableObjectBase::OnAnimationFinished_Implementation()
 {

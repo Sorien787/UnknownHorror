@@ -39,6 +39,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	bool ForceFocus() const;
+	
+	void SetForceFocus(bool set);
+	
 	void RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled);
 
 	bool IsShowingNothing() const;
@@ -69,6 +73,7 @@ public:
 
 	bool m_bIsCurrentlyActive{true};
 
+	bool m_bIsForcedFocused{false};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	UWidgetComponent* m_pInteractWidget;

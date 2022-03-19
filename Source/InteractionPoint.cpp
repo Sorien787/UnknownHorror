@@ -99,7 +99,11 @@ bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) cons
 
 void AInteractionPoint::Tick(float DeltaSeconds)
 {
-	m_pInteractWidget->SetWorldRotation(UnrealUtilities::GetRotationMatrixToPlayer(GetWorld(), GetCurrentLocation()));
+	const FTransform playerCameraTransform = UnrealUtilities::GetPlayerCameraTransform(GetWorld());
+	const FQuat rotatorQuat = FQuat(playerCameraTransform.GetUnitAxis(EAxis::Z), PI);
+	const FQuat iconRotation =  rotatorQuat * playerCameraTransform.GetRotation();
+	
+	m_pInteractWidget->SetWorldRotation(iconRotation);
 }
 
 void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled)
@@ -136,3 +140,16 @@ bool AInteractionPoint::IsFastInteractable() const
 {
 	return m_pInteractableInterface && m_pInteractableInterface->IsFastInteraction();
 }
+
+bool AInteractionPoint::ForceFocus() const
+{
+	return m_bIsForcedFocused;
+
+}
+	
+void AInteractionPoint::SetForceFocus(bool set)
+{
+	m_bIsForcedFocused = set;
+
+}
+	

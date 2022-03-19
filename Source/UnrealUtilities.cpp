@@ -72,3 +72,9 @@ FRotator UnrealUtilities::GetRotationMatrixToPlayer(const UWorld* world, const F
 	return (cameraLocation - objectLocation).Rotation();
 }
 
+FTransform UnrealUtilities::GetPlayerCameraTransform(const UWorld* world)
+{
+	return world->GetFirstPlayerController()->PlayerCameraManager->GetTransform();
+}
+
+

@@ -47,6 +47,8 @@ public:
 
 	bool IsHandFull() const;
 
+	const float GetInteractionRange() const;
+
 	bool AddObjectToHand(AInteractableObject* pInteractableObject);
 
 	AInteractableObject* GetCurrentInObjectInHand() const;
@@ -74,7 +76,7 @@ private:
 
 	void RevealInteractionUpdate();
 	
-	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable)
+	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable);
 
 public:
 	UFUNCTION()

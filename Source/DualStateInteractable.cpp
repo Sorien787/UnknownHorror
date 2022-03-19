@@ -24,7 +24,7 @@ void ADualStateInteractable::OnInteractionStarted(UInteractionUserComponent* pIn
 	// for now, immediately finish the interaction - we'll sort out the proper animation delay later.
 }
 
-bool ADualStateInteractable::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int type) const
+bool ADualStateInteractable::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const
 {
 	// get interaction user type here?
 	
