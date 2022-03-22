@@ -9,16 +9,10 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Create a first person camera component.
+	
 	m_CharacterCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	check(m_CharacterCamera != nullptr);
-
-	// Attach the camera component to our capsule component.
-	m_CharacterCamera->SetupAttachment(CastChecked<USceneComponent, UCapsuleComponent>(GetCapsuleComponent()));
-	// Position the camera slightly above the eyes.
-	m_CharacterCamera->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f + BaseEyeHeight));
-	// Enable the pawn to control camera rotation.
+	m_CharacterCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("head"));
 	m_CharacterCamera->bUsePawnControlRotation = true;
 	
 	m_InteractionComponent = CreateDefaultSubobject<UInteractionUserComponent>(TEXT("Interaction User"));
@@ -62,6 +56,8 @@ void AFirstPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFirstPersonPlayerCharacter::StartJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFirstPersonPlayerCharacter::StopJump);
 
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AFirstPersonPlayerCharacter::ToggleCrouch);
+
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AFirstPersonPlayerCharacter::StartInteractions);
 }
 
@@ -81,6 +77,14 @@ void AFirstPersonPlayerCharacter::MoveRight(float Value)
 void AFirstPersonPlayerCharacter::StartJump()
 {
 	bPressedJump = true;
+}
+
+void AFirstPersonPlayerCharacter::ToggleCrouch()
+{
+	if (!bIsCrouched)
+		Crouch();
+	else
+		UnCrouch();
 }
 
 void AFirstPersonPlayerCharacter::StopJump()

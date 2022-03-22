@@ -41,6 +41,9 @@ public:
 	UFUNCTION()
 		void StartJump();
 
+	UFUNCTION()
+		void ToggleCrouch();
+
 	// Clears jump flag when key is released.
 	UFUNCTION()
 		void StopJump();
@@ -54,12 +57,15 @@ public:
 		UCameraComponent* m_CharacterCamera;
 
 	UPROPERTY(EditAnywhere)
-	UInteractionUserComponent* m_InteractionComponent;
+		USkeletalMeshComponent* m_pCharacterMesh;
 	
 	UPROPERTY(EditAnywhere)
-	UBoxComponent* m_EnterBoxComponent;
+		UInteractionUserComponent* m_InteractionComponent;
 	
 	UPROPERTY(EditAnywhere)
-	UBoxComponent* m_ExitBoxComponent;
+		UBoxComponent* m_EnterBoxComponent;
+	
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* m_ExitBoxComponent;
 };
 
