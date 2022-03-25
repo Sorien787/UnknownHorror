@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "InteractionUserComponent.h"
 #include "FirstPersonPlayerCharacter.generated.h"
@@ -48,6 +49,16 @@ public:
 	UFUNCTION()
 		void StopJump();
 
+	bool CanEnterSprint() const;
+
+	void SprintStateUpdate();
+	
+	UFUNCTION()
+		void SprintStart();
+	
+	UFUNCTION()
+		void SprintEnd();
+
 	// Triggers Interaction stuff
 	UFUNCTION()
 		void StartInteractions();
@@ -58,6 +69,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		USkeletalMeshComponent* m_pCharacterMesh;
+
+	UPROPERTY(EditAnywhere)
+		USpringArmComponent* m_pCameraBoomArm;
 	
 	UPROPERTY(EditAnywhere)
 		UInteractionUserComponent* m_InteractionComponent;
@@ -67,5 +81,15 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_ExitBoxComponent;
+	
+	UPROPERTY(EditAnywhere)
+		float m_DefaultSpeed = 200.0f;
+
+	UPROPERTY(EditAnywhere)
+		float m_SprintSpeed = 600.0f;
+
+	bool m_bWantsToSprint{false};
+
+	bool m_bIsSprinting{false};
 };
 
