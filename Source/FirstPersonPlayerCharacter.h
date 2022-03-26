@@ -81,12 +81,15 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_ExitBoxComponent;
-	
-	UPROPERTY(EditAnywhere)
-		float m_DefaultSpeed = 200.0f;
 
 	UPROPERTY(EditAnywhere)
-		float m_SprintSpeed = 600.0f;
+		float m_DefaultCrouchSpeed = 100.0f;
+	
+	UPROPERTY(EditAnywhere)
+		float m_DefaultSpeed = 150.0f;
+
+	UPROPERTY(EditAnywhere)
+		float m_SprintSpeed = 400.0f;
 
 	bool m_bWantsToSprint{false};
 

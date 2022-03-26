@@ -16,7 +16,7 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 	
 	m_CharacterCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	check(m_CharacterCamera != nullptr);
-	m_CharacterCamera->SetupAttachment(GetMesh(), USpringArmComponent::SocketName);
+	m_CharacterCamera->SetupAttachment(m_pCameraBoomArm, USpringArmComponent::SocketName);
 	m_CharacterCamera->bUsePawnControlRotation = true;
 	
 	m_InteractionComponent = CreateDefaultSubobject<UInteractionUserComponent>(TEXT("Interaction User"));
@@ -36,6 +36,7 @@ void AFirstPersonPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	GetCharacterMovement()->MaxWalkSpeed = m_DefaultSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = m_DefaultCrouchSpeed;
 	m_InteractionComponent->AddInteractionEnterBox(m_EnterBoxComponent);
 	m_InteractionComponent->AddInteractionExitBox(m_ExitBoxComponent);
 }
@@ -73,6 +74,7 @@ void AFirstPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 void AFirstPersonPlayerCharacter::MoveForward(float Value)
 {
 	FVector Direction = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::X);
+	FString dir = Direction.ToString();
 	AddMovementInput(Direction, Value);
 }
 
@@ -148,14 +150,12 @@ bool AFirstPersonPlayerCharacter::CanEnterSprint() const
 	const FVector forwardVector = currentTransform.GetUnitAxis(EAxis::X);
 
 	const float angle = FMath::RadiansToDegrees(acos(FVector::DotProduct(movementVector, forwardVector)));
-	FString val = FString::SanitizeFloat(angle);
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, *val);
+	
 	return angle < 60;
 }
 
 void AFirstPersonPlayerCharacter::StartInteractions()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("A"));
 	m_InteractionComponent->OnInteractButtonPressed();
 }
 
