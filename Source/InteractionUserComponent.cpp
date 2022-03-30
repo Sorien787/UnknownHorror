@@ -38,7 +38,7 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 		float closestInteractableDistance = FLT_MAX;
 		for (auto& interactable : m_InteractionCandidates)
 		{
-			if (!interactable->ForceFocus())
+			if (!interactable->ForceFocus() || !interactable->CanInteract(this))
 				continue;
 			
 			const float temp_interactableDistance = FVector::DistSquared(interactable->GetActorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
@@ -81,7 +81,12 @@ void UInteractionUserComponent::RevealInteractionUpdate()
 {
 	for (const auto& element : m_InteractionCandidates)
 	{
-		element->TryRevealWidget(this);
+		if (!element->CanInteract(this))
+		{
+			element->TryHideWidget();
+			continue;
+		}
+		element->TryRevealWidget();
 	}
 }
 
@@ -185,7 +190,9 @@ void UInteractionUserComponent::EnableInteractions()
 	m_bInteractionsEnabled = true;
 	for (auto& it : m_InteractionCandidates)
     {
-    	it->TryRevealWidget(this);
+		if (!it->CanInteract(this))
+			continue;
+    	it->TryRevealWidget();
     }
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 }
@@ -212,10 +219,10 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 		return;
 	m_InteractionCandidates.Add(pInteractable);
 
-	if (!m_bInteractionsEnabled)
+	if (!m_bInteractionsEnabled || !pInteractable->CanInteract(this))
 		return;
 
-	pInteractable->TryRevealWidget(this);
+	pInteractable->TryRevealWidget();
 }
 
 

@@ -2,7 +2,10 @@
 
 
 #include "InteractionPoint.h"
+
+#include "InteractionUserComponent.h"
 #include "UnrealUtilities.h"
+#include "Kismet/KismetMathLibrary.h"
 #pragma optimize("", off)
 // Sets default values
 AInteractionPoint::AInteractionPoint()
@@ -34,9 +37,9 @@ void AInteractionPoint::BeginPlay()
 	
 }
 
-void AInteractionPoint::TryRevealWidget(UInteractionUserComponent* pUser)
+void AInteractionPoint::TryRevealWidget()
 {
-	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive || CanInteract(pUser))
+	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive)
 		return;
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Revealing Widget!"));
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
@@ -75,6 +78,21 @@ FVector AInteractionPoint::GetCurrentLocation() const
 	return GetActorLocation();
 }
 
+bool AInteractionPoint::IsActorInRangeToInteract(FVector position) const
+{
+	const FTransform& actorTransform = GetActorTransform();
+	const FVector interactionPointForwardVector = actorTransform.GetUnitAxis(EAxis::X);
+	const FVector interactionPointPosition = actorTransform.GetLocation();
+
+	FVector interactionPoint_to_otherActor = position - interactionPointPosition;
+	if (!interactionPoint_to_otherActor.Normalize())
+		return true;
+
+	const float angleBetweenForwardAndActor = FMath::Acos(FVector::DotProduct(interactionPoint_to_otherActor, interactionPointForwardVector));
+
+	return FMath::RadiansToDegrees(angleBetweenForwardAndActor) < m_TriggerAngle;
+}
+
 int AInteractionPoint::GetInteractorId() const
 {
 	return m_interactorId;
@@ -94,6 +112,12 @@ void AInteractionPoint::SetIsEnabled(bool enabled)
 
 bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) const
 {
+	if (!m_bIsCurrentlyActive)
+		return false;
+	
+	if (!IsActorInRangeToInteract(pUser->GetOwner()->GetActorLocation()))
+		return false;
+	
 	return m_pInteractableInterface->IsInteractionAvailable(pUser);
 }
 

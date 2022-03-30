@@ -47,7 +47,7 @@ public:
 
 	bool IsShowingNothing() const;
 	
-	void TryRevealWidget(UInteractionUserComponent* pUser);
+	void TryRevealWidget();
 	
 	void TryHideWidget();
 	
@@ -62,6 +62,8 @@ public:
 	bool IsFastInteractable() const;
 
 	FVector GetCurrentLocation() const;
+
+	bool IsActorInRangeToInteract(FVector position) const;
 
 	int GetInteractorId() const;
 
@@ -80,15 +82,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UBoxComponent* m_TriggerBoxComponent;
-
+	
+	
 	UPROPERTY()
 	USceneComponent* m_RootComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 	USceneComponent* m_WidgetAttachmentPoint;
 	
-	UPROPERTY(EditAnywhere, Category = "Setup")
+	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 	int m_interactorId{0};
+
+	UPROPERTY(EditAnywhere, Category = "Interaction Settings",  meta = (ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "180.0"))
+	float m_TriggerAngle{90};
 	
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 	bool m_bIsQuickInteraction{true};

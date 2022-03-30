@@ -44,7 +44,7 @@ void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* p
 void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
 	m_pCurrentUser = pInteractionUser;
-	Execute_OnInteractWithInteractorId(this, interactorId);
+	Execute_OnInteractWithInteractorId(this, interactorId, pInteractionUser);
 	
 }
 

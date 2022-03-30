@@ -36,7 +36,7 @@ public:
 	virtual bool IsFastInteraction() const = 0;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnInteractWithInteractorId(int interactorId);
+	void OnInteractWithInteractorId(int interactorId, UInteractionUserComponent* pInteractionUser);
 	
 	// UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	// void OnInteractorIdsEnabledSet(TArray<int> ids);
