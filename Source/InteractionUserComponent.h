@@ -14,6 +14,16 @@
 
 class AInteractableObject;
 
+
+UENUM(BlueprintType)
+enum class InteractionUserType : uint8
+{
+	Player UMETA(DisplayName = "Player"),
+	PlayerSprint UMETA(DisplayName = "Sprinting Player"),
+	Schism UMETA(DisplayName = "Schism"),
+	Undefined UMETA(DisplayName = "Undefined")
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UInteractionUserComponent : public UActorComponent
 {
@@ -100,6 +110,9 @@ public:
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_pExitBox;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		InteractionUserType m_UserType;
+	
 	UPROPERTY(EditAnywhere)
 		FVector m_DefaultHandOffset;
 };
