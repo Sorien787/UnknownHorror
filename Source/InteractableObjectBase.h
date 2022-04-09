@@ -22,7 +22,7 @@ public:
 
 	virtual void BeginPlay() override;
 	// no implementation in the base
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const override;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
@@ -38,7 +38,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		bool m_bIsFastInteraction;
-
+	
 	void OnAnimationFinished_Implementation() override;
 
 	void DisableInteractors_Implementation() override;

@@ -40,7 +40,7 @@ public:
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const override;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	AInteractionPoint* GetDropInteractionPoint();
 

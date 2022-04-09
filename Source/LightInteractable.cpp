@@ -57,7 +57,7 @@ void ALightInteractable::OnInteractionStarted(UInteractionUserComponent* pIntera
 	OnInteractionFinished(pInteractable);
 }
 
-bool ALightInteractable::IsInteractionAvailable(const UInteractionUserComponent* pInteractable) const
+bool ALightInteractable::IsInteractionAvailable(const UInteractionUserComponent* pInteractable, int interactorId)
 {
 	return true;
 }

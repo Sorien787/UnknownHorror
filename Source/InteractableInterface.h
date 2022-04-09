@@ -27,14 +27,19 @@ class DEEPSEAHORROR_API IInteractableInterface
 public:
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) = 0;
 
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const = 0;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)  = 0;
 
-	virtual bool IsCombinedInteractionAvailable(const UInteractionUserComponent* pInteractionUser, InteractableObjectType combinedType) const { return false; }
+	virtual bool IsCombinedInteractionAvailable(const UInteractionUserComponent* pInteractionUser, InteractableObjectType combinedType) { return false; }
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
 	
 	virtual bool IsFastInteraction() const = 0;
 
+	UFUNCTION(BlueprintNativeEvent)
+	bool IsInteractionAvailableOverride(const UInteractionUserComponent* pInteractionUser, const int interactorId);
+
+	bool IsInteractionAvailableOverride_Implementation(const UInteractionUserComponent* pInteractionUser, const int interactorId);
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnInteractWithInteractorId(int interactorId, UInteractionUserComponent* pInteractionUser);
 	

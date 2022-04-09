@@ -111,7 +111,7 @@ bool AInteractableObject::IsDropActionValid() const
 }
 
 
-bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const
+bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
 {
 	if (!pInteractionUser->IsHandFull() && m_CurrentState != InteractableObjectState::PickedUp)
 		return true;

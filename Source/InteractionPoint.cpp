@@ -118,7 +118,7 @@ bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) cons
 	if (!IsActorInRangeToInteract(pUser->GetOwner()->GetActorLocation()))
 		return false;
 	
-	return m_pInteractableInterface->IsInteractionAvailable(pUser);
+	return m_pInteractableInterface->IsInteractionAvailable(pUser, m_interactorId);
 }
 
 void AInteractionPoint::Tick(float DeltaSeconds)

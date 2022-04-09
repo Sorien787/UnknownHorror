@@ -21,7 +21,7 @@ public:
 
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractable, int interactorId) override;
 
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable) const override;
+	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractable, int interactorId) override;
 
 protected:
 	// Called when the game starts or when spawned

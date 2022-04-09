@@ -30,9 +30,9 @@ void AInteractableObjectBase::BeginPlay()
 	}
 }
 
-bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser) const
+bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	return m_pCurrentUser == nullptr;
+	return m_pCurrentUser == nullptr && IsInteractionAvailableOverride(pInteractionUser, interactorId);;
 }
 
 void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
@@ -93,6 +93,8 @@ void AInteractableObjectBase::DisableInteractors_Implementation()
 		m_pInteractionPoints[i]->SetIsEnabled(false);		
 	}
 }
+
+
 
 
 
