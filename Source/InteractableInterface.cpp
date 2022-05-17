@@ -5,7 +5,12 @@
 
 // Add default functionality here for any IInteractableInterface functions that are not pure virtual.
 
-bool IInteractableInterface::IsInteractionAvailableOverride_Implementation(const UInteractionUserComponent* pInteractionUser, const int interactorId)
+void IInteractableInterface::IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& result)//const UInteractionUserComponent* pInteractionUser, const int interactorId)
 {
-	return true;
+	return;
+}
+
+void IInteractableInterface::OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& result)
+{
+	
 }

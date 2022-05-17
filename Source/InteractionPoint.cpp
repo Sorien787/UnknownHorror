@@ -57,7 +57,7 @@ void AInteractionPoint::TryHideWidget()
 
 void AInteractionPoint::TryFocusWidget()
 {
-	if (m_CurrentWidgetState == CurrentWidgetState::Interactable)
+	if (m_CurrentWidgetState == CurrentWidgetState::Interactable || !m_bIsCurrentlyActive)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Interactable;
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focusing Widget!"));
@@ -66,7 +66,7 @@ void AInteractionPoint::TryFocusWidget()
 
 void AInteractionPoint::TryUnfocusWidget()
 {
-	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
+	if (m_CurrentWidgetState != CurrentWidgetState::Interactable || !m_bIsCurrentlyActive)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Unfocusing Widget!"));
@@ -106,6 +106,7 @@ bool AInteractionPoint::GetIsEnabled() const
 void AInteractionPoint::SetIsEnabled(bool enabled)
 {
 	m_bIsCurrentlyActive = enabled;
+	SetActorEnableCollision(enabled);
 	if (!m_bIsCurrentlyActive && m_CurrentWidgetState != CurrentWidgetState::Hidden)
 		TryHideWidget();
 }
@@ -114,6 +115,12 @@ bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) cons
 {
 	if (!m_bIsCurrentlyActive)
 		return false;
+
+	if (!m_pInteractableInterface)
+	{
+		__debugbreak();
+		return false;
+	}
 	
 	if (!IsActorInRangeToInteract(pUser->GetOwner()->GetActorLocation()))
 		return false;
@@ -128,6 +135,16 @@ void AInteractionPoint::Tick(float DeltaSeconds)
 	const FQuat iconRotation =  rotatorQuat * playerCameraTransform.GetRotation();
 	
 	m_pInteractWidget->SetWorldRotation(iconRotation);
+}
+
+float AInteractionPoint::GetCameraYawTolerance() const
+{
+	return m_pInteractableInterface->GetCameraYawTolerance();
+}
+
+float AInteractionPoint::GetCameraPitchTolerance() const
+{
+	return m_pInteractableInterface->GetCameraPitchTolerance();
 }
 
 void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled)

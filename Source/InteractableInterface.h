@@ -35,16 +35,19 @@ public:
 	
 	virtual bool IsFastInteraction() const = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
-	bool IsInteractionAvailableOverride(const UInteractionUserComponent* pInteractionUser, const int interactorId);
+	virtual float GetCameraYawTolerance() const = 0;
 
-	bool IsInteractionAvailableOverride_Implementation(const UInteractionUserComponent* pInteractionUser, const int interactorId);
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnInteractWithInteractorId(int interactorId, UInteractionUserComponent* pInteractionUser);
-	
-	// UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	// void OnInteractorIdsEnabledSet(TArray<int> ids);
+	virtual float GetCameraPitchTolerance() const = 0;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void IsInteractionAvailableOverride(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+
+	void IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
+
+	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();

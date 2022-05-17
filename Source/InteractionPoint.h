@@ -39,6 +39,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	float GetCameraYawTolerance() const;
+
+	float GetCameraPitchTolerance() const;
+
 	bool ForceFocus() const;
 	
 	void SetForceFocus(bool set);

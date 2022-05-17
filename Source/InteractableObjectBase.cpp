@@ -32,7 +32,9 @@ void AInteractableObjectBase::BeginPlay()
 
 bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	return m_pCurrentUser == nullptr && IsInteractionAvailableOverride(pInteractionUser, interactorId);;
+	bool isAvailable = true;
+	Execute_IsInteractionAvailableOverride(this, interactorId, pInteractionUser, isAvailable);
+	return m_pCurrentUser == nullptr && isAvailable;
 }
 
 void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
@@ -44,8 +46,8 @@ void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* p
 void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
 {
 	m_pCurrentUser = pInteractionUser;
-	Execute_OnInteractWithInteractorId(this, interactorId, pInteractionUser);
-	
+	bool result;
+	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, result);
 }
 
 bool AInteractableObjectBase::IsFastInteraction() const
@@ -53,6 +55,15 @@ bool AInteractableObjectBase::IsFastInteraction() const
 	return m_bIsFastInteraction;
 }
 
+float AInteractableObjectBase::GetCameraYawTolerance() const
+{
+	return m_DefaultCameraYawTolerance;
+}
+
+float AInteractableObjectBase::GetCameraPitchTolerance() const
+{
+	return m_DefaultCameraPitchTolerance;
+}
 
 void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 {

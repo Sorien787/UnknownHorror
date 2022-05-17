@@ -18,10 +18,12 @@ class AInteractableObject;
 UENUM(BlueprintType)
 enum class InteractionUserType : uint8
 {
+	Undefined UMETA(DisplayName = "Undefined", Hidden),
+	PlayerSneak UMETA(DisplayName = "Player Sneak"),
 	Player UMETA(DisplayName = "Player"),
 	PlayerSprint UMETA(DisplayName = "Sprinting Player"),
-	Schism UMETA(DisplayName = "Schism"),
-	Undefined UMETA(DisplayName = "Undefined")
+	Schism UMETA(DisplayName = "Schism")
+
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -40,6 +42,12 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	bool IsCurrentlyInInteractionAnimation() const;
+
+	float GetAnimCameraYaw() const;
+
+	float GetAnimCameraPitch() const;
 	
 	void OnInteractionFinished();
 
@@ -48,6 +56,8 @@ public:
 	void DisableInteractions();
 
 	void EnableInteractions();
+
+	void SetInteractionUserType(InteractionUserType userType);
 	
 	AInteractionPoint* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
 
@@ -115,4 +125,12 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		FVector m_DefaultHandOffset;
+
+	UPROPERTY(EditAnywhere)
+		float m_DefaultCameraYawTolerance = 20.0f;
+
+	UPROPERTY(EditAnywhere)
+		float m_DefaultCameraPitchTolerance = 20.0f;
+
+	bool m_bIsCurrentlyInInteractionAnimation = false;
 };

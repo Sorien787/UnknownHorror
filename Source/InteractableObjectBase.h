@@ -29,6 +29,10 @@ public:
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
 	virtual bool IsFastInteraction() const override;
+
+	virtual float GetCameraYawTolerance() const override;
+
+	virtual float GetCameraPitchTolerance() const override;
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pWidgetAttachment;
@@ -38,6 +42,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		bool m_bIsFastInteraction;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+		float m_DefaultCameraYawTolerance = 20.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+		float m_DefaultCameraPitchTolerance = 20.0f;
 	
 	void OnAnimationFinished_Implementation() override;
 

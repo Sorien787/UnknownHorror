@@ -3,6 +3,8 @@
 #pragma optimize("", off)
 #include "LightModifierComponent.h"
 
+#include "Components/PointLightComponent.h"
+
 // Sets default values for this component's properties
 ULightModifierComponent::ULightModifierComponent()
 {
@@ -14,12 +16,20 @@ void ULightModifierComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	SetComponentTickEnabled(false);
+
+	TArray<ULightComponent*> Lights;
+	GetOwner()->GetComponents<ULightComponent>(Lights);
+
 	m_IsFlickering = false;
 	if (m_DefaultOn)
 		SwitchOn(true);
 	else
 		SwitchOff(true);
-	// light is polled 
+
+	for (int i = 0; i < Lights.Num(); i++)
+	{
+		AddLightToControlGroup(Lights[i]);		
+	}
 }
 
 void ULightModifierComponent::SwitchOn(bool force /* = false */)

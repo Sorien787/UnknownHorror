@@ -51,13 +51,37 @@ public:
 
 	bool CanEnterSprint() const;
 
-	void SprintStateUpdate();
+	void SprintStateUpdate(float DeltaTime);
+
+	void CrouchStateUpdate(float DeltatTime);
+
+	void LookStateUpdate(float DeltaTime);
+
+	void InteractionStateUpdate(float DeltaTime);
+	
+	UFUNCTION()
+		void AddCharacterYawInput(float yaw);
+	
+	UFUNCTION()
+		void AddCharacterPitchInput(float pitch);
 	
 	UFUNCTION()
 		void SprintStart();
 	
 	UFUNCTION()
 		void SprintEnd();
+
+	UFUNCTION()
+		void LookStart();
+	
+	UFUNCTION()
+		void LookEnd();
+
+	UFUNCTION()
+		void LockCamera(float maxYaw, float maxPitch);
+	
+	UFUNCTION()
+		void UnlockCamera();
 
 	// Triggers Interaction stuff
 	UFUNCTION()
@@ -66,15 +90,12 @@ public:
 	// FPS camera
 	UPROPERTY(VisibleAnywhere)
 		UCameraComponent* m_CharacterCamera;
-
-	UPROPERTY(EditAnywhere)
-		USkeletalMeshComponent* m_pCharacterMesh;
-
+	
 	UPROPERTY(EditAnywhere)
 		USpringArmComponent* m_pCameraBoomArm;
 	
-	UPROPERTY(EditAnywhere)
-		UInteractionUserComponent* m_InteractionComponent;
+	UPROPERTY(VisibleAnywhere)
+		UInteractionUserComponent* m_InteractionUserComponent;
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_EnterBoxComponent;
@@ -91,8 +112,49 @@ public:
 	UPROPERTY(EditAnywhere)
 		float m_SprintSpeed = 400.0f;
 
+	UPROPERTY(EditAnywhere)
+		float m_HeadSnapBackSpeed = 100.0f;
+	
+	UPROPERTY(EditAnywhere)
+		float m_ShoulderStartAngle = 100.0f;
+
+	UPROPERTY(EditAnywhere)
+		float m_ShoulderEndAngle = 100.0f;
+	UPROPERTY(EditAnywhere)
+	
+	float m_ShoulderLowAngle = -10.0f;
+	
+	UPROPERTY(EditAnywhere)
+		float m_MaxHeadYaw = 120.0f;
+	
+	UPROPERTY(EditAnywhere)
+		float m_MaxHeadPitch = 80.0f;
+	
 	bool m_bWantsToSprint{false};
 
 	bool m_bIsSprinting{false};
+
+	bool m_bWantsToCrouch{false};
+
+	bool m_bForcedToCrouch{false};
+
+
+	bool m_bForcedIntoStaticCamera{false};
+
+	bool m_bMouseInputToActorRotation{false};
+
+	float m_currentYawOffset = 0.0f;
+	float m_currentPitchOffset = 0.0f;
+
+	float m_currentMaxYawOffset = 0.0f;
+	float m_currentMaxPitchOffset = 0.0f;
+	
+	bool m_bIsLooking{false};
+	bool m_bWantsToLook{false};
+	
+	bool m_bIsHeadAlignedWithBody{true};
+
+	bool m_bIsCameraLocked{false};
+	FRotator m_cachedLockRotation;
 };
 

@@ -26,9 +26,7 @@ void ADualStateInteractable::OnInteractionStarted(UInteractionUserComponent* pIn
 
 bool ADualStateInteractable::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	// get interaction user type here?
-	
-	return true;
+	return Super::IsInteractionAvailable(pInteractionUser, interactorId);
 }
 
 void ADualStateInteractable::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)

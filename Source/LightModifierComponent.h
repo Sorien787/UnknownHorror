@@ -21,9 +21,13 @@ public:
 	ULightModifierComponent();
 
 	void AddLightToControlGroup(ULightComponent* pLightComponent);
-
+UFUNCTION(BlueprintCallable)
 	void SwitchOn(bool force = false);
+
+UFUNCTION(BlueprintCallable)
 	void SwitchOff(bool force = false);
+	
+UFUNCTION(BlueprintCallable)	
 	void SetLightIntensity(float intensity = 1.0f);
 
 protected:

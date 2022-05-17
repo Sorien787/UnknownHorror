@@ -19,6 +19,11 @@ void UInteractionUserComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UInteractionUserComponent::SetInteractionUserType(InteractionUserType userType)
+{
+	m_UserType = userType;
+}
+
 AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
 {
 	if (!m_bIsPlayerInteractionUser)
@@ -118,6 +123,7 @@ void UInteractionUserComponent::SetNewFocusedInteractable(AInteractionPoint* pNe
 
 void UInteractionUserComponent::OnInteractionFinished()
 {
+	m_bIsCurrentlyInInteractionAnimation = false;
 	EnableInteractions();
 }
 
@@ -129,14 +135,37 @@ void UInteractionUserComponent::OnInteractButtonPressed()
 	OnInteractWithFocusedInteractable();
 }
 
+bool UInteractionUserComponent::IsCurrentlyInInteractionAnimation() const
+{
+	return m_bIsCurrentlyInInteractionAnimation;
+}
+
+float UInteractionUserComponent::GetAnimCameraYaw() const
+{
+	if (!m_pCurrentUsingInteractionPoint)
+		return m_DefaultCameraYawTolerance;
+	return m_pCurrentUsingInteractionPoint->GetCameraYawTolerance();
+}
+
+float UInteractionUserComponent::GetAnimCameraPitch() const
+{
+	if (!m_pCurrentUsingInteractionPoint)
+		return m_DefaultCameraPitchTolerance;
+	return m_pCurrentUsingInteractionPoint->GetCameraPitchTolerance();
+}
 
 void UInteractionUserComponent::OnInteractWithFocusedInteractable()
 {
+	
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Interact with focused interactable"));
 	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
 	m_pCurrentUsingInteractionPoint->TryInteract(this);
 	if (!m_pCurrentUsingInteractionPoint->IsFastInteractable())
+	{
+		m_bIsCurrentlyInInteractionAnimation = true;
 		DisableInteractions();
+	}
+	m_pCurrentFocusedInteractionPoint = nullptr;
 }
 
 void UInteractionUserComponent::DisableInteractions()
