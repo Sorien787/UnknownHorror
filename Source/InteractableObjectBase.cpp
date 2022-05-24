@@ -39,6 +39,8 @@ bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserCompo
 
 void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
 {
+	if (!m_pCurrentUser)
+		return;
 	m_pCurrentUser->OnInteractionFinished();
 	m_pCurrentUser = nullptr;
 }

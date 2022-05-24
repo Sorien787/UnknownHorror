@@ -146,7 +146,7 @@ void AFirstPersonPlayerCharacter::MoveRight(float Value)
 	if (m_bIsCameraLocked)
 		return;
 	
-	FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
+	FVector Direction = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::Y);
 	AddMovementInput(Direction, Value);
 }
 
@@ -394,7 +394,7 @@ void AFirstPersonPlayerCharacter::UnlockCamera()
 	const FRotator currentPawnRotation = GetActorRotation();
 
 	// set the new control rotation to be where we were looking
-	const FRotator newControlRotation = FRotator(currentCameraRotation.Pitch, currentPawnRotation.Yaw, 0);
+	const FRotator newControlRotation = FRotator(currentCameraRotation.Pitch, currentCameraRotation.Yaw, 0);
 	GetController()->SetControlRotation(newControlRotation);
 
 	// also make sure the pitch offset is valid
