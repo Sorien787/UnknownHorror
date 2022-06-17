@@ -7,6 +7,7 @@
 #include "InteractableInterface.h"
 #include "InteractionPoint.h"
 #include "Components/BoxComponent.h"
+#include "InteractionTriggerInterface.h"
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
 
@@ -55,13 +56,13 @@ public:
 
 	void OnInteractorIdEnabledSet_Implementation(int id) override;
 
-	AInteractionPoint* FindInteractionPointById(int id);
+	IInteractionTriggerInterface* FindInteractionPointById(int id);
 
 	// void OnInteractorIdsEnabledSet_Implementation(TArray<int> ids) override;
 	
 	UInteractionUserComponent* m_pCurrentUser {nullptr};
 
-	TArray<AInteractionPoint*> m_pInteractionPoints;
+	TArray<IInteractionTriggerInterface*> m_pInteractionPoints;
 
 	TSet<int> m_EnabledInteractionPoints;
 };

@@ -42,7 +42,7 @@ public:
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId) override;
 
-	AInteractionPoint* GetDropInteractionPoint();
+	IInteractionTriggerInterface* GetDropInteractionPoint();
 
 protected:
 	// Called when the game starts or when spawned

@@ -23,7 +23,7 @@ void AInteractableObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AInteractionPoint* pInteractionPoint = GetDropInteractionPoint();
+	IInteractionTriggerInterface* pInteractionPoint = GetDropInteractionPoint();
 	
 	if (!pInteractionPoint)
 		return;
@@ -83,24 +83,6 @@ void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInter
 // stage 1: start anim 
 void AInteractableObject::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
 {
-	switch(m_CurrentState)
-	{
-		// move into putDown
-	case(InteractableObjectState::PutDown):
-		m_CurrentState = InteractableObjectState::PickedUp;
-		SetActorTickEnabled(true);
-		GetDropInteractionPoint()->SetForceFocus(true);
-		pInteractionUser->AddObjectToHand(this);
-		break;
-		// move into pickedUp
-	case(InteractableObjectState::PickedUp):
-		pInteractionUser->RemoveCurrentObjectInHand();
-		m_CurrentState = InteractableObjectState::PutDown;
-		SetActorEnableCollision(true);
-		break;
-	}
-	// when the animation finishes, we want to detach/ attach to the actor that picked us up, i guess.
-
 	Super::OnInteractionFinished(pInteractionUser);
 }
 
@@ -113,17 +95,10 @@ bool AInteractableObject::IsDropActionValid() const
 
 bool AInteractableObject::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
 {
-	if (!pInteractionUser->IsHandFull() && m_CurrentState != InteractableObjectState::PickedUp)
-		return true;
-
-	if (pInteractionUser->IsHandFull() && pInteractionUser->GetCurrentInObjectInHand() == this && IsDropActionValid())
-	{
-		return true;
-	}
 	return false;
 }
 
-AInteractionPoint* AInteractableObject::GetDropInteractionPoint()
+IInteractionTriggerInterface* AInteractableObject::GetDropInteractionPoint()
 {
 	return FindInteractionPointById(m_nDropInteractionPointId);
 }

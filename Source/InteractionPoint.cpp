@@ -73,59 +73,19 @@ void AInteractionPoint::TryUnfocusWidget()
 	Execute_InteractionWidgetUnfocus(this);
 }
 
-FVector AInteractionPoint::GetCurrentLocation() const
+bool AInteractionPoint::GetActorTriggerConditionMet(FTransform actorTransform, FVector actorVelocity) const
 {
-	return GetActorLocation();
-}
+	const FTransform& interactionPointActorTransform = GetActorTransform();
+	const FVector interactionPointForwardVector = interactionPointActorTransform.GetUnitAxis(EAxis::X);
+	const FVector interactionPointPosition = interactionPointActorTransform.GetLocation();
 
-bool AInteractionPoint::IsActorInRangeToInteract(FVector position) const
-{
-	const FTransform& actorTransform = GetActorTransform();
-	const FVector interactionPointForwardVector = actorTransform.GetUnitAxis(EAxis::X);
-	const FVector interactionPointPosition = actorTransform.GetLocation();
-
-	FVector interactionPoint_to_otherActor = position - interactionPointPosition;
+	FVector interactionPoint_to_otherActor = actorTransform.GetLocation() - interactionPointPosition;
 	if (!interactionPoint_to_otherActor.Normalize())
 		return true;
 
 	const float angleBetweenForwardAndActor = FMath::Acos(FVector::DotProduct(interactionPoint_to_otherActor, interactionPointForwardVector));
 
 	return FMath::RadiansToDegrees(angleBetweenForwardAndActor) < m_TriggerAngle;
-}
-
-int AInteractionPoint::GetInteractorId() const
-{
-	return m_interactorId;
-}
-
-bool AInteractionPoint::GetIsEnabled() const
-{
-	return m_bIsCurrentlyActive;
-}
-
-void AInteractionPoint::SetIsEnabled(bool enabled)
-{
-	m_bIsCurrentlyActive = enabled;
-	SetActorEnableCollision(enabled);
-	if (!m_bIsCurrentlyActive && m_CurrentWidgetState != CurrentWidgetState::Hidden)
-		TryHideWidget();
-}
-
-bool AInteractionPoint::CanInteract(const UInteractionUserComponent* pUser) const
-{
-	if (!m_bIsCurrentlyActive)
-		return false;
-
-	if (!m_pInteractableInterface)
-	{
-		__debugbreak();
-		return false;
-	}
-	
-	if (!IsActorInRangeToInteract(pUser->GetOwner()->GetActorLocation()))
-		return false;
-	
-	return m_pInteractableInterface->IsInteractionAvailable(pUser, m_interactorId);
 }
 
 void AInteractionPoint::Tick(float DeltaSeconds)
@@ -135,27 +95,6 @@ void AInteractionPoint::Tick(float DeltaSeconds)
 	const FQuat iconRotation =  rotatorQuat * playerCameraTransform.GetRotation();
 	
 	m_pInteractWidget->SetWorldRotation(iconRotation);
-}
-
-float AInteractionPoint::GetCameraYawTolerance() const
-{
-	return m_pInteractableInterface->GetCameraYawTolerance();
-}
-
-float AInteractionPoint::GetCameraPitchTolerance() const
-{
-	return m_pInteractableInterface->GetCameraPitchTolerance();
-}
-
-void AInteractionPoint::RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled)
-{
-	m_pInteractableInterface = pInteractableInterface;
-	SetIsEnabled(shouldBeEnabled);
-}
-
-bool AInteractionPoint::IsShowingNothing() const
-{
-	return m_CurrentWidgetState == CurrentWidgetState::Hidden;
 }
 
 void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
@@ -169,28 +108,5 @@ void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 	m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
-
-}
-
-bool AInteractionPoint::HasLinkedInteractable() const
-{
-	return m_pInteractableInterface != nullptr;
-}
-
-bool AInteractionPoint::IsFastInteractable() const
-{
-	return m_pInteractableInterface && m_pInteractableInterface->IsFastInteraction();
-}
-
-bool AInteractionPoint::ForceFocus() const
-{
-	return m_bIsForcedFocused;
-
-}
-	
-void AInteractionPoint::SetForceFocus(bool set)
-{
-	m_bIsForcedFocused = set;
-
 }
 	

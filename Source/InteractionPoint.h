@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "InteractableInterface.h"
 #include "InteractionPointInterface.h"
+#include "InteractionTriggerInterface.h"
 #include "InteractionPoint.generated.h"
 
 class UInteractionUserComponent;
@@ -20,15 +21,12 @@ enum class CurrentWidgetState
 };
 	
 UCLASS()
-class DEEPSEAHORROR_API AInteractionPoint : public AActor, public IInteractionPointInterface
+class DEEPSEAHORROR_API AInteractionPoint : public AActor, public IInteractionPointInterface, public IInteractionTriggerInterface
 {
 private:
 	GENERATED_BODY()
 
 	CurrentWidgetState m_CurrentWidgetState{CurrentWidgetState::Hidden};
-	
-	IInteractableInterface* m_pInteractableInterface;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -38,46 +36,28 @@ public:
 	AInteractionPoint();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	float GetCameraYawTolerance() const;
-
-	float GetCameraPitchTolerance() const;
-
-	bool ForceFocus() const;
 	
-	void SetForceFocus(bool set);
+	virtual bool GetIsFocusable() const override {return true;}
+
+	virtual bool GetIsForcedFocus() const override {return m_bIsForcedFocused;}
+
+	virtual int GetInteractorId() const override {return m_interactorId;}
 	
-	void RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled);
+	virtual FTransform GetInteractorTransform() const override {return GetActorTransform();}
 
-	bool IsShowingNothing() const;
+	virtual bool GetActorTriggerConditionMet(FTransform actorTransform, FVector actorVelocity) const override;
 	
-	void TryRevealWidget();
+	virtual void SetForceFocus(bool set) override { m_bIsForcedFocused = set; }
 	
-	void TryHideWidget();
+	virtual void TryRevealWidget() override;
 	
-	void TryFocusWidget();
+	virtual void TryHideWidget() override;
 	
-	void TryUnfocusWidget();
+	virtual void TryFocusWidget() override;
+	
+	virtual void TryUnfocusWidget() override;
 
-	void TryInteract(UInteractionUserComponent* pUser);
-
-	bool HasLinkedInteractable() const;
-
-	bool IsFastInteractable() const;
-
-	FVector GetCurrentLocation() const;
-
-	bool IsActorInRangeToInteract(FVector position) const;
-
-	int GetInteractorId() const;
-
-	bool GetIsEnabled() const;
-
-	void SetIsEnabled(bool enabled);
-
-	bool CanInteract(const UInteractionUserComponent* pUser) const;
-
-	bool m_bIsCurrentlyActive{true};
+	virtual void TryInteract(UInteractionUserComponent* pUser) override;
 
 	bool m_bIsForcedFocused{false};
 	
@@ -87,19 +67,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UBoxComponent* m_TriggerBoxComponent;
 	
-	
-	UPROPERTY()
-	USceneComponent* m_RootComponent;
-
 	UPROPERTY(EditAnywhere, Category = "Components")
-	USceneComponent* m_WidgetAttachmentPoint;
+	USceneComponent* m_RootComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
 	int m_interactorId{0};
+	
+	UPROPERTY(EditAnywhere, Category = "Components")
+	USceneComponent* m_WidgetAttachmentPoint;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction Settings",  meta = (ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "180.0"))
 	float m_TriggerAngle{90};
-	
-	UPROPERTY(EditAnywhere, Category = "Interaction Settings")
-	bool m_bIsQuickInteraction{true};
 };

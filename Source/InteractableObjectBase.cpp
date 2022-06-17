@@ -80,7 +80,7 @@ void AInteractableObjectBase::OnInteractorIdEnabledSet_Implementation(int id)
 	}
 }
 
-AInteractionPoint* AInteractableObjectBase::FindInteractionPointById(int id)
+IInteractionTriggerInterface* AInteractableObjectBase::FindInteractionPointById(int id)
 {
 	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
 	{

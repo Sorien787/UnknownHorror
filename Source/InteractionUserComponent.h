@@ -5,10 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Components/BoxComponent.h"
-#include "InteractableInterface.h"
-#include "InteractionPoint.h"
+#include "InteractionTriggerInterface.h"
 #include "InteractableObjectBase.h"
-#include "InteractableObjectTypes.h"
 #include "InteractionUserComponent.generated.h"
 
 
@@ -59,21 +57,13 @@ public:
 
 	void SetInteractionUserType(InteractionUserType userType);
 	
-	AInteractionPoint* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
+	IInteractionTriggerInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
 
 	void AddInteractionEnterBox(UBoxComponent* pBox);
 
 	void AddInteractionExitBox(UBoxComponent* pBox);
 
-	bool IsHandFull() const;
-
 	const float GetInteractionRange() const;
-
-	bool AddObjectToHand(AInteractableObject* pInteractableObject);
-
-	AInteractableObject* GetCurrentInObjectInHand() const;
-
-	AInteractableObject* RemoveCurrentObjectInHand();
 private:
 
 	UFUNCTION()
@@ -84,11 +74,9 @@ private:
 	
 	bool m_bInteractionsEnabled{ true };
 
-	AInteractableObject* m_pObjectInHand;
-	
-	TSet<AInteractionPoint*> m_InteractionCandidates;
-	AInteractionPoint* m_pCurrentFocusedInteractionPoint = nullptr;
-	AInteractionPoint* m_pCurrentUsingInteractionPoint = nullptr;
+	TSet<IInteractionTriggerInterface*> m_InteractionCandidates;
+	IInteractionTriggerInterface* m_pCurrentFocusedInteractionPoint = nullptr;
+	IInteractionTriggerInterface* m_pCurrentUsingInteractionPoint = nullptr;
 
 	void ClearFocusedInteractable();
 	
@@ -96,7 +84,7 @@ private:
 
 	void RevealInteractionUpdate();
 	
-	void SetNewFocusedInteractable(AInteractionPoint* pNewInteractable);
+	void SetNewFocusedInteractable(IInteractionTriggerInterface* pNewInteractable);
 
 public:
 	UFUNCTION()

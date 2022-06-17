@@ -24,18 +24,18 @@ void UInteractionUserComponent::SetInteractionUserType(InteractionUserType userT
 	m_UserType = userType;
 }
 
-AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
+IInteractionTriggerInterface* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
 {
 	if (!m_bIsPlayerInteractionUser)
 		return nullptr;
 	
 	FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
 
-	AInteractionPoint* pInteractableObject = nullptr;
+	IInteractionTriggerInterface* pInteractableObject = nullptr;
 
 	if (hit.GetActor())
 	{
-		pInteractableObject = Cast<AInteractionPoint>(hit.GetActor());
+		pInteractableObject = Cast<IInteractionTriggerInterface>(hit.GetActor());
 	}
 	
 	if (!pInteractableObject)
@@ -43,10 +43,10 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 		float closestInteractableDistance = FLT_MAX;
 		for (auto& interactable : m_InteractionCandidates)
 		{
-			if (!interactable->ForceFocus() || !interactable->CanInteract(this))
+			if (!interactable->GetIsForcedFocus() || !interactable->GetCanInteract(this))
 				continue;
 			
-			const float temp_interactableDistance = FVector::DistSquared(interactable->GetActorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
+			const float temp_interactableDistance = FVector::DistSquared(interactable->GetInteractorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
 
 			if (temp_interactableDistance > closestInteractableDistance)
 				continue;
@@ -56,7 +56,7 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 		}
 	}
 	
-	if(!pInteractableObject || !pInteractableObject->HasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->CanInteract(this))
+	if(!pInteractableObject || !pInteractableObject->GetHasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->GetCanInteract(this))
 		return nullptr;
 
 	return pInteractableObject;
@@ -65,7 +65,7 @@ AInteractionPoint* UInteractionUserComponent::ClosestInteractionQuery(bool ignor
 void UInteractionUserComponent::FocusedInteractionUpdate()
 {
 	// only ignore the closest interactable if the current using interactable is not null (since that one will be closest)
-	AInteractionPoint* pClosestInteractable = ClosestInteractionQuery();
+	IInteractionTriggerInterface* pClosestInteractable = ClosestInteractionQuery();
 
 	if (!m_InteractionCandidates.Contains(pClosestInteractable))
 		pClosestInteractable = nullptr;
@@ -86,7 +86,7 @@ void UInteractionUserComponent::RevealInteractionUpdate()
 {
 	for (const auto& element : m_InteractionCandidates)
 	{
-		if (!element->CanInteract(this))
+		if (!element->GetCanInteract(this))
 		{
 			element->TryHideWidget();
 			continue;
@@ -112,7 +112,7 @@ void UInteractionUserComponent::ClearFocusedInteractable()
 	m_pCurrentFocusedInteractionPoint = nullptr;
 }
 
-void UInteractionUserComponent::SetNewFocusedInteractable(AInteractionPoint* pNewInteractable)
+void UInteractionUserComponent::SetNewFocusedInteractable(IInteractionTriggerInterface* pNewInteractable)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("New Focused interaction"));
 	m_pCurrentFocusedInteractionPoint = pNewInteractable;
@@ -160,7 +160,7 @@ void UInteractionUserComponent::OnInteractWithFocusedInteractable()
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Interact with focused interactable"));
 	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
 	m_pCurrentUsingInteractionPoint->TryInteract(this);
-	if (!m_pCurrentUsingInteractionPoint->IsFastInteractable())
+	if (!m_pCurrentUsingInteractionPoint->GetIsFastInteractable())
 	{
 		m_bIsCurrentlyInInteractionAnimation = true;
 		DisableInteractions();
@@ -180,36 +180,9 @@ void UInteractionUserComponent::DisableInteractions()
 	PrimaryComponentTick.SetTickFunctionEnable(false);
 }
 
-bool UInteractionUserComponent::IsHandFull() const
-{
-	return m_pObjectInHand != nullptr;
-}
-
 const float UInteractionUserComponent::GetInteractionRange() const
 {
 	return m_fInteractionRange;
-}
-
-
-bool UInteractionUserComponent::AddObjectToHand(AInteractableObject* pInteractableObject)
-{
-	pInteractableObject->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("object_handAttachmentPoint"));
-	m_pObjectInHand = pInteractableObject;
-	return true;
-}
-
-AInteractableObject* UInteractionUserComponent::GetCurrentInObjectInHand() const
-{
-	return m_pObjectInHand;
-}
-
-AInteractableObject* UInteractionUserComponent::RemoveCurrentObjectInHand()
-{
-	
-	AInteractableObject* temp = std::move(m_pObjectInHand);
-	temp->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	m_pObjectInHand = nullptr;
-	return temp;
 }
 
 void UInteractionUserComponent::EnableInteractions()
@@ -219,7 +192,7 @@ void UInteractionUserComponent::EnableInteractions()
 	m_bInteractionsEnabled = true;
 	for (auto& it : m_InteractionCandidates)
     {
-		if (!it->CanInteract(this))
+		if (!it->GetCanInteract(this))
 			continue;
     	it->TryRevealWidget();
     }
@@ -248,7 +221,7 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 		return;
 	m_InteractionCandidates.Add(pInteractable);
 
-	if (!m_bInteractionsEnabled || !pInteractable->CanInteract(this))
+	if (!m_bInteractionsEnabled || !pInteractable->GetCanInteract(this))
 		return;
 
 	pInteractable->TryRevealWidget();
