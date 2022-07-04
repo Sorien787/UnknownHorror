@@ -112,6 +112,16 @@ void AFirstPersonPlayerCharacter::AddCharacterYawInput(float yaw)
 		AddControllerYawInput(yaw);
 	}
 }
+
+void AFirstPersonPlayerCharacter::BeginCrouch()
+{
+	m_bWantsToCrouch = true;
+}
+
+void AFirstPersonPlayerCharacter::EndCrouch()
+{
+	m_bWantsToCrouch = false;
+}
 	
 
 void AFirstPersonPlayerCharacter::AddCharacterPitchInput(float pitch)
@@ -164,7 +174,6 @@ void AFirstPersonPlayerCharacter::ToggleCrouch()
 		return;
 	
 	m_bWantsToCrouch = !m_bWantsToCrouch;
-
 }
 
 void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)

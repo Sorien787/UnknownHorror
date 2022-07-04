@@ -77,6 +77,12 @@ public:
 	UFUNCTION()
 		void LookEnd();
 
+	UFUNCTION(BlueprintCallable)
+		void BeginCrouch();
+
+	UFUNCTION(BlueprintCallable)
+		void EndCrouch();
+
 	UFUNCTION()
 		void LockCamera(float maxYaw, float maxPitch);
 	
