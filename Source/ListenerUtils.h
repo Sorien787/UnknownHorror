@@ -25,10 +25,11 @@ struct SListenerImpl
 
  typedef std::vector<SListenerImpl> TListeners; 
  TListeners m_Listeners;
+public:
  ListenerUtils() = default;
  ListenerUtils(const ListenerUtils&) = delete;
  ListenerUtils(const ListenerUtils&&) = delete;
-public:
+
  inline bool IsListener(T* pListener) const
  {
   return std::find_if(m_Listeners.begin(), m_Listeners.end(), [pListener](const SListenerImpl &listenerImpl) {return listenerImpl.pListener == pListener; });
@@ -41,7 +42,7 @@ public:
 
  inline void RemoveListener(T* pListener)
  {
-  auto& it = std::find_if(m_Listeners.begin(), m_Listeners.end(), [pListener](const SListenerImpl &listenerImpl){return listenerImpl.pListener == pListener;});
+  auto it = std::find_if(m_Listeners.begin(), m_Listeners.end(), [pListener](const SListenerImpl &listenerImpl){return listenerImpl.pListener == pListener;});
   if (it != m_Listeners.end())
   {
    m_Listeners.erase(it);
@@ -54,7 +55,7 @@ public:
   for (size_t i = 0; i < m_Listeners.size(); i++)
   {
    const SListenerImpl& listenerImpl = m_Listeners[i];
-   (*(listenerImpl).pListener.*pfct)(std::forward<Args>(args...));
+   (*(listenerImpl).pListener.*pfct)(std::forward<Args>(args)...);
   }
  }
 

@@ -4,6 +4,7 @@
 #include "HazeComponent.h"
 
 #include "HazeSubsystem.h"
+#include "AnimGraphRuntime/Public/AnimNodes/AnimNode_RandomPlayer.h"
 
 // Sets default values for this component's properties
 UHazeComponent::UHazeComponent()
@@ -13,6 +14,20 @@ UHazeComponent::UHazeComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
+}
+
+float UHazeComponent::GetHazeFieldAtWorldLocation(FVector worldLocation) const
+{
+	FVector currentLocation = GetOwner()->GetActorLocation();
+	float distSquared = FVector::DistSquared(currentLocation, worldLocation);
+	// we can assume that no haze component will have a haze effect component added on
+	// so, distSquared is never zero.
+	// just in case though, let's guard for it.
+	if (distSquared < FLT_EPSILON)
+	{
+		return FLT_MAX;		
+	}
+	return m_HazeStrength / distSquared;
 }
 
 
