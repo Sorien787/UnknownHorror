@@ -14,3 +14,13 @@ class DEEPSEAHORROR_API HazeListener
 public:
 	virtual void OnRefreshHazeStrength() {}
 };
+
+class DEEPSEAHORROR_API HazeComponentListener
+{
+public:
+	virtual void OnHazeStart() {};
+
+	virtual void OnHazeFinish() {};
+
+	virtual void OnHazeSetValue(float value) {};
+};

@@ -2,9 +2,7 @@
 
 
 #include "HazeComponent.h"
-
 #include "HazeSubsystem.h"
-#include "AnimGraphRuntime/Public/AnimNodes/AnimNode_RandomPlayer.h"
 
 // Sets default values for this component's properties
 UHazeComponent::UHazeComponent()
@@ -36,7 +34,15 @@ void UHazeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	UWorld* world = GetWorld();
+
+	if (!world)
+		return;
+	
 	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+
+	if (!hazeSubsystem)
+		return;
+	
 	hazeSubsystem->RegisterHazeSource(this);
 }
 
@@ -44,7 +50,15 @@ void UHazeComponent::BeginDestroy()
 {
 	Super::BeginDestroy();
 	UWorld* world = GetWorld();
+
+	if (!world)
+		return;
+	
 	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+	
+	if (!hazeSubsystem)
+		return;
+	
 	hazeSubsystem->UnregisterHazeSource(this);
 }
 

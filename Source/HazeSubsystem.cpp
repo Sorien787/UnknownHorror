@@ -2,6 +2,7 @@
 
 
 #include "HazeSubsystem.h"
+#include "HazeComponent.h"
 
 void UHazeSubsystem::AddHazeListener(HazeListener* hazeListener)
 {

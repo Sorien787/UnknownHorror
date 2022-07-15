@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HazeComponent.h"
 #include "HazeUtils.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "HazeSubsystem.generated.h"
@@ -11,6 +10,8 @@
 /**
  * 
  */
+class UHazeComponent;
+
 UCLASS()
 class DEEPSEAHORROR_API UHazeSubsystem : public UWorldSubsystem
 {

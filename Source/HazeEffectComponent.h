@@ -7,7 +7,6 @@
 #include "Components/ActorComponent.h"
 #include "HazeEffectComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public HazeListener
 {
@@ -17,8 +16,17 @@ public:
 	// Sets default values for this component's properties
 	UHazeEffectComponent();
 private:
+	
+	ListenerUtils<HazeComponentListener> m_HazeComponentListeners;
 	float m_CurrentHazeStrength{0.0f};
+	float m_CurrentHazeModifier{0.0f};
+	float m_HazeNoisePollLocation{0.0f};
+	bool m_HazeReachedThreshold{false};
 	FVector m_LastPolledLocation{FVector::ZeroVector};
+
+	void UpdateHazeMultiplierValue(float deltaTime);
+
+	float ConvertHazeValueToMultiplier() const;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -28,13 +36,30 @@ protected:
 	virtual void OnRefreshHazeStrength() override;
 
 public:
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnHazeStrengthChanged(float hazeStrength);
-
 	UPROPERTY()
 		float m_distanceGranularity{0.1f};
+
+	UPROPERTY(EditAnywhere)
+		float m_minimumHazeValue{0.1f};
+
+	UPROPERTY(EditAnywhere)
+		float m_maximumHazeValue{10.0f};
+
+	UPROPERTY(EditAnywhere)
+		float m_noiseFrequencyScale {1.0f};
+
+	UPROPERTY(EditAnywhere)
+		float m_noiseFrequencyScaleMax {1.0f};
+	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+	bool IsHazeActive() const;
+
+	float GetCurrentHazeModifier() const;
+};
+
+class IHazeModifierComponent
+{
+	virtual void OnHazeStrengthChanged(float hazeStrength) = 0;	
 };

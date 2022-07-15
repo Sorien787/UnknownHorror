@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HazeEffectComponent.h"
 #include "Components/ActorComponent.h"
 #include "Components/LightComponent.h"
 #include "LightModifierComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
+class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent, public IHazeModifierComponent
 {
 	GENERATED_BODY()
 
@@ -29,6 +30,8 @@ UFUNCTION(BlueprintCallable)
 	
 UFUNCTION(BlueprintCallable)	
 	void SetLightIntensity(float intensity = 1.0f);
+
+	virtual void OnHazeStrengthChanged(float hazeStrength) override;	
 
 protected:
 	// Called when the game starts
