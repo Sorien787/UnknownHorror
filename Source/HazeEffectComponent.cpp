@@ -14,7 +14,11 @@ UHazeEffectComponent::UHazeEffectComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	m_HazeStrengthToNoiseFrequency.EditorCurveData.AddKey(0.0f, 1.0f);
+	m_HazeStrengthToNoiseFrequency.EditorCurveData.AddKey(1.0f, 1.0f);
+
+	m_HazeStrengthToNoiseAmplitude.EditorCurveData.AddKey(0.1f, 0.0f);
+	m_HazeStrengthToNoiseAmplitude.EditorCurveData.AddKey(1.0f, 1.0f);
 }
 
 
@@ -39,21 +43,22 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 
 	if (!m_HazeReachedThreshold)
 		return;
-	const float perlinVal =  FMath::PerlinNoise1D(m_HazeNoisePollLocation);
-	m_HazeNoisePollLocation += deltaTime * FMath::Lerp(m_noiseFrequencyScale, m_noiseFrequencyScaleMax, newMultiplier);
+	const float perlinVal =  FMath::PerlinNoise1D(m_HazeNoisePollLocation + m_RandomSeed);
+	m_HazeNoisePollLocation += deltaTime * m_HazeStrengthToNoiseFrequency.EditorCurveData.Eval(m_CurrentHazeStrength);
 	m_CurrentHazeModifier = perlinVal * newMultiplier;
 	m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeSetValue, m_CurrentHazeModifier );
 }
 
 float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
 {
-	return FMath::Clamp((m_CurrentHazeStrength - m_minimumHazeValue )/ (m_maximumHazeValue - m_minimumHazeValue), 0.0f, 1.0f);
+	return m_HazeStrengthToNoiseAmplitude.EditorCurveData.Eval(m_CurrentHazeStrength);
 }
 
 // Called when the game starts
 void UHazeEffectComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
 	const UWorld* world = GetWorld();
 	if(!world)
 		return;
@@ -87,7 +92,7 @@ void UHazeEffectComponent::OnRefreshHazeStrength()
 	const UHazeSubsystem* hazeSubsystem = pWorld->GetSubsystem<UHazeSubsystem>();
 	if (!hazeSubsystem)
 		return;
-	m_CurrentHazeStrength = hazeSubsystem->PollHazeStrengthAtLocation(GetOwner()->GetActorLocation());
+	m_CurrentHazeStrength = 1.0f;//hazeSubsystem->PollHazeStrengthAtLocation(GetOwner()->GetActorLocation());
 	m_LastPolledLocation = GetOwner()->GetActorLocation();
 }
 
@@ -111,5 +116,15 @@ bool UHazeEffectComponent::IsHazeActive() const
 float UHazeEffectComponent::GetCurrentHazeModifier() const
 {
 	return m_CurrentHazeModifier;
+}
+
+float UHazeEffectComponent::GetCurrentHazeStrength() const
+{
+	return m_CurrentHazeStrength;	
+}
+
+float UHazeEffectComponent::GetNoiseFrequency() const
+{
+	return m_CurrentHazeStrength;	
 }
 

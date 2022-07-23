@@ -15,13 +15,15 @@ class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public Ha
 public:	
 	// Sets default values for this component's properties
 	UHazeEffectComponent();
+	ListenerUtils<HazeComponentListener> m_HazeComponentListeners;
 private:
 	
-	ListenerUtils<HazeComponentListener> m_HazeComponentListeners;
+
 	float m_CurrentHazeStrength{0.0f};
 	float m_CurrentHazeModifier{0.0f};
 	float m_HazeNoisePollLocation{0.0f};
 	bool m_HazeReachedThreshold{false};
+	float m_RandomSeed{0.0f};
 	FVector m_LastPolledLocation{FVector::ZeroVector};
 
 	void UpdateHazeMultiplierValue(float deltaTime);
@@ -40,23 +42,21 @@ public:
 		float m_distanceGranularity{0.1f};
 
 	UPROPERTY(EditAnywhere)
-		float m_minimumHazeValue{0.1f};
-
-	UPROPERTY(EditAnywhere)
-		float m_maximumHazeValue{10.0f};
-
-	UPROPERTY(EditAnywhere)
-		float m_noiseFrequencyScale {1.0f};
-
-	UPROPERTY(EditAnywhere)
-		float m_noiseFrequencyScaleMax {1.0f};
+	FRuntimeFloatCurve m_HazeStrengthToNoiseAmplitude;
 	
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_HazeStrengthToNoiseFrequency;
+
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	bool IsHazeActive() const;
 
 	float GetCurrentHazeModifier() const;
+
+	float GetNoiseFrequency() const;
+	
+	float GetCurrentHazeStrength() const;
 };
 
 class IHazeModifierComponent
