@@ -23,4 +23,6 @@ public:
 	virtual void OnHazeFinish() {};
 
 	virtual void OnHazeSetValue(float value) {};
+
+	virtual void OnHazeStrengthChanged(float value) {};
 };

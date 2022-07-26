@@ -27,12 +27,8 @@ protected:
 	virtual void OnHazeFinish() override;
 
 	virtual void OnHazeSetValue(float value) override;
-private:
-	bool m_bHazeEffectActive = false;
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
+public:	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnHazeStart(float hazeStrength);
 	

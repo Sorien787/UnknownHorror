@@ -53,17 +53,12 @@ void ULightModifierComponent::SwitchOff(bool force /* = false */)
 
 void ULightModifierComponent::SetLightIntensity(float intensity)
 {
+	m_LightIntensityDelegate.Broadcast(intensity);
 	m_CurrentIntensity = intensity;
 	for (auto pLightComponent : m_pLightComponentsArray)
 	{
 		pLightComponent->SetIntensity(intensity * m_DefaultBrightness);
 	}
-}
-
-void ULightModifierComponent::OnHazeStrengthChanged(float hazeStrength)
-{
-	// ideally, haze multiplies instability
-	// so we have an instability float that is a "dial" for a given light
 }
 
 void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComponent)

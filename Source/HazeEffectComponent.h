@@ -7,6 +7,12 @@
 #include "Components/ActorComponent.h"
 #include "HazeEffectComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeFinish);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeComponentBreak);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeModifierChange, float, HazeModifier);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeStrengthChange, float, HazeStrength);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public HazeListener
 {
@@ -21,6 +27,7 @@ private:
 
 	float m_CurrentHazeStrength{0.0f};
 	float m_CurrentHazeModifier{0.0f};
+	float m_LastHazeModifier{0.0f};
 	float m_HazeNoisePollLocation{0.0f};
 	bool m_HazeReachedThreshold{false};
 	float m_RandomSeed{0.0f};
@@ -46,6 +53,18 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToNoiseFrequency;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHazeStart m_OnHazeStart;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHazeFinish m_OnHazeFinish;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHazeModifierChange m_OnHazeModifierChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHazeStrengthChange m_OnHazeStrengthChanged;
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

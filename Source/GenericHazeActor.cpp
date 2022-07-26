@@ -7,7 +7,7 @@
 AGenericHazeActor::AGenericHazeActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	m_pHazeEffector = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Component"));
 	check(m_pHazeEffector != nullptr);
@@ -41,13 +41,4 @@ void AGenericHazeActor::OnHazeSetValue(float value)
 	OnHazeTick(m_pHazeEffector->GetCurrentHazeModifier());
 }
 
-// Called every frame
-void AGenericHazeActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	if (!m_bHazeEffectActive)
-		return;
-	OnHazeTick(m_pHazeEffector->GetCurrentHazeModifier());
-
-}
 

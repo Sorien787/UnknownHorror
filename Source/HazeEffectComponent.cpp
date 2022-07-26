@@ -35,9 +35,11 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 	if (hazeActiveChanged && m_HazeReachedThreshold)
 	{
 		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStart);
+		m_OnHazeStart.Broadcast();
 	}
 	else if (hazeActiveChanged && !m_HazeReachedThreshold)
 	{
+		m_OnHazeFinish.Broadcast();
 		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeFinish);
 	}
 
@@ -47,6 +49,7 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 	m_HazeNoisePollLocation += deltaTime * m_HazeStrengthToNoiseFrequency.EditorCurveData.Eval(m_CurrentHazeStrength);
 	m_CurrentHazeModifier = perlinVal * newMultiplier;
 	m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeSetValue, m_CurrentHazeModifier );
+	m_OnHazeModifierChanged.Broadcast(m_CurrentHazeModifier);
 }
 
 float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
@@ -94,6 +97,11 @@ void UHazeEffectComponent::OnRefreshHazeStrength()
 		return;
 	m_CurrentHazeStrength = 1.0f;//hazeSubsystem->PollHazeStrengthAtLocation(GetOwner()->GetActorLocation());
 	m_LastPolledLocation = GetOwner()->GetActorLocation();
+	
+	if (m_CurrentHazeStrength == m_LastHazeModifier)
+		return;
+	
+	m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStrengthChanged, m_CurrentHazeStrength );
 }
 
 // Called every frame
