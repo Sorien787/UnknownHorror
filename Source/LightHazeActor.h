@@ -21,8 +21,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void BeginDestroy() override;
-
 	virtual void OnHazeSetValue(float value) override;
 
 	bool m_bHasPopAttempted = false;
@@ -44,15 +42,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	UHazeEffectComponent* m_pHazeEffectComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_LightPercentOnlineByHazeModifier;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_LightFlickerFrequencyByHazeModifier;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_LightMinBrightness;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_LightMaxBrightness;
 };

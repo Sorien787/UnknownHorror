@@ -14,19 +14,6 @@ ALightHazeActor::ALightHazeActor()
 
 	m_pLightModifier = CreateDefaultSubobject<ULightModifierComponent>(TEXT("Light Modifier Component"));
 	check(m_pLightModifier != nullptr);
-	
-
-	m_LightPercentOnlineByHazeModifier.EditorCurveData.AddKey(0.0f, 1.0f);
-	m_LightPercentOnlineByHazeModifier.EditorCurveData.AddKey(1.0f, 0.0f);
-
-	m_LightFlickerFrequencyByHazeModifier.EditorCurveData.AddKey(0.0f, 1.0f);
-	m_LightFlickerFrequencyByHazeModifier.EditorCurveData.AddKey(1.0f, 1.0f);
-	
-	m_LightMinBrightness.EditorCurveData.AddKey(0.0f, 0.5f);
-	m_LightMinBrightness.EditorCurveData.AddKey(1.0f, 0.5f);
-	
-	m_LightMaxBrightness.EditorCurveData.AddKey(0.0f, 0.5f);
-	m_LightMaxBrightness.EditorCurveData.AddKey(1.0f, 0.5f);
 }
 
 void ALightHazeActor::OnHazeStrengthChanged(float value)
@@ -60,11 +47,6 @@ void ALightHazeActor::BeginPlay()
 {
 	Super::BeginPlay();
 	m_pHazeEffectComponent->m_HazeComponentListeners.AddListener(this, "Light Listener");
-
+	OnHazeStrengthChanged(m_pHazeEffectComponent->GetCurrentHazeStrength());
 }
 
-void ALightHazeActor::BeginDestroy()
-{
-	Super::BeginDestroy();
-	m_pHazeEffectComponent->m_HazeComponentListeners.RemoveListener(this);
-}

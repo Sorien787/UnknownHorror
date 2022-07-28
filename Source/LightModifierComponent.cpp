@@ -83,9 +83,13 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	// m_LightFlickerFrequency
 
 	m_IsFlickering = !m_IsFlickering;
-
+	
+	m_LightFlickerDelegate.Broadcast(m_IsFlickering);
+	m_LightIntensityDelegate.Broadcast(m_CurrentIntensity);
+	
 	if (m_IsFlickering)
 	{
+
 		SetLightIntensity(FMath::FRandRange(m_MinFlickerBrightness, m_MaxFlickerBrightness));	
 	}
 	else

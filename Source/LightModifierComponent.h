@@ -9,6 +9,7 @@
 #include "LightModifierComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightIntensityDelegate, float, lightIntensity);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightFlickerDelegate, bool, isFlickering);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
 {
@@ -42,6 +43,9 @@ public:
 	// Called every frame
 	UPROPERTY(BlueprintAssignable)
 	FLightIntensityDelegate m_LightIntensityDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FLightFlickerDelegate m_LightFlickerDelegate;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flicker");
 	float m_MinFlickerBrightness;

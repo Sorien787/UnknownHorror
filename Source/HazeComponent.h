@@ -28,5 +28,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere)
-	float m_HazeStrength;
+	FRuntimeFloatCurve m_DistanceToStrengthCurve;
+	
+	UPROPERTY(EditAnywhere)
+	float m_HazeStrengthMultiplier;
 };

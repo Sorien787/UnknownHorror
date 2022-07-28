@@ -21,11 +21,6 @@ void AGenericHazeActor::BeginPlay()
 	m_pHazeEffector->m_HazeComponentListeners.AddListener(this, "GenericHazeActor");
 }
 
-void AGenericHazeActor::BeginDestroy()
-{
-	m_pHazeEffector->m_HazeComponentListeners.RemoveListener(this);
-}
-
 void AGenericHazeActor::OnHazeStart()
 {
 	OnHazeStart(m_pHazeEffector->GetCurrentHazeModifier());
