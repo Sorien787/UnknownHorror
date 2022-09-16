@@ -45,11 +45,11 @@ void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* p
 	m_pCurrentUser = nullptr;
 }
 
-void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
+void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId)
 {
 	m_pCurrentUser = pInteractionUser;
 	bool result;
-	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, result);
+	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, pointRelativePosition, pointRelativeRotation, result);
 }
 
 bool AInteractableObjectBase::IsFastInteraction() const

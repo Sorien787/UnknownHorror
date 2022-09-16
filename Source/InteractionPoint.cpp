@@ -102,11 +102,11 @@ void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
 	if (m_pInteractableInterface->IsFastInteraction())
 	{
 		Execute_InteractionWidgetInteractFast(this);
-		m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
+		m_pInteractableInterface->OnInteractionStarted(pUser, GetActorLocation(), FQuat(GetActorRotation()), m_interactorId);
 		return;
 	}
 	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	m_pInteractableInterface->OnInteractionStarted(pUser, m_interactorId);
+	m_pInteractableInterface->OnInteractionStarted(pUser, GetActorLocation(), FQuat(GetActorRotation()),  m_interactorId);
 }
 	

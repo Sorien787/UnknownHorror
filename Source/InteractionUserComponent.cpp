@@ -29,37 +29,47 @@ IInteractionTriggerInterface* UInteractionUserComponent::ClosestInteractionQuery
 	if (!m_bIsPlayerInteractionUser)
 		return nullptr;
 	
-	FHitResult hit = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
+	TArray<FHitResult> hits = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
 
-	IInteractionTriggerInterface* pInteractableObject = nullptr;
-
-	if (hit.GetActor())
+	IInteractionTriggerInterface* pClosestObject = nullptr;
+	float closestInteractableDistance = FLT_MAX;
+	for (auto& hit : hits)
 	{
+		IInteractionTriggerInterface* pInteractableObject = nullptr;
+		if (!hit.GetActor())
+			continue;
+		
 		pInteractableObject = Cast<IInteractionTriggerInterface>(hit.GetActor());
-	}
-	
-	if (!pInteractableObject)
-	{
-		float closestInteractableDistance = FLT_MAX;
-		for (auto& interactable : m_InteractionCandidates)
-		{
-			if (!interactable->GetIsForcedFocus() || !interactable->GetCanInteract(this))
-				continue;
-			
-			const float temp_interactableDistance = FVector::DistSquared(interactable->GetInteractorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
+		
+		if (!pInteractableObject)
+			continue;
 
-			if (temp_interactableDistance > closestInteractableDistance)
-				continue;
-			
-			closestInteractableDistance = temp_interactableDistance;
-			pInteractableObject = interactable;
-		}
+		pClosestObject = pInteractableObject;
+		break;
 	}
+
+	if (pClosestObject)
+		return pClosestObject;
 	
-	if(!pInteractableObject || !pInteractableObject->GetHasLinkedInteractable() || !pInteractableObject->GetIsEnabled() || !pInteractableObject->GetCanInteract(this))
+	closestInteractableDistance = FLT_MAX;
+		
+	for (auto& interactable : m_InteractionCandidates)
+	{
+		if (!interactable->GetIsForcedFocus() || !interactable->GetCanInteract(this))
+			continue;
+	
+		const float temp_interactableDistance = FVector::DistSquared(interactable->GetInteractorTransform().GetLocation(), GetOwner()->GetTransform().GetLocation());
+
+		if (temp_interactableDistance > closestInteractableDistance)
+			continue;
+	
+		closestInteractableDistance = temp_interactableDistance;
+		pClosestObject = interactable;
+	}
+	if(!pClosestObject || !pClosestObject->GetHasLinkedInteractable() || !pClosestObject->GetIsEnabled() || !pClosestObject->GetCanInteract(this))
 		return nullptr;
 
-	return pInteractableObject;
+	return pClosestObject;
 }
 
 void UInteractionUserComponent::FocusedInteractionUpdate()

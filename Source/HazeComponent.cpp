@@ -4,26 +4,34 @@
 #include "HazeComponent.h"
 #include "HazeSubsystem.h"
 
-// Sets default values for this component's properties
-UHazeComponent::UHazeComponent()
+void UHazeComponent::RefreshHazeSource()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	UWorld* world = GetWorld();
 
-	// ...
+	if (!world)
+		return;
+	
+	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+
+	if (!hazeSubsystem)
+		return;
+	
+	const FVector currentLocation = GetOwner()->GetActorLocation();
+
+	if (m_HazeID >= 0)
+	{
+		hazeSubsystem->AddHazeSourceAtLocation(m_LastPolledLocation, m_HazeStrengthMultiplier, m_HazeID);
+	}
+	
+	if (FVector::DistSquared(currentLocation, m_LastPolledLocation) < m_distanceGranularity * m_distanceGranularity)
+		return;
+
+	RefreshHazePosition();
 }
 
-float UHazeComponent::GetHazeFieldAtWorldLocation(FVector worldLocation) const
+UHazeComponent::UHazeComponent()
 {
-	const FVector currentLocation = GetOwner()->GetActorLocation();
-	const float distSquared = FVector::DistSquared(currentLocation, worldLocation);
-	// we can assume that no haze component will have a haze effect component added on
-	// so, distSquared is never zero.
-	// just in case though, let's guard for it.
-	const float dist = FMath::Sqrt(distSquared);
-	
-	return m_HazeStrengthMultiplier * m_DistanceToStrengthCurve.EditorCurveData.Eval(dist);
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
@@ -31,42 +39,35 @@ float UHazeComponent::GetHazeFieldAtWorldLocation(FVector worldLocation) const
 void UHazeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	UWorld* world = GetWorld();
-
-	if (!world)
-		return;
 	
-	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
-
-	if (!hazeSubsystem)
-		return;
-	
-	hazeSubsystem->RegisterHazeSource(this);
+	RefreshHazeSource();
 }
 
-void UHazeComponent::BeginDestroy()
-{
-	Super::BeginDestroy();
-	UWorld* world = GetWorld();
-
-	if (!world)
-		return;
-	
-	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
-	
-	if (!hazeSubsystem)
-		return;
-	
-	hazeSubsystem->UnregisterHazeSource(this);
-}
-
-
-
-// Called every frame
 void UHazeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+	
+	RefreshHazeSource();
 }
+
+
+void UHazeComponent::RefreshHazePosition()
+{
+	UWorld* world = GetWorld();
+
+	if (!world)
+		return;
+	
+	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+	
+	if (!hazeSubsystem)
+		return;
+
+	const FVector currentLocation = GetOwner()->GetActorLocation();
+	
+	m_LastPolledLocation = currentLocation;
+
+	m_HazeID = hazeSubsystem->GetHazeIDAtLocation(currentLocation, m_HazeID);
+}
+
 

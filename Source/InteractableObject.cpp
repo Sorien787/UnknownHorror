@@ -58,9 +58,9 @@ void AInteractableObject::Tick(float DeltaTime)
 	// pInteractionPoint->SetActorLocation(worldHit.Location);
 }
 
-void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId)
+void AInteractableObject::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId)
 {
-	Super::OnInteractionStarted(pInteractionUser, interactorId);
+	Super::OnInteractionStarted(pInteractionUser, pointRelativePosition, pointRelativeRotation, interactorId);
 
 	switch(m_CurrentState)
 	{

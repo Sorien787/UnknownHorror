@@ -2,43 +2,59 @@
 
 
 #include "HazeSubsystem.h"
+#include "DrawDebugHelpers.h"
 #include "HazeComponent.h"
 
-void UHazeSubsystem::AddHazeListener(HazeListener* hazeListener)
+
+void UHazeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
-	m_Listeners.AddListener(hazeListener, "New Haze Listener");
-	hazeListener->OnRefreshHazeStrength();
+	Super::OnWorldBeginPlay(InWorld);
+
 }
 
-void UHazeSubsystem::RemoveHazeListener(HazeListener* hazeListener)
+void UHazeSubsystem::RegisterHazeGrid(AHazeGridActor* hazeGrid)
 {
-	m_Listeners.RemoveListener(hazeListener);
-}
-
-void UHazeSubsystem::RegisterHazeSource(UHazeComponent* hazeComponent)
-{
-	m_HazeSources.push_back(hazeComponent);
-}
-
-void UHazeSubsystem::UnregisterHazeSource(UHazeComponent* hazeComponent)
-{
-	const auto it = std::find(m_HazeSources.begin(), m_HazeSources.end(), hazeComponent);
-	if (it == m_HazeSources.end())
+	const auto it = std::find(m_HazeGrids.begin(), m_HazeGrids.end(), hazeGrid);
+	if (it != m_HazeGrids.end())
 		return;
-	m_HazeSources.erase(it);
+	m_HazeGrids.push_back(hazeGrid);
 }
 
-float UHazeSubsystem::PollHazeStrengthAtLocation(FVector worldLocation) const
+void UHazeSubsystem::UnregisterHazeGrid(AHazeGridActor* hazeGrid)
 {
-	float totalHaze = 0.0f;
-	for(const auto& hazeComponent : m_HazeSources)
+	const auto it = std::find(m_HazeGrids.begin(), m_HazeGrids.end(), hazeGrid);
+	if (it == m_HazeGrids.end())
+		return;
+	m_HazeGrids.erase(it);
+}
+
+float UHazeSubsystem::PollHazeStrengthAtLocation(FVector strengthAtLocation, int hazeGridID) const
+{
+	return m_HazeGrids[hazeGridID]->SampleGrid(strengthAtLocation);
+}
+
+void UHazeSubsystem::AddHazeSourceAtLocation(FVector strengthAtLocation, float strength, int hazeGridID)
+{
+	m_HazeGrids[hazeGridID]->AddSampleToGrid(strengthAtLocation, strength);
+}
+
+int UHazeSubsystem::GetHazeIDAtLocation(FVector newLocation, int hazeGridID) const
+{
+	if (hazeGridID != -1)
 	{
-		totalHaze += hazeComponent->GetHazeFieldAtWorldLocation(worldLocation);
+		if (m_HazeGrids[hazeGridID]->GridContainsPoint(newLocation))
+			return hazeGridID;
 	}
-	return totalHaze;
-}
 
-void UHazeSubsystem::OnHazeSourceUpdated()
-{
-	m_Listeners.Notify(&HazeListener::OnRefreshHazeStrength);
+	for (int i = 0; i < m_HazeGrids.size(); i++)
+	{
+		if (hazeGridID == i)
+			continue;
+		
+		const AHazeGridActor* pHazeGrid = m_HazeGrids[i];
+		if (pHazeGrid->GridContainsPoint(newLocation))
+			return i;
+	}
+
+	return -1;
 }

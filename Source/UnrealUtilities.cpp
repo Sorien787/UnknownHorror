@@ -39,7 +39,7 @@ FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const 
 	return  hit.Location;
 }
 
-FHitResult UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor)
+TArray<FHitResult> UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor)
 {
 	FVector playerViewPointLocation;
 	FRotator playerRotationInformation;
@@ -53,16 +53,15 @@ FHitResult UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float ra
 
 	static FName TraceTag = TEXT("TraceTag");
 	FCollisionQueryParams traceParams(TraceTag, false, pIgnoreActor);
-	
-	
-	world->LineTraceSingleByObjectType(
-		OUT hit,
+	TArray<FHitResult> outHits;
+	world->LineTraceMultiByObjectType(
+		OUT outHits,
 		playerViewPointLocation,
 		lineTraceEnd,
 		FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic),
 		traceParams);
 	
-	return hit;
+	return outHits;
 }
 
 FRotator UnrealUtilities::GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation)

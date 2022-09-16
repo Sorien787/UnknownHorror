@@ -10,7 +10,7 @@ void IInteractableInterface::IsInteractionAvailableOverride_Implementation(const
 	return;
 }
 
-void IInteractableInterface::OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& result)
+void IInteractableInterface::OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, bool& result)
 {
 	
 }

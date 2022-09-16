@@ -24,22 +24,6 @@ void ALightHazeActor::OnHazeStrengthChanged(float value)
 	m_pLightModifier->m_LightDesiredPercentOnline = m_LightPercentOnlineByHazeModifier.EditorCurveData.Eval(value);
 }
 
-void ALightHazeActor::OnHazeSetValue(float value)
-{
-	const bool bAttemptPop = value > m_fHazeModifierForPop;
-	if (bAttemptPop && !m_bHasPopAttempted)
-	{
-		if (m_fHazeModifierForPop < m_pHazeEffectComponent->GetCurrentHazeModifier())
-		{
-			m_pHazeEffectComponent->m_HazeComponentListeners.RemoveListener(this);
-			m_pLightModifier->SwitchOff();
-			RunLightBreakAnim();
-		}
-	}
-	m_bHasPopAttempted = bAttemptPop;
-}
-
-
 
 
 // Called when the game starts or when spawned

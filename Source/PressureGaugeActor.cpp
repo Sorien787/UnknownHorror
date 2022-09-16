@@ -41,15 +41,17 @@ void APressureGaugeActor::Tick(float DeltaTime)
 	float acceleration = 0.0f;
 
 	// if we're not out of range of the dial, or our current velocity is too low to be uncontrolled spinning
+	float distanceFromDefault = m_fCurrentAngle - m_fDefaultAngle;
+	acceleration -= distanceFromDefault * m_SpringContant + m_fCurrentVelocity * 2 * m_SpringDamping;
 	if (abs(m_fCurrentAngle) < m_fMaxAngle || abs(m_fCurrentVelocity) < m_VelocityForUncontrolledSpin)
 	{
 		// angles in degrees
-		float distanceFromDefault = m_fCurrentAngle - m_fDefaultAngle;
+
 
 		// assuming unit mass, simple spring damping equation.
 		// critical damping, m_springDamping, should be roughly root constant for critical damping.
 		// higher damping = less resonant response.
-		acceleration -= distanceFromDefault * m_SpringContant + m_fCurrentVelocity * 2 * m_SpringDamping;
+
 		
 		if (m_pHazeEffector && m_pHazeEffector->IsHazeActive())
 		{

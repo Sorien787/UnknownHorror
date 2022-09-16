@@ -36,7 +36,7 @@ public:
 	// Sets default values for this actor's properties
 	AInteractableObject();
 	
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) override;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) override;
 
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 

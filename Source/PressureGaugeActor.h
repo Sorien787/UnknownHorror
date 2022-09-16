@@ -27,11 +27,20 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSetPressureGaugeAngle(float angle);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPressureGaugeExplode(float angle);
+
 	UPROPERTY(EditAnywhere)
 	UHazeEffectComponent* m_pHazeEffector;
 
 	UPROPERTY(EditAnywhere)
 	float m_fDefaultAngle;
+	
+	UPROPERTY(EditAnywhere)
+	float m_fExplodeProbability;
+
+	UPROPERTY(EditAnywhere)
+	float m_fMinHazeForExplode;
 
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToAcceleration;

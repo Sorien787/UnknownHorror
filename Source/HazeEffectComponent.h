@@ -30,19 +30,20 @@ private:
 	float m_LastHazeModifier{0.0f};
 	float m_HazeNoisePollLocation{0.0f};
 	bool m_HazeReachedThreshold{false};
+	int m_HazeID{-1};
 	float m_RandomSeed{0.0f};
 	FVector m_LastPolledLocation{FVector::ZeroVector};
 
 	void UpdateHazeMultiplierValue(float deltaTime);
 
 	float ConvertHazeValueToMultiplier() const;
+
+	void RefreshHazeSink();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	virtual void BeginDestroy() override;
-
-	virtual void OnRefreshHazeStrength() override;
+	virtual void OnRefreshHazeGridPosition() override;
 
 public:
 	UPROPERTY()
@@ -53,6 +54,9 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToNoiseFrequency;
+	
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_HazeStrengthToEventProbability;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnHazeStart m_OnHazeStart;
@@ -65,6 +69,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnHazeStrengthChange m_OnHazeStrengthChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHazeComponentBreak m_OnHazeComponentBreak;
+
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

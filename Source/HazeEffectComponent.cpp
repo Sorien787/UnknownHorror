@@ -24,14 +24,31 @@ UHazeEffectComponent::UHazeEffectComponent()
 
 void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 {
-	float newMultiplier = ConvertHazeValueToMultiplier();
-	bool hazeEffectActive = newMultiplier > 0.0f;
+	const float newMultiplier = ConvertHazeValueToMultiplier();
+	
+	const bool hazeEffectActive = newMultiplier > 0.0f;
 
-	bool hazeActiveChanged = hazeEffectActive != m_HazeReachedThreshold;
+	const bool hazeActiveChanged = hazeEffectActive != m_HazeReachedThreshold;
 	
 	m_HazeReachedThreshold = hazeEffectActive;
 
+	const float eventProbability = m_HazeStrengthToEventProbability.EditorCurveData.Eval(m_CurrentHazeStrength) * deltaTime;
+	if (FMath::FRandRange(0.0f, 100.0f) < eventProbability)
+	{
+		const UWorld* world = GetWorld();
+		if(!world)
+			return;
+	
+		UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+	
+		if (!hazeSubsystem)
+			return;
 
+		m_OnHazeComponentBreak.Broadcast();
+		SetComponentTickEnabled(false);
+		return;
+	}
+	
 	if (hazeActiveChanged && m_HazeReachedThreshold)
 	{
 		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStart);
@@ -57,63 +74,69 @@ float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
 	return m_HazeStrengthToNoiseAmplitude.EditorCurveData.Eval(m_CurrentHazeStrength);
 }
 
-// Called when the game starts
+void UHazeEffectComponent::RefreshHazeSink()
+{
+	
+	UWorld* pWorld = GetWorld();
+	if (!pWorld)
+		return;
+	
+	const UHazeSubsystem* hazeSubsystem = pWorld->GetSubsystem<UHazeSubsystem>();
+	
+	if (!hazeSubsystem)
+		return;
+
+	if (m_HazeID >= 0)
+	{
+		m_CurrentHazeStrength = hazeSubsystem->PollHazeStrengthAtLocation(m_LastPolledLocation, m_HazeID);
+	
+		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStrengthChanged, m_CurrentHazeStrength );
+	}
+	
+	const FVector currentLocation = GetOwner()->GetActorLocation();
+	
+	if (FVector::DistSquared(currentLocation, m_LastPolledLocation) < m_distanceGranularity * m_distanceGranularity)
+		return;
+
+	
+	OnRefreshHazeGridPosition();
+}
+
 void UHazeEffectComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
-	const UWorld* world = GetWorld();
-	if(!world)
-		return;
-	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
-	if (!hazeSubsystem)
-		return;
-	hazeSubsystem->AddHazeListener(this);
-	OnRefreshHazeStrength();
 	
+	RefreshHazeSink();
 }
 
-void UHazeEffectComponent::BeginDestroy()
-{
-	Super::BeginDestroy();
-	const UWorld* world = GetWorld();
-	if(!world)
-		return;
-	
-	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
-	
-	if (!hazeSubsystem)
-		return;
-	hazeSubsystem->RemoveHazeListener(this);
-}
 
-void UHazeEffectComponent::OnRefreshHazeStrength()
+void UHazeEffectComponent::OnRefreshHazeGridPosition()
 {
 	UWorld* pWorld = GetWorld();
 	if (!pWorld)
 		return;
+	
 	const UHazeSubsystem* hazeSubsystem = pWorld->GetSubsystem<UHazeSubsystem>();
+	
 	if (!hazeSubsystem)
 		return;
-	m_CurrentHazeStrength = 1.0f;//hazeSubsystem->PollHazeStrengthAtLocation(GetOwner()->GetActorLocation());
-	m_LastPolledLocation = GetOwner()->GetActorLocation();
+
+	const FVector currentLocation = GetOwner()->GetActorLocation();
 	
-	if (m_CurrentHazeStrength == m_LastHazeModifier)
-		return;
-	
-	m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStrengthChanged, m_CurrentHazeStrength );
+	m_HazeID = hazeSubsystem->GetHazeIDAtLocation(currentLocation, m_HazeID);
+
+	m_LastPolledLocation = currentLocation;
 }
 
-// Called every frame
 void UHazeEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
 	UpdateHazeMultiplierValue(DeltaTime);
-	const FVector currentLocation = GetOwner()->GetActorLocation();
-	if (FVector::DistSquared(currentLocation, m_LastPolledLocation) < m_distanceGranularity * m_distanceGranularity)
-		return;
-	OnRefreshHazeStrength();
-	// ...
+	
+	RefreshHazeSink();
 }
 
 bool UHazeEffectComponent::IsHazeActive() const

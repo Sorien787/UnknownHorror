@@ -5,6 +5,8 @@
 #include "FirstPersonPlayerCharacter.h"
 
 #include "DrawDebugHelpers.h"
+#include "InteractionUserComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -73,38 +75,69 @@ void AFirstPersonPlayerCharacter::Tick(float DeltaTime)
 // Called to bind functionality to input
 void AFirstPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	UEnhancedInputComponent* eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	Super::SetupPlayerInputComponent(PlayerInputComponent);	
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &AFirstPersonPlayerCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AFirstPersonPlayerCharacter::MoveRight);
+	eic->BindAction( JumpAction, ETriggerEvent::Started, this, &AFirstPersonPlayerCharacter::StartJump);
+	eic->BindAction( JumpAction, ETriggerEvent::Completed, this, &AFirstPersonPlayerCharacter::StopJump);
 
-	PlayerInputComponent->BindAxis("LookRight", this, &AFirstPersonPlayerCharacter::AddCharacterYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &AFirstPersonPlayerCharacter::AddCharacterPitchInput);
+	eic->BindAction( SprintAction, ETriggerEvent::Started, this, &AFirstPersonPlayerCharacter::StartSprint);
+	eic->BindAction( SprintAction, ETriggerEvent::Completed, this, &AFirstPersonPlayerCharacter::StopSprint);
+
+	eic->BindAction( LookAroundAction, ETriggerEvent::Started, this, &AFirstPersonPlayerCharacter::StartLookAround);
+	eic->BindAction( LookAroundAction, ETriggerEvent::Completed, this, &AFirstPersonPlayerCharacter::StopLookAround);
+
+	eic->BindAction( InteractionAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::TriggerInteractions);
 	
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFirstPersonPlayerCharacter::StartJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFirstPersonPlayerCharacter::StopJump);
-
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AFirstPersonPlayerCharacter::ToggleCrouch);
-
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AFirstPersonPlayerCharacter::SprintStart);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AFirstPersonPlayerCharacter::SprintEnd);
-
-	PlayerInputComponent->BindAction("Look", IE_Pressed, this, &AFirstPersonPlayerCharacter::LookStart);
-	PlayerInputComponent->BindAction("Look", IE_Released, this, &AFirstPersonPlayerCharacter::LookEnd);
+	eic->BindAction( CrouchAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::ToggleCrouch);
 	
-	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AFirstPersonPlayerCharacter::StartInteractions);
+	eic->BindAction( ProneAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::ToggleProne);
+
+	eic->BindAction( LookUpAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::LookUp);
+	eic->BindAction( LookSideAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::LookRight);
+
+	eic->BindAction( MovementForwardAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::MoveForward);
+	eic->BindAction( MovementRightAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayerCharacter::MoveRight);
+}
+
+void AFirstPersonPlayerCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	if (!Subsystem)
+		return;
+
+	Subsystem->ClearAllMappings();
+	Subsystem->AddMappingContext(BaseMappingContext, BaseMappingPriority);
 }
 
 
+void AFirstPersonPlayerCharacter::AddCharacterPitchInput(float pitch)
+{
+	pitch *= m_LookSensitivityVal;
+	if (m_bIsLooking)
+	{
+		m_currentPitchOffset += -pitch;
+		m_currentPitchOffset = FMath::Clamp(m_currentPitchOffset, -m_currentMaxPitchOffset, m_currentMaxPitchOffset);
+	}
+	else
+	{
+		AddControllerPitchInput(pitch);
+		
+	}
+}
 
 void AFirstPersonPlayerCharacter::AddCharacterYawInput(float yaw)
 {
+	yaw *= m_LookSensitivityVal;
 	if (m_bIsLooking)
 	{
-		// we're no longer removing small rotations due to animation
-		// so let's make sure we're working relative from that instead
-		const APlayerController* PC = Cast<const APlayerController>(Controller);
-		m_currentYawOffset += yaw * PC->InputYawScale;
+		m_currentYawOffset += yaw;
 		m_currentYawOffset = FMath::Clamp(m_currentYawOffset, -m_currentMaxYawOffset, m_currentMaxYawOffset);
 	}
 	else
@@ -112,6 +145,38 @@ void AFirstPersonPlayerCharacter::AddCharacterYawInput(float yaw)
 		AddControllerYawInput(yaw);
 	}
 }
+
+void AFirstPersonPlayerCharacter::MoveForward(const FInputActionValue& value)
+{
+	if (m_bIsInputLocked || value.GetMagnitude() == 0.0f)
+		return;
+	
+	const FVector Forward = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::X);
+	AddMovementInput(Forward, value[0]);
+}
+
+void AFirstPersonPlayerCharacter::MoveRight(const FInputActionValue& value)
+{
+	if (m_bIsInputLocked || value.GetMagnitude() == 0.0f)
+		return;
+
+	const FVector Right = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::Y);
+	AddMovementInput(Right, value[0]);
+}
+
+void AFirstPersonPlayerCharacter::LookRight(const FInputActionValue& value)
+{
+	if (value.GetMagnitude() == 0.0f)
+		return;
+	AddCharacterYawInput(value[0]);
+}
+
+void AFirstPersonPlayerCharacter::LookUp(const FInputActionValue& value)
+{
+	if (value.GetMagnitude() == 0.0f)
+		return;
+	AddCharacterPitchInput(value[0]);
+}	
 
 void AFirstPersonPlayerCharacter::BeginCrouch()
 {
@@ -122,59 +187,65 @@ void AFirstPersonPlayerCharacter::EndCrouch()
 {
 	m_bWantsToCrouch = false;
 }
-	
 
-void AFirstPersonPlayerCharacter::AddCharacterPitchInput(float pitch)
+void AFirstPersonPlayerCharacter::ToggleCrouch()
 {
-	if (m_bIsLooking)
-	{
-		const APlayerController* PC = Cast<const APlayerController>(Controller);
-		m_currentPitchOffset += pitch * PC->InputPitchScale;
-	
-
-		m_currentPitchOffset = FMath::Clamp(m_currentPitchOffset, -m_currentMaxPitchOffset, m_currentMaxPitchOffset);
-	}
-	else
-	{
-		AddControllerPitchInput(pitch);
-		
-	}
-}
-
-void AFirstPersonPlayerCharacter::MoveForward(float Value)
-{
-	if (m_bIsCameraLocked)
+	if (m_bIsInputLocked)
 		return;
 	
-	FVector Direction = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::X);
-	FString dir = Direction.ToString();
-	AddMovementInput(Direction, Value);
+	m_bWantsToCrouch = !m_bWantsToCrouch;
 }
 
-void AFirstPersonPlayerCharacter::MoveRight(float Value)
+void AFirstPersonPlayerCharacter::ToggleProne()
 {
-	if (m_bIsCameraLocked)
+	if (m_bIsInputLocked)
 		return;
 	
-	FVector Direction = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::Y);
-	AddMovementInput(Direction, Value);
+	m_bWantsToCrouch = !m_bWantsToCrouch;
+}
+
+
+void AFirstPersonPlayerCharacter::StartSprint()
+{
+	m_bWantsToSprint = true;
+}
+
+void AFirstPersonPlayerCharacter::StopSprint()
+{
+	m_bWantsToSprint = false;
 }
 
 void AFirstPersonPlayerCharacter::StartJump()
 {
-	if (m_bIsCameraLocked)
+	if (m_bIsInputLocked)
 		return;
 	
 	bPressedJump = true;
 }
 
-void AFirstPersonPlayerCharacter::ToggleCrouch()
+void AFirstPersonPlayerCharacter::StopJump()
 {
-	if (m_bIsCameraLocked)
-		return;
-	
-	m_bWantsToCrouch = !m_bWantsToCrouch;
+	bPressedJump = false;
 }
+
+void AFirstPersonPlayerCharacter::StartLookAround()
+{
+	m_bWantsToLook = true;
+}
+
+void AFirstPersonPlayerCharacter::StopLookAround()
+{
+	m_bWantsToLook = false;
+}
+
+void AFirstPersonPlayerCharacter::TriggerInteractions()
+{
+	if (!m_InteractionUserComponent)
+		return;
+	m_InteractionUserComponent->OnInteractButtonPressed();
+}
+
+
 
 void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 {
@@ -182,11 +253,11 @@ void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 		return;
 	
 	const bool bShouldLockCamera = m_InteractionUserComponent->IsCurrentlyInInteractionAnimation();
-	if (bShouldLockCamera && !m_bIsCameraLocked)
+	if (bShouldLockCamera && !m_bIsInputLocked)
 	{
 		LockCamera(m_InteractionUserComponent->GetAnimCameraYaw(), m_InteractionUserComponent->GetAnimCameraPitch());		
 	}
-	if (!bShouldLockCamera && m_bIsCameraLocked)
+	if (!bShouldLockCamera && m_bIsInputLocked)
 	{
 		UnlockCamera();
 	}
@@ -195,13 +266,13 @@ void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 {
 	const bool bCanEnterLook = true;
-	const bool tryEnterLookState = m_bIsCameraLocked || m_bWantsToLook; 
+	const bool tryEnterLookState = m_bIsInputLocked || m_bWantsToLook; 
 
 	if (tryEnterLookState && !m_bIsLooking && bCanEnterLook)
 	{
 		m_bIsLooking = true;
 		m_bIsHeadAlignedWithBody = false;
-		if (!m_bIsCameraLocked)
+		if (!m_bIsInputLocked)
 		{
 			m_pCameraBoomArm->bUsePawnControlRotation = false;
 			const float controlPitch = GetControlRotation().Pitch;
@@ -260,7 +331,7 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 			if (m_currentPitchOffset < allowedPitch)
 				m_currentPitchOffset = allowedPitch;
 		}
-		if (!m_bIsCameraLocked)
+		if (!m_bIsInputLocked)
 			m_pCameraBoomArm->SetWorldRotation(FRotator(0, GetControlRotation().Yaw, 0));
 		newControlRotation.Pitch = m_currentPitchOffset;
 		newControlRotation.Yaw = m_currentYawOffset;
@@ -281,7 +352,6 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
 {
 	UCharacterMovementComponent* pCharacterMovement = GetCharacterMovement();
-
 	m_bForcedToCrouch = false;
 
 	// if we're not crouching, check if we need to crouch to move underneath something that we're near
@@ -339,36 +409,11 @@ void AFirstPersonPlayerCharacter::SprintStateUpdate(float DeltaTime)
 	}
 }
 
-void AFirstPersonPlayerCharacter::SprintStart()
-{
-	m_bWantsToSprint = true;
-}
-
-void AFirstPersonPlayerCharacter::SprintEnd()
-{
-	m_bWantsToSprint = false;
-}
-
-void AFirstPersonPlayerCharacter::StopJump()
-{
-	bPressedJump = false;
-}
-
-void AFirstPersonPlayerCharacter::LookStart()
-{
-	m_bWantsToLook = true;
-}
-
-void AFirstPersonPlayerCharacter::LookEnd()
-{
-	m_bWantsToLook = false;
-}
-
 void AFirstPersonPlayerCharacter::LockCamera(float maxYaw, float maxPitch)
 {
 	
 	m_cachedLockRotation = m_CharacterCamera->GetComponentRotation();
-	m_bIsCameraLocked = true;
+	m_bIsInputLocked = true;
 
 	m_pCameraBoomArm->bUsePawnControlRotation = false;
 	m_pCameraBoomArm->bInheritPitch = true;
@@ -391,7 +436,7 @@ void AFirstPersonPlayerCharacter::LockCamera(float maxYaw, float maxPitch)
 
 void AFirstPersonPlayerCharacter::UnlockCamera()
 {
-	if (!m_bIsCameraLocked)
+	if (!m_bIsInputLocked)
 		return;
 
 	bUseControllerRotationYaw = true;
@@ -410,7 +455,7 @@ void AFirstPersonPlayerCharacter::UnlockCamera()
 	m_currentPitchOffset = currentCameraRotation.Pitch;
 	m_currentYawOffset = 0.0f;
 	
-	m_bIsCameraLocked = false;
+	m_bIsInputLocked = false;
 
 	m_pCameraBoomArm->bUsePawnControlRotation = true;
 	
@@ -438,13 +483,5 @@ bool AFirstPersonPlayerCharacter::CanEnterSprint() const
 	
 	return angle < 60;
 }
-
-void AFirstPersonPlayerCharacter::StartInteractions()
-{
-	if (!m_InteractionUserComponent)
-		return;
-	m_InteractionUserComponent->OnInteractButtonPressed();
-}
-
 
 

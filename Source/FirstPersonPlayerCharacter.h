@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "InteractionUserComponent.h"
@@ -23,6 +24,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void PawnClientRestart() override;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -30,52 +33,77 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// Handles input for moving forward and backward.
-	UFUNCTION()
-		void MoveForward(float Value);
+	// INPUT ACTIONS //
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* MovementForwardAction;
 
-	// Handles input for moving right and left.
-	UFUNCTION()
-		void MoveRight(float Value);
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* MovementRightAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* LookUpAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* LookSideAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* JumpAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* CrouchAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* ProneAction;
 
-	// Sets jump flag when key is pressed.
-	UFUNCTION()
-		void StartJump();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* InteractionAction;
 
-	UFUNCTION()
-		void ToggleCrouch();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* SprintAction;
 
-	// Clears jump flag when key is released.
-	UFUNCTION()
-		void StopJump();
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
+	UInputAction* LookAroundAction;
+	
+	// INPUT MAPPINGS //
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Mappings")
+	UInputMappingContext* BaseMappingContext;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Mappings")
+	int32 BaseMappingPriority = 0;
+	
 	bool CanEnterSprint() const;
 
 	void SprintStateUpdate(float DeltaTime);
 
-	void CrouchStateUpdate(float DeltatTime);
+	void CrouchStateUpdate(float DeltaTime);
 
 	void LookStateUpdate(float DeltaTime);
 
 	void InteractionStateUpdate(float DeltaTime);
-	
-	UFUNCTION()
-		void AddCharacterYawInput(float yaw);
-	
-	UFUNCTION()
-		void AddCharacterPitchInput(float pitch);
-	
-	UFUNCTION()
-		void SprintStart();
-	
-	UFUNCTION()
-		void SprintEnd();
 
-	UFUNCTION()
-		void LookStart();
+	// INPUT FUNCTIONS //
+	void MoveForward(const FInputActionValue& value);
+	void MoveRight(const FInputActionValue& value);
+	void LookUp(const FInputActionValue& value);
+	void LookRight(const FInputActionValue& value);
+	void AddCharacterPitchInput(float pitch);
+	void AddCharacterYawInput(float yaw);
+
+	void StartJump();
+	void StopJump();
 	
-	UFUNCTION()
-		void LookEnd();
+	void StartSprint();
+	void StopSprint();
+	
+	void StartLookAround();
+	void StopLookAround();
+
+	void TriggerInteractions();
+	
+	void ToggleCrouch();
+	
+	void ToggleProne();
+
 
 	UFUNCTION(BlueprintCallable)
 		void BeginCrouch();
@@ -89,9 +117,6 @@ public:
 	UFUNCTION()
 		void UnlockCamera();
 
-	// Triggers Interaction stuff
-	UFUNCTION()
-		void StartInteractions();
 
 	// FPS camera
 	UPROPERTY(VisibleAnywhere)
@@ -135,6 +160,9 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		float m_MaxHeadPitch = 80.0f;
+
+	UPROPERTY(EditAnywhere)
+		float m_LookSensitivityVal = 0.1f;
 	
 	bool m_bWantsToSprint{false};
 
@@ -160,7 +188,7 @@ public:
 	
 	bool m_bIsHeadAlignedWithBody{true};
 
-	bool m_bIsCameraLocked{false};
+	bool m_bIsInputLocked{false};
 	FRotator m_cachedLockRotation;
 };
 

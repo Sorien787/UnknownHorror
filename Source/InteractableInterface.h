@@ -23,9 +23,8 @@ class DEEPSEAHORROR_API IInteractableInterface
 {	
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, int interactorId) = 0;
+	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) = 0;
 
 	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)  = 0;
 
@@ -45,9 +44,9 @@ public:
 	void IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
+	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, bool& returnResult);
 
-	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
+	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, bool& returnResult);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();

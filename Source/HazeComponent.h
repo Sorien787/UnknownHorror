@@ -12,19 +12,22 @@ class DEEPSEAHORROR_API UHazeComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	int m_HazeID {-1};
+	
+	void RefreshHazePosition();
+
+	FVector m_LastPolledLocation = FVector::Zero();
+
+	void RefreshHazeSource();
 public:	
-	// Sets default values for this component's properties
+
 	UHazeComponent();
 
-	float GetHazeFieldAtWorldLocation(FVector worldLocation) const;
 protected:
-	// Called when the game starts
+
 	virtual void BeginPlay() override;
 
-	virtual void BeginDestroy() override;
-
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere)
@@ -32,4 +35,7 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float m_HazeStrengthMultiplier;
+
+	UPROPERTY()
+	float m_distanceGranularity{0.1f};
 };

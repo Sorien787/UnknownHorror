@@ -11,7 +11,8 @@ UCLASS()
 class DEEPSEAHORROR_API ALightHazeActor : public AActor, public HazeComponentListener
 {
 	GENERATED_BODY()
-	
+
+
 public:	
 	// Sets default values for this actor's properties
 	ALightHazeActor();
@@ -21,25 +22,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void OnHazeSetValue(float value) override;
-
-	bool m_bHasPopAttempted = false;
-
 public:
-
-	UPROPERTY(EditAnywhere)
-	float m_fPoppingProbability = 0.0f;
-
-	UPROPERTY(EditAnywhere)
-	float m_fHazeModifierForPop = 0.0f;
-
-	UFUNCTION(BlueprintImplementableEvent)
-	float RunLightBreakAnim();
-
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ULightModifierComponent* m_pLightModifier;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UHazeEffectComponent* m_pHazeEffectComponent;
 
 	UPROPERTY(EditAnywhere, Category = Setup)
