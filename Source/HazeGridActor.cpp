@@ -36,6 +36,23 @@ void AHazeGridActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 							   drainageCoefficient);
 }
 
+void AHazeGridActor::SyncChangesToWorkingGrid()
+{
+	m_HazeGrid = m_WorkingGrid;
+
+	for (int nPendingChangeIndex = 0; nPendingChangeIndex < m_pendingChanges.size(); nPendingChangeIndex++)
+	{
+		PendingChange& pendingChange = m_PendingChanges[nPendingChangeIndex];
+		m_WorkingGrid.AddDiffusionSource(pendingChange.gridIndex, pendingCHange.value);
+	}
+}
+
+void AHazeGridActor::UpdateDiffusion(float deltaTime)
+{
+	m_WorkingGrid.RunDiffusionCycle(deltaTime);
+}
+
+
 void AHazeGridActor::BeginDestroy()
 {
 	Super::BeginDestroy();

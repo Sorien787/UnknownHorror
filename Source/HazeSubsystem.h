@@ -2,6 +2,10 @@
 
 #pragma once
 
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+
 #include "CoreMinimal.h"
 #include "HazeUtils.h"
 #include "HazeGridActor.h"
@@ -24,6 +28,17 @@ class DEEPSEAHORROR_API UHazeSubsystem : public UWorldSubsystem
 	std::vector<AHazeGridActor*> m_HazeGrids;
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+	virtual void OnWorldUpdate(UWorld& InWorld) override;
+
+	void ThreadUpdateLoop(float deltaTime);
+
+	bool HasHazeUpdateFinished()const;
+
+	bool m_bHasHazeUpdateFinished{ true };
+
+	std::mutex m_Mutex;
+	std::thread m_UpdateLoopThread;
+	std::condition_variable m_UpdateLoopConditionVariable;
 	
 public:
 	void RegisterHazeGrid(AHazeGridActor* hazeGrid);

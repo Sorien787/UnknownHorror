@@ -9,6 +9,14 @@
 #include "GameFramework/Actor.h"
 #include "HazeGridActor.generated.h"
 
+
+struct PendingChange
+{
+	PendingChange(int _gridIndex, float _value) : gridIndex(_gridIndex), value(_value) {}
+	int gridIndex;
+	float value;
+};
+
 UCLASS()
 class DEEPSEAHORROR_API AHazeGridActor : public AActor
 {
@@ -17,6 +25,8 @@ class DEEPSEAHORROR_API AHazeGridActor : public AActor
 	ListenerUtils<HazeListener> m_Listeners;
 	std::vector<UHazeComponent*> m_HazeSources;
 	DiffusionGrid m_HazeGrid;
+	DiffusionGrid m_WorkingHazeGrid;
+	std::vector<PendingChange> m_PendingChanges;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -35,6 +45,10 @@ public:
 	bool GridContainsPoint(FVector point) const;
 
 	float SampleGrid(FVector point) const;
+
+	void SyncChangesToWorkingGrid();
+
+	void UpdateDiffusion(float deltaTime);
 
 	void AddSampleToGrid(FVector point, float sample);
 
