@@ -99,7 +99,7 @@ void DiffusionGrid::AddDiffusionSource(const float x, const float y, const float
 	m_BasicGrid[index] += sourceStrength;
 }
 
-FColor DiffusionGrid::ConvertGridValueToColor(float& gridObject) const
+FColor DiffusionGrid::ConvertGridValueToColor(const float& gridObject) const
 {
 	const float lerpVal = FMath::Clamp(gridObject/m_FloatValForMaxColor, 0.0f, 1.0f);
 	const float resultantColor = FMath::Lerp(0.0f, 1.0f, lerpVal);

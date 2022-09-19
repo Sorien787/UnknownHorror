@@ -74,10 +74,18 @@ float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
 	return m_HazeStrengthToNoiseAmplitude.EditorCurveData.Eval(m_CurrentHazeStrength);
 }
 
+void UHazeEffectComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
+	
+	RefreshHazeSink();
+}
+
 void UHazeEffectComponent::RefreshHazeSink()
 {
-	
-	UWorld* pWorld = GetWorld();
+	const UWorld* pWorld = GetWorld();
 	if (!pWorld)
 		return;
 	
@@ -102,19 +110,9 @@ void UHazeEffectComponent::RefreshHazeSink()
 	OnRefreshHazeGridPosition();
 }
 
-void UHazeEffectComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
-	
-	RefreshHazeSink();
-}
-
-
 void UHazeEffectComponent::OnRefreshHazeGridPosition()
 {
-	UWorld* pWorld = GetWorld();
+	const UWorld* pWorld = GetWorld();
 	if (!pWorld)
 		return;
 	

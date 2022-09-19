@@ -3,21 +3,26 @@
 #include "HazeGridActor.h"
 #include "HazeSubsystem.h"
 
-
 AHazeGridActor::AHazeGridActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
+	
 	m_HazeGrid = DiffusionGrid(valueForMaxDebug, gridExtents.X, gridExtents.Y, gridExtents.Z, GetActorLocation().X,
-							   GetActorLocation().Y, GetActorLocation().Z, gridElementSize, diffusionCoefficient,
-							   drainageCoefficient);
+						   GetActorLocation().Y, GetActorLocation().Z, gridElementSize, diffusionCoefficient,
+						   drainageCoefficient);
+	m_WorkingGrid = m_HazeGrid;
 }
 
 void AHazeGridActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UWorld* world = GetWorld();
+	m_HazeGrid = DiffusionGrid(valueForMaxDebug, gridExtents.X, gridExtents.Y, gridExtents.Z, GetActorLocation().X,
+					   GetActorLocation().Y, GetActorLocation().Z, gridElementSize, diffusionCoefficient,
+					   drainageCoefficient);
+	m_WorkingGrid = m_HazeGrid;
+
+	const UWorld* world = GetWorld();
 	if (!world)
 		return;
 	
@@ -34,17 +39,20 @@ void AHazeGridActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 	m_HazeGrid = DiffusionGrid(valueForMaxDebug, gridExtents.X, gridExtents.Y, gridExtents.Z, GetActorLocation().X,
 							   GetActorLocation().Y, GetActorLocation().Z, gridElementSize, diffusionCoefficient,
 							   drainageCoefficient);
+	m_WorkingGrid = m_HazeGrid;
 }
 
 void AHazeGridActor::SyncChangesToWorkingGrid()
 {
 	m_HazeGrid = m_WorkingGrid;
 
-	for (int nPendingChangeIndex = 0; nPendingChangeIndex < m_pendingChanges.size(); nPendingChangeIndex++)
+	for (int nPendingChangeIndex = 0; nPendingChangeIndex < m_PendingChanges.size(); nPendingChangeIndex++)
 	{
-		PendingChange& pendingChange = m_PendingChanges[nPendingChangeIndex];
-		m_WorkingGrid.AddDiffusionSource(pendingChange.gridIndex, pendingCHange.value);
+		const PendingChange& pendingChange = m_PendingChanges[nPendingChangeIndex];
+		m_WorkingGrid.AddDiffusionSource(pendingChange.x, pendingChange.y, pendingChange.z, pendingChange.value);
 	}
+	
+	m_PendingChanges.clear();
 }
 
 void AHazeGridActor::UpdateDiffusion(float deltaTime)
@@ -52,12 +60,16 @@ void AHazeGridActor::UpdateDiffusion(float deltaTime)
 	m_WorkingGrid.RunDiffusionCycle(deltaTime);
 }
 
+void AHazeGridActor::Tick(float deltaTime)
+{
+	m_HazeGrid.DebugDrawGrid(GetWorld());
+}
 
 void AHazeGridActor::BeginDestroy()
 {
 	Super::BeginDestroy();
 
-	UWorld* world = GetWorld();
+	const UWorld* world = GetWorld();
 	if (!world)
 		return;
 	
@@ -80,6 +92,6 @@ float AHazeGridActor::SampleGrid(FVector point) const
 
 void AHazeGridActor::AddSampleToGrid(FVector point, float sample)
 {
-	m_HazeGrid.AddDiffusionSource(point.X, point.Y, point.Z, sample);
+	m_PendingChanges.emplace_back(point.X, point.Y, point.Z, sample);
 }
 

@@ -48,6 +48,16 @@ protected:
 		return input.X >= 0 && input.X < m_GridSize.X && input.Y >= 0 && input.Y < m_GridSize.X && input.Z >= 0 && input.Z < m_GridSize.X;
 	}
 
+	virtual FColor ConvertGridValueToColor(const T& gridObject) const = 0;
+public:
+	virtual T SampleGrid(const float x, const float y, const float z) const
+	{
+		const FVector pos = FVector(x, y, z);
+		const FIntVector pos_gridSpace = ConvertFloatInputToGridInput(pos);
+		const int index = ConvertGridInputToIndex(pos_gridSpace);
+		return m_BasicGrid[index];
+	}
+	
 	void DebugDrawGrid(const UWorld* pRenderWorld) const
 	{
 		DrawDebugBox(pRenderWorld, m_GridOrigin + FVector(m_GridSize) * m_GridElementSize / 2.0f, FVector(m_GridSize) * m_GridElementSize, FColor::Blue);
@@ -69,15 +79,6 @@ protected:
 		}	
 	}
 	
-	virtual FColor ConvertGridValueToColor(T& gridObject) const = 0;
-public:
-	virtual T SampleGrid(const float x, const float y, const float z) const
-	{
-		const FVector pos = FVector(x, y, z);
-		const FIntVector pos_gridSpace = ConvertFloatInputToGridInput(pos);
-		const int index = ConvertGridInputToIndex(pos_gridSpace);
-		return m_BasicGrid[index];
-	}
 	
 	bool IsWorldInputWithinGrid(FVector input) const
 	{

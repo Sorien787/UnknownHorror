@@ -20,16 +20,15 @@ class UHazeComponent;
 
 
 UCLASS()
-class DEEPSEAHORROR_API UHazeSubsystem : public UWorldSubsystem
+class DEEPSEAHORROR_API UHazeSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
-
 
 	std::vector<AHazeGridActor*> m_HazeGrids;
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
-	virtual void OnWorldUpdate(UWorld& InWorld) override;
-
+	virtual void Tick(float DeltaTime) override;
+	virtual TStatId GetStatId() const override;
 	void ThreadUpdateLoop(float deltaTime);
 
 	bool HasHazeUpdateFinished()const;
@@ -41,6 +40,8 @@ class DEEPSEAHORROR_API UHazeSubsystem : public UWorldSubsystem
 	std::condition_variable m_UpdateLoopConditionVariable;
 	
 public:
+	virtual ~UHazeSubsystem();
+	
 	void RegisterHazeGrid(AHazeGridActor* hazeGrid);
 	void UnregisterHazeGrid(AHazeGridActor* hazeGrid);
 	

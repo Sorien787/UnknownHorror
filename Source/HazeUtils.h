@@ -33,7 +33,7 @@ public:
 class DiffusionGrid : public Grid<float>
 {
 protected:
-	virtual FColor ConvertGridValueToColor(float& gridObject) const override;
+	virtual FColor ConvertGridValueToColor(const float& gridObject) const override;
 private:
 	float m_DiffusionCoefficient;
 

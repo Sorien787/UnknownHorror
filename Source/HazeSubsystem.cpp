@@ -6,36 +6,33 @@
 #include "DrawDebugHelpers.h"
 #include "HazeComponent.h"
 
-
-// start up a new thread
-// have the thread update the haze grid every frame
-// and we await the thread before, to be sure its done processing
-// this is the same as single threaded...
-// so make two forms of data: working, and 
 void UHazeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 }
 
-void UHazeSubsystem::OnWorldUpdate(UWorld& InWorld)
+void UHazeSubsystem::Tick(float deltaTime)
 {
-
 	std::unique_lock<std::mutex> lock(m_Mutex);
-	// Start waiting for the Condition Variable to get signaled
-	// Wait() will internally release the lock and make the thread to block
-	// As soon as condition variable get signaled, resume the thread and
-	// again acquire the lock. Then check if condition is met or not
-	// If condition is met then continue else again go in wait.
-	m_UpdateLoopConditionVariable.wait(lock, std::bind(&UHazeSubsystem::HasHazeUpdateFinished, this));
 
+	m_UpdateLoopConditionVariable.wait(lock, std::bind(&UHazeSubsystem::HasHazeUpdateFinished, this));
+	
 	for (int hazeGridIndex = 0; hazeGridIndex < m_HazeGrids.size(); ++hazeGridIndex)
 	{
 		AHazeGridActor* pHazeGrid = m_HazeGrids[hazeGridIndex];
 		pHazeGrid->SyncChangesToWorkingGrid();
 	}
 	m_bHasHazeUpdateFinished = false;
-	m_UpdateThread(&UHazeSubsystem::ThreadUpdateLoop, this);
+	
+	if (m_UpdateLoopThread.joinable())
+		m_UpdateLoopThread.join();
+	
+	m_UpdateLoopThread = std::thread(&UHazeSubsystem::ThreadUpdateLoop, this, deltaTime);
+}
 
+TStatId UHazeSubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UHazeSubsystem, STATGROUP_Tickables);
 }
 
 void UHazeSubsystem::ThreadUpdateLoop(float deltaTime)
@@ -43,17 +40,22 @@ void UHazeSubsystem::ThreadUpdateLoop(float deltaTime)
 	for (int hazeGridIndex = 0; hazeGridIndex < m_HazeGrids.size(); ++hazeGridIndex)
 	{
 		AHazeGridActor* pHazeGrid = m_HazeGrids[hazeGridIndex];
-		pHazeGrid->UpdateDiffusionCycle(deltaTime);
+		pHazeGrid->UpdateDiffusion(deltaTime);
 	}
 
 	m_bHasHazeUpdateFinished = true;
-
 	m_UpdateLoopConditionVariable.notify_all();
 }
 
-void UHazeSubsystem::HasHazeUpdateFinished() const
+bool UHazeSubsystem::HasHazeUpdateFinished() const
 {
 	return m_bHasHazeUpdateFinished;
+}
+
+UHazeSubsystem::~UHazeSubsystem()
+{
+	if (m_UpdateLoopThread.joinable())
+		m_UpdateLoopThread.join();
 }
 
 void UHazeSubsystem::RegisterHazeGrid(AHazeGridActor* hazeGrid)

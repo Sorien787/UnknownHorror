@@ -4,9 +4,30 @@
 #include "HazeComponent.h"
 #include "HazeSubsystem.h"
 
+UHazeComponent::UHazeComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+}
+
+
+// Called when the game starts
+void UHazeComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	RefreshHazeSource();
+}
+
+void UHazeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	RefreshHazeSource();
+}
+
 void UHazeComponent::RefreshHazeSource()
 {
-	UWorld* world = GetWorld();
+	const UWorld* world = GetWorld();
 
 	if (!world)
 		return;
@@ -29,36 +50,14 @@ void UHazeComponent::RefreshHazeSource()
 	RefreshHazePosition();
 }
 
-UHazeComponent::UHazeComponent()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-}
-
-
-// Called when the game starts
-void UHazeComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	RefreshHazeSource();
-}
-
-void UHazeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	RefreshHazeSource();
-}
-
-
 void UHazeComponent::RefreshHazePosition()
 {
-	UWorld* world = GetWorld();
+	const UWorld* world = GetWorld();
 
 	if (!world)
 		return;
 	
-	UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
+	const UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
 	
 	if (!hazeSubsystem)
 		return;

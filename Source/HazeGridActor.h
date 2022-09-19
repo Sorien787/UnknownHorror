@@ -12,8 +12,10 @@
 
 struct PendingChange
 {
-	PendingChange(int _gridIndex, float _value) : gridIndex(_gridIndex), value(_value) {}
-	int gridIndex;
+	PendingChange(int _x, int _y, int _z, float _value) : x(_x), y(_y), z(_z), value(_value) {}
+	float x;
+	float y;
+	float z;
 	float value;
 };
 
@@ -25,7 +27,7 @@ class DEEPSEAHORROR_API AHazeGridActor : public AActor
 	ListenerUtils<HazeListener> m_Listeners;
 	std::vector<UHazeComponent*> m_HazeSources;
 	DiffusionGrid m_HazeGrid;
-	DiffusionGrid m_WorkingHazeGrid;
+	DiffusionGrid m_WorkingGrid;
 	std::vector<PendingChange> m_PendingChanges;
 	
 public:	
@@ -40,6 +42,8 @@ protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	
 	virtual void BeginDestroy() override;
+	
+	virtual void Tick(float deltaTime) override;
 
 public:	
 	bool GridContainsPoint(FVector point) const;
