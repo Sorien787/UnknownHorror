@@ -5,7 +5,7 @@
 
 AHazeGridActor::AHazeGridActor()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	m_HazeGrid = DiffusionGrid(valueForMaxDebug, gridExtents.X, gridExtents.Y, gridExtents.Z, GetActorLocation().X,
 						   GetActorLocation().Y, GetActorLocation().Z, gridElementSize, diffusionCoefficient,

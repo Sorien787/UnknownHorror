@@ -60,7 +60,7 @@ public:
 	
 	void DebugDrawGrid(const UWorld* pRenderWorld) const
 	{
-		DrawDebugBox(pRenderWorld, m_GridOrigin + FVector(m_GridSize) * m_GridElementSize / 2.0f, FVector(m_GridSize) * m_GridElementSize, FColor::Blue);
+		DrawDebugBox(pRenderWorld, m_GridOrigin + FVector(m_GridSize) * m_GridElementSize / 2.0f, FVector(m_GridSize) * m_GridElementSize / 2, FColor::Blue);
 		const FVector gridSize = FVector(m_GridElementSize) / 2;
 		for (int z = m_GridSize.Z-1; z >= 0; --z)
 		{

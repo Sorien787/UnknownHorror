@@ -35,7 +35,7 @@ void DiffusionGrid::RunDiffusionCycle(const float deltaTime)
 				m_BasicGrid[gridIndex] *= remainingProportion;
 				const float diffusedAmount = (gridValue * (1.0f - remainingProportion)) / 6.0f;
 
-				for (int w = m_DirectionalArray.size()-1; w > 0; --w)
+				for (int w = m_DirectionalArray.size()-1; w >= 0; --w)
 				{
 					FIntVector relevantDirection = m_DirectionalArray[w];
 					const FIntVector diffusedGridElement = gridPosition + relevantDirection;
@@ -102,6 +102,7 @@ void DiffusionGrid::AddDiffusionSource(const float x, const float y, const float
 FColor DiffusionGrid::ConvertGridValueToColor(const float& gridObject) const
 {
 	const float lerpVal = FMath::Clamp(gridObject/m_FloatValForMaxColor, 0.0f, 1.0f);
-	const float resultantColor = FMath::Lerp(0.0f, 1.0f, lerpVal);
-    return FColor(resultantColor, resultantColor, resultantColor, 1.0f);
+	const float resultantColor = FMath::Lerp(0.0f, 255.0f, lerpVal);
+	const uint8 cast = (uint8)FMath::Floor(resultantColor);
+    return FColor(cast, cast, cast, 1.0f);
 }
