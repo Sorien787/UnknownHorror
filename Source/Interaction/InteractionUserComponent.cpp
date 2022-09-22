@@ -4,7 +4,7 @@
 #include "InteractionUserComponent.h"
 
 #include "InteractableObject.h"
-#include "UnrealUtilities.h"
+#include "../Common/UnrealUtilities.h"
 
 // Sets default values for this component's properties
 UInteractionUserComponent::UInteractionUserComponent()
@@ -41,9 +41,10 @@ IInteractionTriggerInterface* UInteractionUserComponent::ClosestInteractionQuery
 		
 		pInteractableObject = Cast<IInteractionTriggerInterface>(hit.GetActor());
 		
-		if (!pInteractableObject)
+		if (!pInteractableObject || !pInteractableObject->GetCanInteract(this) || hit.Distance > closestInteractableDistance)
 			continue;
 
+		closestInteractableDistance = hit.Distance;
 		pClosestObject = pInteractableObject;
 		break;
 	}

@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LightModifierComponent.h"
+#include "../../Gameplay/LightModifierComponent.h"
 #include "GameFramework/Actor.h"
+#include "../HazeUtils.h"
+#include "../HazeEffectComponent.h"
 #include "LightHazeActor.generated.h"
 
 UCLASS()

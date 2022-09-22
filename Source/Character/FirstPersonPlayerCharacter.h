@@ -8,7 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "InteractionUserComponent.h"
+#include "Interaction/InteractionUserComponent.h"
 #include "FirstPersonPlayerCharacter.generated.h"
 
 UCLASS()

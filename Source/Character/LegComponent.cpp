@@ -3,7 +3,7 @@
 
 #include "LegComponent.h"
 
-#include "UnrealUtilities.h"
+#include "../Common/UnrealUtilities.h"
 
 
 ULegComponent::ULegComponent()

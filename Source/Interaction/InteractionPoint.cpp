@@ -1,13 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "InteractionPoint.h"
 
 #include "InteractionUserComponent.h"
-#include "UnrealUtilities.h"
+#include "../Common/UnrealUtilities.h"
 #include "Kismet/KismetMathLibrary.h"
-#pragma optimize("", off)
-// Sets default values
+
 AInteractionPoint::AInteractionPoint()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.

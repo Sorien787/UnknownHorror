@@ -31,8 +31,8 @@ void DiffusionGrid::RunDiffusionCycle(const float deltaTime)
 				const float distanceScale = m_GridElementSize / 1000.0f;
 				const FIntVector gridPosition = FIntVector(x, y, z);
 				const int gridIndex = ConvertGridInputToIndex(gridPosition);
-				const float gridValue = m_BasicGrid[gridIndex] * ( 1 - deltaTime * m_DrainageCoefficient * (1 / FMath::Pow(distanceScale, 3)));
-				const float remainingProportion = 1.0f / (1.0f + deltaTime * m_DiffusionCoefficient * distanceScale);
+				const float gridValue = m_BasicGrid[gridIndex] * ( 1 - deltaTime * m_DrainageCoefficient * FMath::Pow(distanceScale, 3));
+				const float remainingProportion = 1.0f / (1.0f + deltaTime * m_DiffusionCoefficient * (1.0f / distanceScale));
 				m_BasicGrid[gridIndex] = gridValue * remainingProportion;
 				const float diffusedAmount = (gridValue * (1.0f - remainingProportion)) / 6.0f;
 

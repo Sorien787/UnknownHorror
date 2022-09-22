@@ -3,9 +3,8 @@
 
 #include "InteractableObject.h"
 
-#include "UnrealUtilities.h"
+#include "../Common/UnrealUtilities.h"
 #include "InteractionUserComponent.h"
-#pragma optimize("", off)
 
 void AInteractableObject::BeginPlay()
 {

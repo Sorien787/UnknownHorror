@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "HazeEffectComponent.h"
+#include "../HazeEffectComponent.h"
 #include "PressureGaugeActor.generated.h"
 
 UCLASS()

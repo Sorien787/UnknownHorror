@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "HazeEffectComponent.h"
+#include "../HazeEffectComponent.h"
+#include "../HazeUtils.h"
 #include "GenericHazeActor.generated.h"
 
 UCLASS()

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HazeUtils.h"
+#include "../HazeUtils.h"
 #include "GameFramework/Actor.h"
 #include "SlammingDoorActor.generated.h"
 

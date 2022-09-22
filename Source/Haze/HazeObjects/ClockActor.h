@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HazeEffectComponent.h"
+#include "../HazeEffectComponent.h"
 #include "GameFramework/Actor.h"
 #include "ClockActor.generated.h"
 

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HazeEffectComponent.h"
 #include "Components/ActorComponent.h"
 #include "Components/LightComponent.h"
 #include "LightModifierComponent.generated.h"

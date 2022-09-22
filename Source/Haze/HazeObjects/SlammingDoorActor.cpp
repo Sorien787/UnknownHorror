@@ -2,7 +2,7 @@
 
 
 #include "SlammingDoorActor.h"
-#include "HazeEffectComponent.h"
+#include "../HazeEffectComponent.h"
 // Sets default values
 ASlammingDoorActor::ASlammingDoorActor()
 {

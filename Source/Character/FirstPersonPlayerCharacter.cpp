@@ -5,7 +5,7 @@
 #include "FirstPersonPlayerCharacter.h"
 
 #include "DrawDebugHelpers.h"
-#include "InteractionUserComponent.h"
+#include "Interaction/InteractionUserComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
