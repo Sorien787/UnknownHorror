@@ -47,7 +47,10 @@ protected:
 
 public:
 	UPROPERTY()
-		float m_distanceGranularity{0.1f};
+	float m_distanceGranularity{0.1f};
+
+	UPROPERTY(EditAnywhere)
+	float m_HazeEffectThreshold{ 0.01f };
 
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToNoiseAmplitude;

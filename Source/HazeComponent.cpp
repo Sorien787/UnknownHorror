@@ -14,18 +14,16 @@ UHazeComponent::UHazeComponent()
 void UHazeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	RefreshHazeSource();
 }
 
 void UHazeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	RefreshHazeSource();
+	RefreshHazeSource(DeltaTime);
 }
 
-void UHazeComponent::RefreshHazeSource()
+void UHazeComponent::RefreshHazeSource(float deltaTime)
 {
 	const UWorld* world = GetWorld();
 
@@ -41,7 +39,7 @@ void UHazeComponent::RefreshHazeSource()
 
 	if (m_HazeID >= 0)
 	{
-		hazeSubsystem->AddHazeSourceAtLocation(m_LastPolledLocation, m_HazeStrengthMultiplier, m_HazeID);
+		hazeSubsystem->AddHazeSourceAtLocation(m_LastPolledLocation, deltaTime * m_HazeStrengthMultiplier, m_HazeID);
 	}
 	
 	if (FVector::DistSquared(currentLocation, m_LastPolledLocation) < m_distanceGranularity * m_distanceGranularity)

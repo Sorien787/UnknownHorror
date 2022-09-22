@@ -28,11 +28,12 @@ void DiffusionGrid::RunDiffusionCycle(const float deltaTime)
 			{
 				// its not really mathematically correct to do it like this
 				// but let's just iterate through the grid and spread to adjacent grids
+				const float distanceScale = m_GridElementSize / 1000.0f;
 				const FIntVector gridPosition = FIntVector(x, y, z);
 				const int gridIndex = ConvertGridInputToIndex(gridPosition);
-				const float gridValue = m_BasicGrid[gridIndex];
-				const float remainingProportion = 1.0f / (1.0f + deltaTime * m_DiffusionCoefficient);
-				m_BasicGrid[gridIndex] *= remainingProportion;
+				const float gridValue = m_BasicGrid[gridIndex] * ( 1 - deltaTime * m_DrainageCoefficient * (1 / FMath::Pow(distanceScale, 3)));
+				const float remainingProportion = 1.0f / (1.0f + deltaTime * m_DiffusionCoefficient * distanceScale);
+				m_BasicGrid[gridIndex] = gridValue * remainingProportion;
 				const float diffusedAmount = (gridValue * (1.0f - remainingProportion)) / 6.0f;
 
 				for (int w = m_DirectionalArray.size()-1; w >= 0; --w)
@@ -62,7 +63,6 @@ float DiffusionGrid::SampleGrid(const float x, const float y, const float z) con
 	// remove 1/2 to all sides: since we want to take samples as if they're at a distance from the *center*, but the indices are at the lowest corner
 	// rather than adding 1/2 to each grid's position
 	// this is effectively the same
-	pos -= FVector::One() / 2.0f;
 	int numSamples = 0;
 	float totLen = 0.0f;
 	float totDensity = 0.0f;
@@ -77,7 +77,7 @@ float DiffusionGrid::SampleGrid(const float x, const float y, const float z) con
 				if(!IsInputWithinGrid(gridPosition))
 					continue;
 				
-				const FVector offset = FVector(gridPosition.X - pos.X, gridPosition.Y - pos.Y, gridPosition.Z - pos.Z);
+				const FVector offset = FVector(gridPosition.X - pos_gridSpace.X - 0.5f, gridPosition.Y - pos_gridSpace.Y - 0.5f, gridPosition.Z - pos_gridSpace.Z - 0.5f);
 				const float len = offset.Length();
 				const float lenScale = FMath::Max(0.0f, 1.0f - len);
 				totLen += lenScale;

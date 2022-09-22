@@ -18,7 +18,7 @@ class DEEPSEAHORROR_API UHazeComponent : public UActorComponent
 
 	FVector m_LastPolledLocation = FVector::Zero();
 
-	void RefreshHazeSource();
+	void RefreshHazeSource(float deltaTime);
 public:	
 
 	UHazeComponent();
@@ -29,13 +29,10 @@ protected:
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UPROPERTY(EditAnywhere)
-	FRuntimeFloatCurve m_DistanceToStrengthCurve;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.1", ClampMax = "1000.0", UIMin = "0.1", UIMax = "1000.0"))
 	float m_HazeStrengthMultiplier;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.01", ClampMax = "10.0", UIMin = "0.01", UIMax = "10.0"))
 	float m_distanceGranularity{0.1f};
 };

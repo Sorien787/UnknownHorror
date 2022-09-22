@@ -35,15 +35,6 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 	const float eventProbability = m_HazeStrengthToEventProbability.EditorCurveData.Eval(m_CurrentHazeStrength) * deltaTime;
 	if (FMath::FRandRange(0.0f, 100.0f) < eventProbability)
 	{
-		const UWorld* world = GetWorld();
-		if(!world)
-			return;
-	
-		UHazeSubsystem* hazeSubsystem = world->GetSubsystem<UHazeSubsystem>();
-	
-		if (!hazeSubsystem)
-			return;
-
 		m_OnHazeComponentBreak.Broadcast();
 		SetComponentTickEnabled(false);
 		return;
@@ -79,8 +70,6 @@ void UHazeEffectComponent::BeginPlay()
 	Super::BeginPlay();
 	
 	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
-	
-	RefreshHazeSink();
 }
 
 void UHazeEffectComponent::RefreshHazeSink()

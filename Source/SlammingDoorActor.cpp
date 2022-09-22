@@ -45,6 +45,10 @@ void ASlammingDoorActor::Tick(float DeltaTime)
 		return;
 	
 	Super::Tick(DeltaTime);
+
+	if (!m_pHazeEffectComponent->IsHazeActive())
+		return;
+
 	const float currentModifier = FMath::Abs(m_pHazeEffectComponent->GetCurrentHazeModifier());
 	const float currentStrength = m_pHazeEffectComponent->GetCurrentHazeStrength();
 	const float slamProbability = m_SlamProbabilityByHazeStrength.EditorCurveData.Eval(currentStrength);
