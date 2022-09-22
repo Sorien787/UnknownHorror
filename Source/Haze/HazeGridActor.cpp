@@ -62,7 +62,15 @@ void AHazeGridActor::UpdateDiffusion(float deltaTime)
 
 void AHazeGridActor::Tick(float deltaTime)
 {
-	m_HazeGrid.DebugDrawGrid(GetWorld());
+	IConsoleVariable* pConsoleVariable = IConsoleManager::Get().RegisterConsoleVariable(TEXT("HazeGridDebug"),
+	   0,
+	   TEXT("Shows haze grid debug visualization.\n")
+		TEXT("<=0: off\n")
+		TEXT(">=1: on\n"),
+	   ECVF_Scalability | ECVF_RenderThreadSafe);
+	
+	if (pConsoleVariable->GetInt() > 0)
+		m_HazeGrid.DebugDrawGrid(GetWorld());
 }
 
 void AHazeGridActor::BeginDestroy()
