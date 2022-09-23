@@ -11,6 +11,42 @@ UnrealUtilities::~UnrealUtilities()
 {
 }
 
+bool UnrealUtilities::IsInFrustrum( FVector location, float size, UWorld* pWorld)
+{
+	ULocalPlayer* LocalPlayer = pWorld->GetFirstLocalPlayerFromController();
+	
+	if (LocalPlayer == nullptr || LocalPlayer->ViewportClient == nullptr || !LocalPlayer->ViewportClient->Viewport)
+		return false;
+	
+	FSceneViewFamilyContext ViewFamily(FSceneViewFamily::ConstructionValues(
+		LocalPlayer->ViewportClient->Viewport,
+		pWorld->Scene,
+		LocalPlayer->ViewportClient->EngineShowFlags)
+		.SetRealtimeUpdate(true));
+
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	FSceneView* SceneView = LocalPlayer->CalcSceneView(&ViewFamily, ViewLocation, ViewRotation, LocalPlayer->ViewportClient->Viewport);
+	
+	if (SceneView == nullptr)
+		return false;
+	
+	return SceneView->ViewFrustum.IntersectSphere(location, size);
+}
+
+FVector UnrealUtilities::GetArbitraryNormalVector(FVector basisA)
+{
+	FVector someDirection = FVector(1, 0, 0);
+	
+	if(basisA.Dot(someDirection) > 1 - FLT_EPSILON)
+		someDirection = FVector(0, 1, 0);
+
+	FVector basisB = someDirection - someDirection.Dot(basisA) * basisA;
+	basisB.Normalize();
+	
+	return basisB;
+}
+
 FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const float range, const AActor* pIgnoreActor)
 {
 	FVector playerViewPointLocation;

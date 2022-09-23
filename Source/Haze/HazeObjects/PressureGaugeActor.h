@@ -11,6 +11,10 @@ UCLASS()
 class DEEPSEAHORROR_API APressureGaugeActor : public AActor
 {
 	GENERATED_BODY()
+		
+	float m_fCurrentVelocity{0.0f};
+
+	float m_fCurrentAngle{0.0f};
 	
 public:	
 	// Sets default values for this actor's properties
@@ -53,15 +57,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float m_VelocityForUncontrolledSpin;
-
-
 	
 	UPROPERTY(EditAnywhere)
 	float m_fMaxAngle;
-	
-	float m_fCurrentVelocity;
-
-	float m_fCurrentAngle;
-	
-
 };

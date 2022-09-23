@@ -22,6 +22,7 @@ void APressureGaugeActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	m_fCurrentAngle = m_fDefaultAngle;
 }
 
 // Called every frame
@@ -29,30 +30,12 @@ void APressureGaugeActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	float newTickTime = 1.0f;
-
-	// damp down to default value
-
-	// acceleration applied from haze
-
-	// when we reach the end, stop all accelerations, continue at velocity,
-	
-	
 	float acceleration = 0.0f;
-
-	// if we're not out of range of the dial, or our current velocity is too low to be uncontrolled spinning
-	float distanceFromDefault = m_fCurrentAngle - m_fDefaultAngle;
+	
+	const float distanceFromDefault = m_fCurrentAngle - m_fDefaultAngle;
 	acceleration -= distanceFromDefault * m_SpringContant + m_fCurrentVelocity * 2 * m_SpringDamping;
 	if (abs(m_fCurrentAngle) < m_fMaxAngle || abs(m_fCurrentVelocity) < m_VelocityForUncontrolledSpin)
 	{
-		// angles in degrees
-
-
-		// assuming unit mass, simple spring damping equation.
-		// critical damping, m_springDamping, should be roughly root constant for critical damping.
-		// higher damping = less resonant response.
-
-		
 		if (m_pHazeEffector && m_pHazeEffector->IsHazeActive())
 		{
 			const float currentHazeStrength = m_pHazeEffector->GetCurrentHazeStrength();

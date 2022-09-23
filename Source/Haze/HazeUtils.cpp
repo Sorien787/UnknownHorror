@@ -103,6 +103,7 @@ FColor DiffusionGrid::ConvertGridValueToColor(const float& gridObject) const
 {
 	const float lerpVal = FMath::Clamp(gridObject/m_FloatValForMaxColor, 0.0f, 1.0f);
 	const float resultantColor = FMath::Lerp(0.0f, 255.0f, lerpVal);
+	const float resultantAlpha = FMath::Lerp(0.0f, 1.0f, lerpVal);
 	const uint8 cast = (uint8)FMath::Floor(resultantColor);
-    return FColor(cast, cast, cast, 1.0f);
+    return FColor(cast, 0.0f, 0.0f, resultantAlpha);
 }

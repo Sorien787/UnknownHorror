@@ -14,6 +14,8 @@ public:
 	static TArray<FHitResult> RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor);
 	static FRotator GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation);
 	static FTransform GetPlayerCameraTransform(const UWorld* world);
+	static bool IsInFrustrum( FVector location, float size, UWorld* pWorld);
+	static FVector GetArbitraryNormalVector(FVector basisA);
 	UnrealUtilities();
 	~UnrealUtilities();
 };
