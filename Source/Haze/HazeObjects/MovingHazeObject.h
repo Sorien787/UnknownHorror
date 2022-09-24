@@ -22,9 +22,13 @@ class DEEPSEAHORROR_API AMovingHazeObject : public AActor
 {
 	GENERATED_BODY()
 
-	FVector TryGetNewObjectPlacementPoint(float objectSize, int objectIndex);
+	bool TryGetNewObjectPlacementPoint(FVector& position, FVector& normal, float objectSize, int objectIndex);
 	
 	std::vector<ObjectData> m_Objects;
+
+	float m_TimeLastInFrustrum = 0.0f;
+
+	bool m_bHasAnyObjectMoved = false;
 	
 public:	
 	AMovingHazeObject();
@@ -39,20 +43,19 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float m_TimeOffScreenBeforeCanMove;
-
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* m_pObjectMesh;
 	
-	UPROPERTY(EditAnywhere)
-	UHazeEffectComponent* m_pHazeEffector;
-
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToShiftProbabilityPerSecond;
 
+	UPROPERTY(EditAnywhere)
+	bool m_bRandomizeRotation{false};
+	
 	UPROPERTY(EditAnywhere)
 	USphereComponent* m_pPlacementArea;
 
 	UPROPERTY(EditAnywhere)
 	UArrowComponent* m_pPlacementDirection;
 
+	UPROPERTY(EditAnywhere)
+	UHazeEffectComponent* m_pHazeEffector;
 };

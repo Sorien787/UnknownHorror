@@ -60,14 +60,16 @@ void AHazeGridActor::UpdateDiffusion(float deltaTime)
 	m_WorkingGrid.RunDiffusionCycle(deltaTime);
 }
 
+static TAutoConsoleVariable<int32> CVarHazeGridDebug(
+	TEXT("HazeGridDebug"),
+	0,
+	TEXT("Shows haze grid debug visualization.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
 void AHazeGridActor::Tick(float deltaTime)
 {
-	IConsoleVariable* pConsoleVariable = IConsoleManager::Get().RegisterConsoleVariable(TEXT("HazeGridDebug"),
-	   0,
-	   TEXT("Shows haze grid debug visualization.\n")
-		TEXT("<=0: off\n")
-		TEXT(">=1: on\n"),
-	   ECVF_Scalability | ECVF_RenderThreadSafe);
+	const FString CommandString1 = "HazeGridDebug";
+	const auto pConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*CommandString1);
 	
 	if (pConsoleVariable->GetInt() > 0)
 		m_HazeGrid.DebugDrawGrid(GetWorld());

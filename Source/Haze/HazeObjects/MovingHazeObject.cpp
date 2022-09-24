@@ -3,9 +3,10 @@
 
 #include "Haze/HazeObjects/MovingHazeObject.h"
 
-FVector AMovingHazeObject::TryGetNewObjectPlacementPoint(float objectSize, int objectIndex)
+bool AMovingHazeObject::TryGetNewObjectPlacementPoint(FVector& position, FVector& normal, float objectSize, int objectIndex)
 {
-	FVector2d circlePoint = FMath::RandPointInCircle(m_pPlacementArea->Bounds.SphereRadius);
+	float circleRadius = m_pPlacementArea->Bounds.SphereRadius - objectSize;
+	FVector2d circlePoint = FMath::RandPointInCircle(circleRadius);
 	FVector circleNorm = m_pPlacementDirection->GetForwardVector();
 	FVector axisA = UnrealUtilities::GetArbitraryNormalVector(circleNorm);
 	FVector axisB = circleNorm.Cross(axisA);
@@ -14,18 +15,19 @@ FVector AMovingHazeObject::TryGetNewObjectPlacementPoint(float objectSize, int o
 	FVector lineTraceStart = GetActorLocation() + pointOnCircle + total;
 	FVector lineTraceEnd = GetActorLocation() - pointOnCircle + total;
 
-	static FName TraceTag = TEXT("TraceTag");
+	static FName TraceTag = TEXT("MovingHazeTrace");
+	GetWorld()->DebugDrawTraceTag = TraceTag;
 	FCollisionQueryParams traceParams(TraceTag, false);
 	FHitResult outHit;
 	bool hasHit = GetWorld()->LineTraceSingleByObjectType(
 		OUT outHit,
 		lineTraceStart,
 		lineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
 		traceParams);
 	
 	if (!hasHit)
-		return m_Objects[objectIndex].pObject->GetComponentLocation();
+		return false;
 
 	for (int i = 0; i < m_Objects.size(); i++)
 	{
@@ -39,10 +41,12 @@ FVector AMovingHazeObject::TryGetNewObjectPlacementPoint(float objectSize, int o
 		float objectDoubleRadii = obj.nObjectSize + m_Objects[objectIndex].nObjectSize;
 		
 		if (FVector::DistSquared(objectLocation, outHit.Location) < objectDoubleRadii * objectDoubleRadii)
-			return m_Objects[objectIndex].pObject->GetComponentLocation();
+			return false;
 	}
-	
-	return outHit.Location;
+
+	position = outHit.Location;
+	normal = outHit.Normal;
+	return true;
 }
 
 // Sets default values
@@ -50,7 +54,14 @@ AMovingHazeObject::AMovingHazeObject()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	m_pPlacementArea = CreateDefaultSubobject<USphereComponent>(TEXT("Area Component"));
+	check(m_pPlacementArea != nullptr);
+	//
+	m_pPlacementDirection = CreateDefaultSubobject<UArrowComponent>(TEXT("Placement Component"));
+	check(m_pPlacementDirection != nullptr);
 
+	m_pHazeEffector = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Component"));
+	check(m_pHazeEffector != nullptr);
 }
 
 void AMovingHazeObject::AddObject(UStaticMeshComponent* pMesh)
@@ -66,7 +77,13 @@ void AMovingHazeObject::AddObject(UStaticMeshComponent* pMesh)
 void AMovingHazeObject::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	TArray<UStaticMeshComponent*> meshComponents;
+	GetComponents<UStaticMeshComponent>(meshComponents);
+	for (int i = 0; i < meshComponents.Num(); i++)
+	{
+		AddObject(meshComponents[i]);
+	}
 }
 
 // Called every frame
@@ -77,15 +94,29 @@ void AMovingHazeObject::Tick(float DeltaTime)
 	if (!m_pHazeEffector->IsHazeActive())
 		return;
 
-	if (m_pPlacementArea->WasRecentlyRendered(m_TimeOffScreenBeforeCanMove))
+	if (UnrealUtilities::IsInFrustrum(GetActorLocation(), m_pPlacementArea->Bounds.SphereRadius, GetWorld()))
+	{
+		m_TimeLastInFrustrum = GetWorld()->GetTimeSeconds();
+
+		if (!m_bHasAnyObjectMoved)
+			return;
+		
+		for (int i = 0; i < m_Objects.size(); i++)
+		{
+			m_Objects[i].bHasMoved = false;
+		}
+		
+		m_bHasAnyObjectMoved = false;
+		return;
+	}
+
+	if (GetWorld()->GetTimeSeconds() - m_TimeLastInFrustrum < m_TimeOffScreenBeforeCanMove)
 		return;
 	
 	for (int i = 0; i < m_Objects.size(); i++)
 	{
 		ObjectData& obj = m_Objects[i];
 		
-
-
 		if (obj.bHasMoved)
 			continue;
 		
@@ -94,13 +125,32 @@ void AMovingHazeObject::Tick(float DeltaTime)
 		if (DeltaTime * probabilityToShiftPerSecond < FMath::RandRange(0.0f, 1.0f))
 			continue;
 
-		FVector newPoint = TryGetNewObjectPlacementPoint(obj.nObjectSize, i);
+		FVector position;
+		FVector normal;
+		const bool foundNewPoint = TryGetNewObjectPlacementPoint(position, normal, obj.nObjectSize, i);
 
-		if (FVector::DistSquared(newPoint, obj.pObject->GetComponentLocation()) < FLT_EPSILON)
+		normal = -normal;
+		
+		if (!foundNewPoint)
 			continue;
 
-		obj.pObject->SetWorldLocation(newPoint);
+		obj.pObject->SetWorldLocation(position);
 		obj.bHasMoved = true;
+		m_bHasAnyObjectMoved = true;
+
+		if (!m_bRandomizeRotation)
+			continue;
+
+		FVector upVec = FVector(0, 0, 1);
+		FVector rotateAround = normal.Cross(upVec).GetUnsafeNormal();
+
+		float tilt = UnrealUtilities::GetRadAngleBetweenVectors(normal, upVec);
+
+		const float randAngle = FMath::FRandRange(0.0f, 360.0f);
+		
+		const FQuat rotator = FQuat(rotateAround, -tilt) *  FQuat(upVec,  randAngle);
+
+		obj.pObject->SetWorldRotation(rotator);
 	}
 
 }

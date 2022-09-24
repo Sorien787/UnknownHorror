@@ -34,6 +34,11 @@ bool UnrealUtilities::IsInFrustrum( FVector location, float size, UWorld* pWorld
 	return SceneView->ViewFrustum.IntersectSphere(location, size);
 }
 
+float UnrealUtilities::GetRadAngleBetweenVectors(FVector a, FVector b)
+{
+	return FMath::Acos(FVector::DotProduct(a.GetUnsafeNormal(), b.GetUnsafeNormal()));
+}
+
 FVector UnrealUtilities::GetArbitraryNormalVector(FVector basisA)
 {
 	FVector someDirection = FVector(1, 0, 0);

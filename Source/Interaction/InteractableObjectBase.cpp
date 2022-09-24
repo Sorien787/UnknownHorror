@@ -13,8 +13,7 @@ AInteractableObjectBase::AInteractableObjectBase()
 void AInteractableObjectBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	TInlineComponentArray<AInteractionPoint*> pInteractionPoints;
+	
 	TArray<AActor*> pActorChildren;
 	GetAttachedActors(pActorChildren);
 	for (int i = 0; i < pActorChildren.Num(); i++)
