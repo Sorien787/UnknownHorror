@@ -15,7 +15,18 @@ UCLASS()
 class DEEPSEAHORROR_API AFirstPersonPlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
+private:
+	void ClampViewOffsetToShoulder(float DeltaTime);
 
+	void ClampViewOffsetToMaximum(float maximumPitch, float maximumYaw);
+
+	void ClampViewOffsetToZero(float DeltaTime);
+
+	void OnEnterLookState();
+
+	void OnExitLookState();
+
+	FRotator ApplyPitchYawOffsetToBase(FRotator base) const;
 public:
 	// Sets default values for this character's properties
 	AFirstPersonPlayerCharacter();

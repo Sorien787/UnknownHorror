@@ -9,6 +9,79 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+void AFirstPersonPlayerCharacter::ClampViewOffsetToShoulder(float DeltaTime)
+{
+	if (FMath::Abs(m_currentPitchOffset) - m_currentMaxPitchOffset > 0)
+	{
+		m_currentPitchOffset = FMath::Sign(m_currentPitchOffset) * (FMath::Abs(m_currentPitchOffset) - FMath::Min(m_HeadSnapBackSpeed * DeltaTime, FMath::Abs(m_currentPitchOffset) - m_currentMaxPitchOffset));
+	}
+		
+	if (FMath::Abs(m_currentYawOffset) - m_currentMaxYawOffset > 0)
+	{
+		m_currentYawOffset = FMath::Sign(m_currentYawOffset) * (FMath::Abs(m_currentYawOffset) - FMath::Min(m_HeadSnapBackSpeed * DeltaTime, FMath::Abs(m_currentYawOffset) - m_currentMaxYawOffset));
+	}
+
+	bool isBelow = m_currentPitchOffset < m_ShoulderLowAngle;
+	bool isBeforeShoulder = FMath::Abs(m_currentYawOffset) < m_ShoulderStartAngle;
+	bool isAfterShoulder = FMath::Abs(m_currentYawOffset) > m_ShoulderEndAngle;
+	if (!isBeforeShoulder && isAfterShoulder && isBelow)
+	{
+		m_currentPitchOffset = FMath::Clamp(m_currentPitchOffset, m_ShoulderLowAngle, 90.0f);
+	}
+	else if (!isBeforeShoulder && !isAfterShoulder && isBelow)
+	{
+		const float percentageOfShoulderYaw = FMath::Min(1.0f,(FMath::Abs(m_currentYawOffset) - m_ShoulderStartAngle) / (m_ShoulderEndAngle - m_ShoulderStartAngle));
+		float pitchRange = m_ShoulderLowAngle + m_currentMaxPitchOffset;
+		float allowedPitch = -m_currentMaxPitchOffset + percentageOfShoulderYaw * pitchRange;
+		if (m_currentPitchOffset < allowedPitch)
+			m_currentPitchOffset = allowedPitch;
+	}
+}
+
+void AFirstPersonPlayerCharacter::ClampViewOffsetToZero(float DeltaTime)
+{
+	m_currentYawOffset = 0.0f;
+	m_currentPitchOffset = 0.0f;
+}
+
+void AFirstPersonPlayerCharacter::OnEnterLookState()
+{
+	m_bIsLooking = true;
+	m_bIsHeadAlignedWithBody = false;
+	if (!m_bIsInputLocked)
+	{
+		m_pCameraBoomArm->bUsePawnControlRotation = false;
+		const float controlPitch = GetControlRotation().Pitch;
+		const float controlYaw = GetControlRotation().Yaw;
+		m_pCameraBoomArm->SetWorldRotation(FRotator(0, controlYaw, 0));
+		if (m_currentPitchOffset < FLT_EPSILON)
+			m_currentPitchOffset = controlPitch;
+		if (m_currentPitchOffset > 180)
+			m_currentPitchOffset -= 360;
+		m_CharacterCamera->SetRelativeRotation(FRotator(controlPitch, 0, 0));
+	}
+	else
+	{
+		FQuat boomRot = m_pCameraBoomArm->GetComponentRotation().Quaternion();
+		FQuat camRot = m_cachedLockRotation.Quaternion();
+		FRotator tot = FRotator(boomRot.Inverse() * camRot);
+		m_currentPitchOffset = tot.Pitch;
+		m_currentYawOffset = tot.Yaw;
+		m_CharacterCamera->SetWorldRotation(m_cachedLockRotation);
+	}
+}
+
+void AFirstPersonPlayerCharacter::OnExitLookState()
+{
+	m_pCameraBoomArm->bUsePawnControlRotation = true;
+	m_pCameraBoomArm->SetWorldRotation(GetControlRotation());
+	m_bIsLooking = false;
+}
+
+FRotator AFirstPersonPlayerCharacter::ApplyPitchYawOffsetToBase(FRotator base) const
+{
+}
+
 // Sets default values
 AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 {
@@ -128,7 +201,6 @@ void AFirstPersonPlayerCharacter::AddCharacterPitchInput(float pitch)
 	else
 	{
 		AddControllerPitchInput(pitch);
-		
 	}
 }
 
@@ -266,83 +338,51 @@ void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 {
 	const bool bCanEnterLook = true;
-	const bool tryEnterLookState = m_bIsInputLocked || m_bWantsToLook; 
+	const bool tryEnterLookState = m_bIsInputLocked || m_bWantsToLook;
+
+	// use the controller for !m_bIsLooking
+
+	// use the head for m_bIsLooking, + the additional angles
 
 	if (tryEnterLookState && !m_bIsLooking && bCanEnterLook)
 	{
-		m_bIsLooking = true;
-		m_bIsHeadAlignedWithBody = false;
-		if (!m_bIsInputLocked)
-		{
-			m_pCameraBoomArm->bUsePawnControlRotation = false;
-			const float controlPitch = GetControlRotation().Pitch;
-			const float controlYaw = GetControlRotation().Yaw;
-			m_pCameraBoomArm->SetWorldRotation(FRotator(0, controlYaw, 0));
-			if (m_currentPitchOffset < FLT_EPSILON)
-				m_currentPitchOffset = controlPitch;
-			if (m_currentPitchOffset > 180)
-				m_currentPitchOffset -= 360;
-			m_CharacterCamera->SetRelativeRotation(FRotator(controlPitch, 0, 0));
-		}
-		else
-		{
-			FQuat boomRot = m_pCameraBoomArm->GetComponentRotation().Quaternion();
-			FQuat camRot = m_cachedLockRotation.Quaternion();
-			FRotator tot = FRotator(boomRot.Inverse() * camRot);
-			m_currentPitchOffset = tot.Pitch;
-			m_currentYawOffset = tot.Yaw;
-			m_CharacterCamera->SetWorldRotation(m_cachedLockRotation);
-		}
+		OnEnterLookState();
 	}
 	
 	if (!tryEnterLookState && m_bIsLooking)
 	{
-		m_pCameraBoomArm->bUsePawnControlRotation = true;
-		m_pCameraBoomArm->SetWorldRotation(GetControlRotation());
-		m_bIsLooking = false;
+		OnExitLookState();
 	}
-	
+
+
+	FRotator targetHeadRotator = m_CharacterCamera->GetComponentRotation();
+
 	if (m_bIsLooking)
 	{
-		FRotator newControlRotation = FRotator();
-
-		if (FMath::Abs(m_currentPitchOffset) - m_currentMaxPitchOffset > 0)
-		{
-			m_currentPitchOffset = FMath::Sign(m_currentPitchOffset) * (FMath::Abs(m_currentPitchOffset) - FMath::Min(m_HeadSnapBackSpeed * DeltaTime, FMath::Abs(m_currentPitchOffset) - m_currentMaxPitchOffset));
-		}
+		// FRotator newControlRotation = FRotator();
+		// if (!m_bIsInputLocked)
+		// 	m_pCameraBoomArm->SetWorldRotation(FRotator(0, GetControlRotation().Yaw, 0));
+		// newControlRotation.Pitch = m_currentPitchOffset;
+		// newControlRotation.Yaw = m_currentYawOffset;
+		// m_CharacterCamera->SetRelativeRotation(newControlRotation);
 		
-		if (FMath::Abs(m_currentYawOffset) - m_currentMaxYawOffset > 0)
-		{
-			m_currentYawOffset = FMath::Sign(m_currentYawOffset) * (FMath::Abs(m_currentYawOffset) - FMath::Min(m_HeadSnapBackSpeed * DeltaTime, FMath::Abs(m_currentYawOffset) - m_currentMaxYawOffset));
-		}
-
-		bool isBelow = m_currentPitchOffset < m_ShoulderLowAngle;
-		bool isBeforeShoulder = FMath::Abs(m_currentYawOffset) < m_ShoulderStartAngle;
-		bool isAfterShoulder = FMath::Abs(m_currentYawOffset) > m_ShoulderEndAngle;
-		if (!isBeforeShoulder && isAfterShoulder && isBelow)
-		{
-			m_currentPitchOffset = FMath::Clamp(m_currentPitchOffset, m_ShoulderLowAngle, 90.0f);
-		}
-		else if (!isBeforeShoulder && !isAfterShoulder && isBelow)
-		{
-			const float percentageOfShoulderYaw = FMath::Min(1.0f,(FMath::Abs(m_currentYawOffset) - m_ShoulderStartAngle) / (m_ShoulderEndAngle - m_ShoulderStartAngle));
-			float pitchRange = m_ShoulderLowAngle + m_currentMaxPitchOffset;
-			float allowedPitch = -m_currentMaxPitchOffset + percentageOfShoulderYaw * pitchRange;
-			if (m_currentPitchOffset < allowedPitch)
-				m_currentPitchOffset = allowedPitch;
-		}
-		if (!m_bIsInputLocked)
-			m_pCameraBoomArm->SetWorldRotation(FRotator(0, GetControlRotation().Yaw, 0));
-		newControlRotation.Pitch = m_currentPitchOffset;
-		newControlRotation.Yaw = m_currentYawOffset;
-		m_CharacterCamera->SetRelativeRotation(newControlRotation);
+		FRotator rotation = GetControlRotation();
+		ClampViewOffsetToZero(DeltaTime);
+		targetHeadRotator = ApplyPitchYawOffsetToBase(rotation);
 	}
+	else
+	{
+		FTransform headBoneTransform = GetMesh()->GetBoneTransform();
+		FRotator headBoneRotation = headBoneTransform.Rotator();
+		ClampViewOffsetToShoulder(DeltaTime);
+		targetHeadRotator = ApplyPitchYawOffsetToBase(headBoneRotation);
+	}
+	
 
 	if (m_bIsHeadAlignedWithBody || m_bIsLooking)
 		return;
 
-	m_currentYawOffset = 0.0f;
-	m_currentPitchOffset = 0.0f;
+
 	m_pCameraBoomArm->bUsePawnControlRotation = true;
 	m_bIsHeadAlignedWithBody = true;
 
