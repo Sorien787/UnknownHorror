@@ -34,6 +34,7 @@ class DiffusionGrid : public Grid<float>
 {
 protected:
 	virtual FColor ConvertGridValueToColor(const float& gridObject) const override;
+	virtual bool ShouldDebugDrawGridPoint(const float& gridObject) const override;
 private:
 	float m_DiffusionCoefficient;
 

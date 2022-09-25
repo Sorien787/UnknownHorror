@@ -85,10 +85,27 @@ void AMovingHazeObject::BeginPlay()
 		AddObject(meshComponents[i]);
 	}
 }
+static TAutoConsoleVariable<int32> CVarMovingHazeObjectDebug(
+	TEXT("MovingHazeObjectDebug"),
+	0,
+	TEXT("Shows visualization of where objects can move to, and what their sizes are.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
 
 // Called every frame
 void AMovingHazeObject::Tick(float DeltaTime)
 {
+	if (CVarMovingHazeObjectDebug->GetInt() > 0)
+	{
+		DrawDebugSphere(GetWorld(), m_pPlacementArea->GetComponentLocation(), m_pPlacementArea->Bounds.SphereRadius, 32, FColor::Black);
+
+		for (int i = 0; i < m_Objects.size(); i++)
+		{
+			DrawDebugSphere(GetWorld(), m_Objects[i].pObject->GetComponentLocation(), m_Objects[i].nObjectSize, 32, FColor::Green);
+			
+		}
+	}
+	
 	Super::Tick(DeltaTime);
 
 	if (!m_pHazeEffector->IsHazeActive())

@@ -52,6 +52,7 @@ protected:
 	}
 
 	virtual FColor ConvertGridValueToColor(const T& gridObject) const = 0;
+	virtual bool ShouldDebugDrawGridPoint(const T& gridObject) const = 0;
 public:
 	virtual T SampleGrid(const float x, const float y, const float z) const
 	{
@@ -75,6 +76,8 @@ public:
 					const FVector gridPositionWorld = m_GridOrigin + FVector(gridPosition) * m_GridElementSize + gridSize;
 					const int gridIndex = ConvertGridInputToIndex(gridPosition);
 					const T gridValue = m_BasicGrid[gridIndex];
+					if (!ShouldDebugDrawGridPoint(gridValue))
+						continue;
 					const FColor gridColor = ConvertGridValueToColor(gridValue);
 					DrawDebugBox(pRenderWorld, gridPositionWorld, gridSize, gridColor);
 				}

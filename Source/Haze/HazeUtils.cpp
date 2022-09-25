@@ -107,3 +107,8 @@ FColor DiffusionGrid::ConvertGridValueToColor(const float& gridObject) const
 	const uint8 cast = (uint8)FMath::Floor(resultantColor);
     return FColor(cast, 0.0f, 0.0f, resultantAlpha);
 }
+
+bool DiffusionGrid::ShouldDebugDrawGridPoint(const float& gridObject) const
+{
+	return gridObject > 0.01f;
+}

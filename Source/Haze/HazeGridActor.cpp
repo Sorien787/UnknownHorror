@@ -68,10 +68,7 @@ static TAutoConsoleVariable<int32> CVarHazeGridDebug(
 
 void AHazeGridActor::Tick(float deltaTime)
 {
-	const FString CommandString1 = "HazeGridDebug";
-	const auto pConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*CommandString1);
-	
-	if (pConsoleVariable->GetInt() > 0)
+	if (CVarHazeGridDebug->GetInt() > 0)
 		m_HazeGrid.DebugDrawGrid(GetWorld());
 }
 
