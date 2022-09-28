@@ -22,11 +22,8 @@ private:
 
 	void ClampViewOffsetToZero(float DeltaTime);
 
-	void OnEnterLookState();
+	FQuat m_currentHeadQuat;
 
-	void OnExitLookState();
-
-	FRotator ApplyPitchYawOffsetToBase(FRotator base) const;
 public:
 	// Sets default values for this character's properties
 	AFirstPersonPlayerCharacter();
@@ -174,6 +171,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		float m_LookSensitivityVal = 0.1f;
+
+	UPROPERTY(EditAnywhere)
+		FName m_HeadBoneName;
 	
 	bool m_bWantsToSprint{false};
 
@@ -196,10 +196,7 @@ public:
 	
 	bool m_bIsLooking{false};
 	bool m_bWantsToLook{false};
-	
-	bool m_bIsHeadAlignedWithBody{true};
 
 	bool m_bIsInputLocked{false};
-	FRotator m_cachedLockRotation;
 };
 

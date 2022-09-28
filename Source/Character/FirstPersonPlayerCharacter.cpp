@@ -44,44 +44,6 @@ void AFirstPersonPlayerCharacter::ClampViewOffsetToZero(float DeltaTime)
 	m_currentPitchOffset = 0.0f;
 }
 
-void AFirstPersonPlayerCharacter::OnEnterLookState()
-{
-	m_bIsLooking = true;
-	m_bIsHeadAlignedWithBody = false;
-	if (!m_bIsInputLocked)
-	{
-		m_pCameraBoomArm->bUsePawnControlRotation = false;
-		const float controlPitch = GetControlRotation().Pitch;
-		const float controlYaw = GetControlRotation().Yaw;
-		m_pCameraBoomArm->SetWorldRotation(FRotator(0, controlYaw, 0));
-		if (m_currentPitchOffset < FLT_EPSILON)
-			m_currentPitchOffset = controlPitch;
-		if (m_currentPitchOffset > 180)
-			m_currentPitchOffset -= 360;
-		m_CharacterCamera->SetRelativeRotation(FRotator(controlPitch, 0, 0));
-	}
-	else
-	{
-		FQuat boomRot = m_pCameraBoomArm->GetComponentRotation().Quaternion();
-		FQuat camRot = m_cachedLockRotation.Quaternion();
-		FRotator tot = FRotator(boomRot.Inverse() * camRot);
-		m_currentPitchOffset = tot.Pitch;
-		m_currentYawOffset = tot.Yaw;
-		m_CharacterCamera->SetWorldRotation(m_cachedLockRotation);
-	}
-}
-
-void AFirstPersonPlayerCharacter::OnExitLookState()
-{
-	m_pCameraBoomArm->bUsePawnControlRotation = true;
-	m_pCameraBoomArm->SetWorldRotation(GetControlRotation());
-	m_bIsLooking = false;
-}
-
-FRotator AFirstPersonPlayerCharacter::ApplyPitchYawOffsetToBase(FRotator base) const
-{
-}
-
 // Sets default values
 AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 {
@@ -112,27 +74,20 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 void AFirstPersonPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-
+	
 	const APlayerController* PC = Cast<const APlayerController>(Controller);
 
 	PC->PlayerCameraManager->ViewPitchMin = -m_MaxHeadPitch;
 	PC->PlayerCameraManager->ViewPitchMax = m_MaxHeadPitch;
+	
 	m_currentMaxPitchOffset = m_MaxHeadPitch;
 	m_currentMaxYawOffset = m_MaxHeadYaw;
+	
 	GetCharacterMovement()->MaxWalkSpeed = m_DefaultSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = m_DefaultCrouchSpeed;
-	if (m_InteractionUserComponent)
-	{
-		m_InteractionUserComponent->AddInteractionEnterBox(m_EnterBoxComponent);
-		m_InteractionUserComponent->AddInteractionExitBox(m_ExitBoxComponent);
-		
-	}
-	else
-	{
-		UE_DEBUG_BREAK();
-	}
 
+	m_InteractionUserComponent->AddInteractionEnterBox(m_EnterBoxComponent);
+	m_InteractionUserComponent->AddInteractionExitBox(m_ExitBoxComponent);
 }
 
 // Called every frame
@@ -317,8 +272,6 @@ void AFirstPersonPlayerCharacter::TriggerInteractions()
 	m_InteractionUserComponent->OnInteractButtonPressed();
 }
 
-
-
 void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 {
 	if (!m_InteractionUserComponent)
@@ -346,47 +299,81 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 	if (tryEnterLookState && !m_bIsLooking && bCanEnterLook)
 	{
-		OnEnterLookState();
+		m_bIsLooking = true;
+
+		// we'll be looking towards the control rotation
+		// we want to look relative to our head bone
+		// so figure out head bone to control rotation
+		// and set our current pitch offset and yaw offsets to match
+		const FQuat controlQuat = FQuat(GetControlRotation());
+	
+		const FTransform cameraBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
+
+		const FQuat controlQuat_to_cameraBoneQuat = controlQuat.Inverse() * cameraBoneQuat;
+
+		const float pitch = controlQuat_to_cameraBoneQuat.Euler().X;
+		const float yaw = controlQuat_to_cameraBoneQuat.Euler().Y;
+
+		m_currentPitchOffset = pitch;
+		m_currentYawOffset = yaw;
 	}
 	
 	if (!tryEnterLookState && m_bIsLooking)
 	{
-		OnExitLookState();
+		// we'll be looking along head bone + offsets
+		// but we want to be looking along our control rotation
+		// so set our control rotation to match our look state as best as possible
+		
+		const FTransform cameraBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
+	
+		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
+		const FQuat totalQuat = cameraBoneQuat * extraQuat;
+	
+		const float pitch = totalQuat.Euler().X;
+		const float yaw = totalQuat.Euler().Y;
+
+		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));
+	
+		Controller->SetControlRotation(FRotator(controlQuat));
 	}
 
 
-	FRotator targetHeadRotator = m_CharacterCamera->GetComponentRotation();
+	FQuat targetHeadQuat;
 
 	if (m_bIsLooking)
 	{
-		// FRotator newControlRotation = FRotator();
-		// if (!m_bIsInputLocked)
-		// 	m_pCameraBoomArm->SetWorldRotation(FRotator(0, GetControlRotation().Yaw, 0));
-		// newControlRotation.Pitch = m_currentPitchOffset;
-		// newControlRotation.Yaw = m_currentYawOffset;
-		// m_CharacterCamera->SetRelativeRotation(newControlRotation);
+		const FTransform headBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FQuat headBoneRotation = headBoneTransform.GetRotation();
 		
-		FRotator rotation = GetControlRotation();
-		ClampViewOffsetToZero(DeltaTime);
-		targetHeadRotator = ApplyPitchYawOffsetToBase(rotation);
+		ClampViewOffsetToShoulder(DeltaTime);
+		
+		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
+		const FQuat totalQuat = headBoneRotation * extraQuat;
+	
+		const float pitch = totalQuat.Euler().X;
+		const float yaw = totalQuat.Euler().Y;
+
+		targetHeadQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));		
 	}
 	else
 	{
-		FTransform headBoneTransform = GetMesh()->GetBoneTransform();
-		FRotator headBoneRotation = headBoneTransform.Rotator();
-		ClampViewOffsetToShoulder(DeltaTime);
-		targetHeadRotator = ApplyPitchYawOffsetToBase(headBoneRotation);
-	}
+		const FQuat rotation = FQuat(GetControlRotation());
+		
+		ClampViewOffsetToZero(DeltaTime);
 	
+		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
+		const FQuat totalQuat = rotation * extraQuat;
+	
+		const float pitch = totalQuat.Euler().X;
+		const float yaw = totalQuat.Euler().Y;
 
-	if (m_bIsHeadAlignedWithBody || m_bIsLooking)
-		return;
+		targetHeadQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));
+	}
 
-
-	m_pCameraBoomArm->bUsePawnControlRotation = true;
-	m_bIsHeadAlignedWithBody = true;
-
-	m_CharacterCamera->SetRelativeRotation(FRotator(m_currentPitchOffset, m_currentYawOffset, 0));
+	const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
+	m_CharacterCamera->SetWorldRotation(targetHeadQuat);
 }
 
 void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
@@ -451,54 +438,17 @@ void AFirstPersonPlayerCharacter::SprintStateUpdate(float DeltaTime)
 
 void AFirstPersonPlayerCharacter::LockCamera(float maxYaw, float maxPitch)
 {
-	
-	m_cachedLockRotation = m_CharacterCamera->GetComponentRotation();
 	m_bIsInputLocked = true;
-
-	m_pCameraBoomArm->bUsePawnControlRotation = false;
-	m_pCameraBoomArm->bInheritPitch = true;
-	m_pCameraBoomArm->bInheritRoll = true;
-	m_pCameraBoomArm->bInheritYaw = true;
-
-	USceneComponent* parent = m_pCameraBoomArm->GetAttachParent();
-	FName socketName = m_pCameraBoomArm->GetAttachSocketName();
-	FRotator newBoomArmRotation = parent->GetSocketRotation(socketName);
-	m_pCameraBoomArm->SetWorldRotation(newBoomArmRotation);
-
-	bUseControllerRotationYaw = false;
 	
 	m_currentMaxPitchOffset = maxPitch;
 	m_currentMaxYawOffset = maxYaw;
-	m_CharacterCamera->SetWorldRotation(m_cachedLockRotation);
-
 }
 
 
 void AFirstPersonPlayerCharacter::UnlockCamera()
 {
-	if (!m_bIsInputLocked)
-		return;
-
-	bUseControllerRotationYaw = true;
-	// when we unlock the camera, our pawn's rotation, and our camera's rotation, will not necessarily be that of the control rotation
-	// and also, the camera might be shifted in pitch and yaw. Our yaw is not what we can set the control rotation to - our pitch is valid though.
-	// so we need to set the control rotation to match our pawn's yaw
-	// and our camera's pitch
-	const FRotator currentCameraRotation = m_CharacterCamera->GetComponentRotation();
-	const FRotator currentPawnRotation = GetActorRotation();
-
-	// set the new control rotation to be where we were looking
-	const FRotator newControlRotation = FRotator(currentCameraRotation.Pitch, currentCameraRotation.Yaw, 0);
-	GetController()->SetControlRotation(newControlRotation);
-
-	// also make sure the pitch offset is valid
-	m_currentPitchOffset = currentCameraRotation.Pitch;
-	m_currentYawOffset = 0.0f;
-	
 	m_bIsInputLocked = false;
 
-	m_pCameraBoomArm->bUsePawnControlRotation = true;
-	
 	m_currentMaxPitchOffset = m_MaxHeadPitch;
 	m_currentMaxYawOffset = m_MaxHeadYaw;
 }
