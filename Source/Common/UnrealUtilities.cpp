@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#pragma optimize("", off)
 
 #include "UnrealUtilities.h"
 
@@ -115,6 +115,89 @@ FRotator UnrealUtilities::GetRotationMatrixToPlayer(const UWorld* world, const F
 FTransform UnrealUtilities::GetPlayerCameraTransform(const UWorld* world)
 {
 	return world->GetFirstPlayerController()->PlayerCameraManager->GetTransform();
+}
+
+FVector UnrealUtilities::VectorSpringInterpCD(FVector Current, FVector Target, FVector& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity)
+{
+	const FVector n1 = Velocity - (Current - Target) * (InterpSpeed * InterpSpeed * DeltaTime);
+	const float n2 = 1.f + InterpSpeed * DeltaTime;
+	if (MaxVelocity > 0.f)
+	{
+		Velocity = (n1 / (n2 * n2)).GetClampedToMaxSize(MaxVelocity);
+	}
+	else
+	{
+		Velocity = n1 / (n2 * n2);
+	}
+	return Current + Velocity * DeltaTime;
+}
+
+float UnrealUtilities::FloatSpringInterpCD(float Current, float Target, float& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity)
+{
+	const float n1 = Velocity - (Current - Target) * (InterpSpeed * InterpSpeed * DeltaTime);
+	const float n2 = 1.f + InterpSpeed * DeltaTime;
+
+	Velocity = (MaxVelocity > 0.f) ? FMath::Min(n1 / (n2 * n2), MaxVelocity) : n1 / (n2 * n2);
+
+	return Current + Velocity * DeltaTime;
+}
+
+FRotator UnrealUtilities::RotatorSpringInterpCD(FRotator Current, FRotator Target, FVector4& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity)
+{
+	return QuatSpringInterpCD(Current.Quaternion(), Target.Quaternion(), Velocity, DeltaTime, InterpSpeed, MaxVelocity).Rotator();
+}
+
+FORCEINLINE FVector4 UnrealUtilities::QuatToVector4(const FQuat& Quat)
+{
+	return FVector4(Quat.X, Quat.Y, Quat.Z, Quat.W);
+}
+
+FORCEINLINE FVector4 UnrealUtilities::ClampVector4(FVector4 Target, float MaxSize)
+{
+	if (MaxSize < KINDA_SMALL_NUMBER)
+	{
+		return FVector4(0.f, 0.f, 0.f, 0.f);
+	}
+
+	const float VSq = Target.SizeSquared();
+	if (VSq > FMath::Square(MaxSize))
+	{
+		const float Scale = MaxSize * FMath::InvSqrt(VSq);
+		return FVector4(Target.X*Scale, Target.Y*Scale, Target.Z*Scale, Target.W*Scale);
+	}
+	else
+	{
+		return Target;
+	}
+}
+
+FQuat UnrealUtilities::QuatSpringInterpCD(FQuat Current, FQuat Target, FVector4& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity)
+{
+	// Here would it be better to make operations directly on FQuat? 
+	// I can't find FQuat operators code to check, so I prefer those conversions...
+	FVector4 currentVector = QuatToVector4(Current);
+	FVector4 targetVector = QuatToVector4(Target);
+
+	// We can use either of vtarget/-vtarget. Use closer one. 
+	// If using FQuat, might FQuat::Squad() be usesul here?
+	if (Dot4(currentVector, targetVector) < 0.f) targetVector = -targetVector;
+
+	const FVector4 n1 = Velocity - (currentVector - targetVector) * (InterpSpeed * InterpSpeed * DeltaTime);
+	const float n2 = 1.f + InterpSpeed * DeltaTime;
+
+	if (MaxVelocity > 0.f)
+	{
+		Velocity = ClampVector4(n1 / (n2 * n2), MaxVelocity);
+	}
+	else
+	{
+		Velocity = n1 / (n2 * n2);
+	}
+	// Apply delta on current
+	currentVector = (currentVector + Velocity * DeltaTime);
+
+	// Normalizing gave odd results, it looks fine this way but don't ask me why...
+	return FQuat(currentVector.X, currentVector.Y, currentVector.Z, currentVector.W);
 }
 
 

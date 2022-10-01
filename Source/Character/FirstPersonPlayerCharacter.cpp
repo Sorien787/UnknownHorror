@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#pragma optimize("", off)
 #include "FirstPersonPlayerCharacter.h"
 
 #include "DrawDebugHelpers.h"
 #include "Interaction/InteractionUserComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Common/UnrealUtilities.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void AFirstPersonPlayerCharacter::ClampViewOffsetToShoulder(float DeltaTime)
@@ -307,13 +308,13 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 		// and set our current pitch offset and yaw offsets to match
 		const FQuat controlQuat = FQuat(GetControlRotation());
 	
-		const FTransform cameraBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FTransform cameraBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
 		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
 
 		const FQuat controlQuat_to_cameraBoneQuat = controlQuat.Inverse() * cameraBoneQuat;
 
-		const float pitch = controlQuat_to_cameraBoneQuat.Euler().X;
-		const float yaw = controlQuat_to_cameraBoneQuat.Euler().Y;
+		const float pitch = -controlQuat_to_cameraBoneQuat.Euler().Y;
+		const float yaw = controlQuat_to_cameraBoneQuat.Euler().Z;
 
 		m_currentPitchOffset = pitch;
 		m_currentYawOffset = yaw;
@@ -321,20 +322,21 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 	
 	if (!tryEnterLookState && m_bIsLooking)
 	{
+		m_bIsLooking = false;
 		// we'll be looking along head bone + offsets
 		// but we want to be looking along our control rotation
 		// so set our control rotation to match our look state as best as possible
 		
-		const FTransform cameraBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FTransform cameraBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
 		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
 	
-		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
+		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
 		const FQuat totalQuat = cameraBoneQuat * extraQuat;
 	
-		const float pitch = totalQuat.Euler().X;
-		const float yaw = totalQuat.Euler().Y;
+		const float pitch = totalQuat.Euler().Y;
+		const float yaw = totalQuat.Euler().Z;
 
-		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));
+		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));
 	
 		Controller->SetControlRotation(FRotator(controlQuat));
 	}
@@ -344,18 +346,22 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 	if (m_bIsLooking)
 	{
-		const FTransform headBoneTransform = GetMesh()->GetBoneTransform(GetMesh()->GetBoneIndex(m_HeadBoneName));
+		const FTransform headBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
 		const FQuat headBoneRotation = headBoneTransform.GetRotation();
-		
+		const FVector eulerAngles = headBoneRotation.Euler();
 		ClampViewOffsetToShoulder(DeltaTime);
-		
-		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
+		if (eulerAngles.X > 0)
+		{
+			int i = 0;
+			i++;
+		}
+		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
 		const FQuat totalQuat = headBoneRotation * extraQuat;
-	
-		const float pitch = totalQuat.Euler().X;
-		const float yaw = totalQuat.Euler().Y;
-
-		targetHeadQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));		
+		
+		const float pitch = totalQuat.Euler().Y;
+		const float yaw = totalQuat.Euler().Z;
+		
+		targetHeadQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));		
 	}
 	else
 	{
@@ -365,15 +371,20 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 	
 		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
 		const FQuat totalQuat = rotation * extraQuat;
-	
-		const float pitch = totalQuat.Euler().X;
-		const float yaw = totalQuat.Euler().Y;
 
-		targetHeadQuat = FQuat::MakeFromEuler(FVector(pitch, yaw, 0.0f));
+		const FVector eulerAngles = totalQuat.Euler();
+		const float pitch = eulerAngles.Y;
+		const float yaw = eulerAngles.Z;
+
+		targetHeadQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));
+
 	}
 
 	const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
-	m_CharacterCamera->SetWorldRotation(targetHeadQuat);
+
+	FQuat actualHeadQuat = UnrealUtilities::QuatSpringInterpCD(currentHeadQuat, targetHeadQuat, m_currentHeadVelocity, DeltaTime, m_CameraLookNormalizedSpeed, 100000.0f);
+
+	m_CharacterCamera->SetWorldRotation(actualHeadQuat);
 }
 
 void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)

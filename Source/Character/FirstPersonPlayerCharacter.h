@@ -24,6 +24,8 @@ private:
 
 	FQuat m_currentHeadQuat;
 
+	FVector4 m_currentHeadVelocity;
+
 public:
 	// Sets default values for this character's properties
 	AFirstPersonPlayerCharacter();
@@ -71,7 +73,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Actions")
 	UInputAction* LookAroundAction;
-	
+
 	// INPUT MAPPINGS //
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Controls|Input Mappings")
 	UInputMappingContext* BaseMappingContext;
@@ -141,38 +143,44 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_ExitBoxComponent;
-
-	UPROPERTY(EditAnywhere)
-		float m_DefaultCrouchSpeed = 100.0f;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_CameraLookNormalizedSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_CameraShoulderReturnSpeeds;
+
+	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
+		float m_DefaultCrouchSpeed = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
 		float m_DefaultSpeed = 150.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
 		float m_SprintSpeed = 400.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_HeadSnapBackSpeed = 100.0f;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_ShoulderStartAngle = 100.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_ShoulderEndAngle = 100.0f;
-	UPROPERTY(EditAnywhere)
 	
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 	float m_ShoulderLowAngle = -10.0f;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_MaxHeadYaw = 120.0f;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_MaxHeadPitch = 80.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		float m_LookSensitivityVal = 0.1f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
 		FName m_HeadBoneName;
 	
 	bool m_bWantsToSprint{false};

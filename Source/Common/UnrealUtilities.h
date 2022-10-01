@@ -14,9 +14,17 @@ public:
 	static TArray<FHitResult> RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor);
 	static FRotator GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation);
 	static FTransform GetPlayerCameraTransform(const UWorld* world);
+	FVector VectorSpringInterpCD(FVector Current, FVector Target, FVector& Velocity, float DeltaTime, float InterpSpeed,
+	                             float MaxVelocity);
 	static bool IsInFrustrum( FVector location, float size, UWorld* pWorld);
 	static float GetRadAngleBetweenVectors(FVector a, FVector b);
 	static FVector GetArbitraryNormalVector(FVector basisA);
+
+	static float FloatSpringInterpCD(float Current, float Target, float& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity);
+	static FRotator RotatorSpringInterpCD(FRotator Current, FRotator Target, FVector4& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity);
+	static FVector4 QuatToVector4(const FQuat& Quat);
+	static FVector4 ClampVector4(FVector4 Target, float MaxSize);
+	static FQuat QuatSpringInterpCD(FQuat Current, FQuat Target, FVector4& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity);
 	UnrealUtilities();
 	~UnrealUtilities();
 };
