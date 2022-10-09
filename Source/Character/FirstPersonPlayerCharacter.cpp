@@ -318,6 +318,8 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 		m_currentPitchOffset = pitch;
 		m_currentYawOffset = yaw;
+
+		bUseControllerRotationYaw = false;
 	}
 	
 	if (!tryEnterLookState && m_bIsLooking)
@@ -325,20 +327,33 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 		m_bIsLooking = false;
 		// we'll be looking along head bone + offsets
 		// but we want to be looking along our control rotation
-		// so set our control rotation to match our look state as best as possible
+		// so set our control reotation to match our look state as best as possible
 		
 		const FTransform cameraBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
 		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
 	
 		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
 		const FQuat totalQuat = cameraBoneQuat * extraQuat;
-	
-		const float pitch = totalQuat.Euler().Y;
-		const float yaw = totalQuat.Euler().Z;
+		const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
+		const float pitch = currentHeadQuat.Euler().Y;
+		const float yaw = currentHeadQuat.Euler().Z;
 
-		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));
-	
+		// however.
+		// this control quat could be wrapped all the way over 90 degrees, or under 90.
+		// so we want to limit the pitch to plus/minus 90.
+
+		const float pitchAfterLimit = FMath::Clamp(pitch, -89, 89);
+		
+		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAfterLimit, yaw));
+		FRotator actorRotation = GetActorRotation();
+		const FQuat actorRot = FQuat::MakeFromRotator(actorRotation);
+		const float pitch2 = actorRot.Euler().Y;
+		const float quat2 = actorRot.Euler().Z;
+		if (pitch2>quat2)
+		{int i = 0; i++;}
 		Controller->SetControlRotation(FRotator(controlQuat));
+		
+		bUseControllerRotationYaw = true;
 	}
 
 
@@ -356,12 +371,9 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 			i++;
 		}
 		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
-		const FQuat totalQuat = headBoneRotation * extraQuat;
-		
-		const float pitch = totalQuat.Euler().Y;
-		const float yaw = totalQuat.Euler().Z;
-		
-		targetHeadQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));		
+
+		targetHeadQuat = headBoneRotation * extraQuat;
+		GetController()->SetControlRotation(FRotator(targetHeadQuat));
 	}
 	else
 	{
@@ -370,18 +382,17 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 		ClampViewOffsetToZero(DeltaTime);
 	
 		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(m_currentPitchOffset, m_currentYawOffset, 0.0f));
-		const FQuat totalQuat = rotation * extraQuat;
-
-		const FVector eulerAngles = totalQuat.Euler();
-		const float pitch = eulerAngles.Y;
-		const float yaw = eulerAngles.Z;
-
-		targetHeadQuat = FQuat::MakeFromEuler(FVector(0.0f, pitch, yaw));
+		
+		targetHeadQuat =  rotation * extraQuat;
 
 	}
 
 	const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
-
+	
+	const float pitch2 = targetHeadQuat.Euler().Y;
+	const float quat2 = targetHeadQuat.Euler().Z;
+	if (pitch2>quat2)
+	{int i = 0; i++;}
 	FQuat actualHeadQuat = UnrealUtilities::QuatSpringInterpCD(currentHeadQuat, targetHeadQuat, m_currentHeadVelocity, DeltaTime, m_CameraLookNormalizedSpeed, 100000.0f);
 
 	m_CharacterCamera->SetWorldRotation(actualHeadQuat);
