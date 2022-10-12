@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "LightModifierComponent.h"
 #include "Components/PointLightComponent.h"
 
@@ -7,6 +8,19 @@
 ULightModifierComponent::ULightModifierComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
+}
+
+FLightFlickerStateStruct::FLightFlickerStateStruct()
+{
+}
+
+FLightFlickerStateStruct::FLightFlickerStateStruct(float min, float brightness, float freq, float proportion)
+{
+	m_MaxFlickerBrightness = brightness;
+	m_MinFlickerBrightness = min;
+	m_LightFlickerFrequency = freq;
+	m_LightDesiredPercentOnline = proportion;
 }
 
 // Called when the game starts
@@ -53,12 +67,28 @@ void ULightModifierComponent::BeginPlay()
 	if (hasFoundBulbMesh)
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("Light Modifier Component %s found Meshes, but no mesh had the name 'BulbMesh', is this intentional?"), *GetOwner()->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Light Modifier Component %s found Meshes, but no mesh had the tag 'BulbMesh', is this intentional?"), *GetOwner()->GetName());
+}
+
+void ULightModifierComponent::Break()
+{
+	m_IsBroken = true;
+	m_LightBreakDelegate.Broadcast();
+}
+
+void ULightModifierComponent::SetFlickerStatusOverride(const FLightFlickerStateStruct& flickerStateOverride)
+{
+	m_CurrentLightFlickerState = flickerStateOverride;
+}
+
+void ULightModifierComponent::CancelFlickerStatusOverride()
+{
+	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 }
 
 void ULightModifierComponent::SwitchOn(bool force /* = false */)
 {
-	if(m_IsOn && !force)
+	if(m_IsOn && !force || m_IsBroken)
 		return;
 	m_IsOn = true;
 	SetComponentTickEnabled(true);
@@ -103,36 +133,29 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 	float transitionAttemptProbability;
 
-	// here's the problem:
-
-	// want to have a frequency (ish)
-
-	// so maybe 1/frequency is period
-
-	// and scale the transition probability by (time since last on) / (period) = (time since last on) * frequency
-
-	// so that we're less likely to transition at a fequency lower than desired
-
-	// and mroe likely to at a frequency higher than desired
-
 	if (m_IsFlickering)
-		transitionAttemptProbability = FMath::FRandRange(0.0f, m_LightDesiredPercentOnline);
+		transitionAttemptProbability = FMath::FRandRange(0.0f, m_CurrentLightFlickerState.m_LightDesiredPercentOnline);
 	else
-		transitionAttemptProbability = FMath::FRandRange(0.0f, 1-m_LightDesiredPercentOnline);
+		transitionAttemptProbability = FMath::FRandRange(0.0f, 1-m_CurrentLightFlickerState.m_LightDesiredPercentOnline);
+	
+	const float currentTime = GetWorld()->GetTimeSeconds();
+
+	const float frequencyScalar = (currentTime - m_TimeLastStateTransition) * m_CurrentLightFlickerState.m_LightFlickerFrequency;
+
+	transitionAttemptProbability *= frequencyScalar;
 	
 	if(transitionAttemptProbability < FMath::FRandRange(0.0f, 1.0f))
 		return;
-	// m_LightFlickerFrequency
 
 	m_IsFlickering = !m_IsFlickering;
 	
 	m_LightFlickerDelegate.Broadcast(m_IsFlickering);
 	m_LightIntensityDelegate.Broadcast(m_CurrentIntensity);
-	
+
+	m_TimeLastStateTransition = currentTime;
 	if (m_IsFlickering)
 	{
-
-		SetLightIntensity(FMath::FRandRange(m_MinFlickerBrightness, m_MaxFlickerBrightness));	
+		SetLightIntensity(FMath::FRandRange(m_CurrentLightFlickerState.m_MinFlickerBrightness, m_CurrentLightFlickerState.m_MaxFlickerBrightness));	
 	}
 	else
 	{

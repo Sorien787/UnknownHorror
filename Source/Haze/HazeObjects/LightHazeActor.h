@@ -20,9 +20,12 @@ public:
 	ALightHazeActor();
 
 	virtual void OnHazeStrengthChanged(float value) override;
-protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
+
+	virtual void OnHazeEvent() override;
+
+	virtual void OnHazeFinish() override;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

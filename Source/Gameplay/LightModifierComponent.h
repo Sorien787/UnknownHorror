@@ -9,17 +9,48 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightIntensityDelegate, float, lightIntensity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightFlickerDelegate, bool, isFlickering);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLightBreakDelegate);
+
+USTRUCT(BlueprintType)
+struct FLightFlickerStateStruct
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite)
+	float m_MinFlickerBrightness;
+
+	UPROPERTY(BlueprintReadWrite)
+	float m_MaxFlickerBrightness;
+
+	UPROPERTY(BlueprintReadWrite)
+	float m_LightFlickerFrequency;
+
+	UPROPERTY(BlueprintReadWrite)
+	float m_LightDesiredPercentOnline;
+
+	FLightFlickerStateStruct();
+
+	FLightFlickerStateStruct(float min, float brightness, float freq, float proportion);
+};
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
 {
 private:
 	GENERATED_BODY()
 
+	bool m_IsBroken{false};
+
 	bool m_IsOn{false};
 	
 	bool m_IsFlickering{false};
 	
 	float m_CurrentIntensity{0.0f};
+
+	float m_TimeLastStateTransition{0.0f};
+
+	FLightFlickerStateStruct m_CurrentLightFlickerState;
 
 protected:
 
@@ -31,6 +62,12 @@ public:
 	void AddLightToControlGroup(ULightComponent* pLightComponent);
 
 	void AddMeshToControlGroup(UMeshComponent* pMeshComponent);
+
+	void Break();
+
+	void SetFlickerStatusOverride(const FLightFlickerStateStruct& flickerStateOverride);
+
+	void CancelFlickerStatusOverride();
 	
 UFUNCTION(BlueprintCallable)
 	void SwitchOn(bool force = false);
@@ -49,31 +86,25 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FLightFlickerDelegate m_LightFlickerDelegate;
 
-	UPROPERTY(EditAnywhere)
-	UMaterialInterface* Material;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flicker");
-	float m_MinFlickerBrightness;
+	UPROPERTY(BlueprintAssignable)
+	FLightBreakDelegate m_LightBreakDelegate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flicker");
-	float m_MaxFlickerBrightness;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flicker");
-	float m_LightFlickerFrequency;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flicker");
-	float m_LightDesiredPercentOnline;
+	UPROPERTY(EditAnywhere, Category = "Material Setup");
+	UMaterialInterface* Material;
 	
 	UPROPERTY(EditAnywhere, Category = "Material Setup")
 	FRuntimeFloatCurve m_LightIntensityToEmissivity;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
+	FLightFlickerStateStruct m_DefaultLightFlickerState;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
 	float m_DefaultBrightness;
 
-	UPROPERTY(EditAnywhere, Category = "LightSetting");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
 	bool m_DefaultOn;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	UMaterialInstanceDynamic* m_InstancedMat;
 
 	UPROPERTY()

@@ -18,10 +18,12 @@ ALightHazeActor::ALightHazeActor()
 
 void ALightHazeActor::OnHazeStrengthChanged(float value)
 {
-	m_pLightModifier->m_LightFlickerFrequency = m_LightFlickerFrequencyByHazeModifier.EditorCurveData.Eval(value);
-	m_pLightModifier->m_MinFlickerBrightness = m_LightMinBrightness.EditorCurveData.Eval(value);
-	m_pLightModifier->m_MaxFlickerBrightness = m_LightMaxBrightness.EditorCurveData.Eval(value);
-	m_pLightModifier->m_LightDesiredPercentOnline = m_LightPercentOnlineByHazeModifier.EditorCurveData.Eval(value);
+	m_pLightModifier->SetFlickerStatusOverride(FLightFlickerStateStruct(
+	m_LightMinBrightness.EditorCurveData.Eval(value),
+	m_LightMaxBrightness.EditorCurveData.Eval(value),
+	m_LightFlickerFrequencyByHazeModifier.EditorCurveData.Eval(value),
+	m_LightPercentOnlineByHazeModifier.EditorCurveData.Eval(value)
+	));
 }
 
 
@@ -32,5 +34,16 @@ void ALightHazeActor::BeginPlay()
 	Super::BeginPlay();
 	m_pHazeEffectComponent->m_HazeComponentListeners.AddListener(this, "Light Listener");
 	OnHazeStrengthChanged(m_pHazeEffectComponent->GetCurrentHazeStrength());
+}
+
+void ALightHazeActor::OnHazeEvent()
+{
+	m_pLightModifier->Break();
+	m_pHazeEffectComponent->m_HazeComponentListeners.RemoveListener(this);
+}
+
+void ALightHazeActor::OnHazeFinish()
+{
+	m_pLightModifier->CancelFlickerStatusOverride();
 }
 
