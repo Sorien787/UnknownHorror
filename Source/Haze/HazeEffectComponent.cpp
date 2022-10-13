@@ -31,11 +31,12 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 	const bool hazeActiveChanged = hazeEffectActive != m_HazeReachedThreshold;
 	
 	m_HazeReachedThreshold = hazeEffectActive;
-
-	const float eventProbability = m_HazeStrengthToEventProbability.EditorCurveData.Eval(m_CurrentHazeStrength) * deltaTime;
-	if (FMath::FRandRange(0.0f, 100.0f) < eventProbability)
+	const float perSecEventProbability = m_HazeStrengthToEventProbability.EditorCurveData.Eval(m_CurrentHazeStrength);
+	const float eventProbability = perSecEventProbability * deltaTime;
+	if (FMath::FRandRange(0.0f, 1.0f) < eventProbability)
 	{
-		m_OnHazeComponentBreak.Broadcast();
+		m_OnHazeEvent.Broadcast();
+		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeEvent);
 		SetComponentTickEnabled(false);
 		return;
 	}

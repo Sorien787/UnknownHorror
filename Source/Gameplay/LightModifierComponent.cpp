@@ -11,17 +11,6 @@ ULightModifierComponent::ULightModifierComponent()
 	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 }
 
-FLightFlickerStateStruct::FLightFlickerStateStruct()
-{
-}
-
-FLightFlickerStateStruct::FLightFlickerStateStruct(float min, float brightness, float freq, float proportion)
-{
-	m_MaxFlickerBrightness = brightness;
-	m_MinFlickerBrightness = min;
-	m_LightFlickerFrequency = freq;
-	m_LightDesiredPercentOnline = proportion;
-}
 
 // Called when the game starts
 void ULightModifierComponent::BeginPlay()
@@ -73,7 +62,10 @@ void ULightModifierComponent::BeginPlay()
 void ULightModifierComponent::Break()
 {
 	m_IsBroken = true;
+	SwitchOff();
+	SetLightIntensity(m_BrightnessWhenBreaking);
 	m_LightBreakDelegate.Broadcast();
+	GetWorld()->GetTimerManager().SetTimer(m_BreakTimerHandle, this, &ULightModifierComponent::OnFinishedBreaking, m_LengthOfBreakFlash, false, 0.1f);
 }
 
 void ULightModifierComponent::SetFlickerStatusOverride(const FLightFlickerStateStruct& flickerStateOverride)
@@ -113,7 +105,8 @@ void ULightModifierComponent::SetLightIntensity(float intensity)
 	{
 		pLightComponent->SetIntensity(intensity * m_DefaultBrightness);
 	}
-	m_InstancedMat->SetScalarParameterValue("Emissive_Strength", m_LightIntensityToEmissivity.EditorCurveData.Eval(intensity));
+	const float desiredStrength = m_LightIntensityToEmissivity.EditorCurveData.Eval(intensity);
+	m_InstancedMat->SetScalarParameterValue("Emissive_Strength",desiredStrength );
 }
 
 void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComponent)
@@ -125,6 +118,11 @@ void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComp
 void ULightModifierComponent::AddMeshToControlGroup(UMeshComponent* pMeshComponent)
 {
 	m_pMeshComponentsArray.Add(pMeshComponent);
+}
+
+void ULightModifierComponent::OnFinishedBreaking()
+{
+	SetLightIntensity(-10.0f);
 }
 
 void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -140,7 +138,7 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	
 	const float currentTime = GetWorld()->GetTimeSeconds();
 
-	const float frequencyScalar = (currentTime - m_TimeLastStateTransition) * m_CurrentLightFlickerState.m_LightFlickerFrequency;
+	const float frequencyScalar = m_ApplyFrequencyScalar ? (currentTime - m_TimeLastStateTransition) * m_CurrentLightFlickerState.m_LightFlickerFrequency : 1.0f;
 
 	transitionAttemptProbability *= frequencyScalar;
 	

@@ -9,7 +9,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeFinish);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeComponentBreak);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeModifierChange, float, HazeModifier);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeStrengthChange, float, HazeStrength);
 
@@ -74,7 +74,7 @@ public:
 	FOnHazeStrengthChange m_OnHazeStrengthChanged;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnHazeComponentBreak m_OnHazeComponentBreak;
+	FOnHazeEvent m_OnHazeEvent;
 
 
 	// Called every frame

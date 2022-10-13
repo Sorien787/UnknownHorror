@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LightModifierFlickerStruct.h"
 #include "Components/ActorComponent.h"
 #include "Components/LightComponent.h"
 #include "LightModifierComponent.generated.h"
@@ -10,29 +11,6 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightIntensityDelegate, float, lightIntensity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightFlickerDelegate, bool, isFlickering);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLightBreakDelegate);
-
-USTRUCT(BlueprintType)
-struct FLightFlickerStateStruct
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite)
-	float m_MinFlickerBrightness;
-
-	UPROPERTY(BlueprintReadWrite)
-	float m_MaxFlickerBrightness;
-
-	UPROPERTY(BlueprintReadWrite)
-	float m_LightFlickerFrequency;
-
-	UPROPERTY(BlueprintReadWrite)
-	float m_LightDesiredPercentOnline;
-
-	FLightFlickerStateStruct();
-
-	FLightFlickerStateStruct(float min, float brightness, float freq, float proportion);
-};
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
@@ -50,6 +28,8 @@ private:
 
 	float m_TimeLastStateTransition{0.0f};
 
+	FTimerHandle m_BreakTimerHandle;
+
 	FLightFlickerStateStruct m_CurrentLightFlickerState;
 
 protected:
@@ -63,6 +43,8 @@ public:
 
 	void AddMeshToControlGroup(UMeshComponent* pMeshComponent);
 
+	void OnFinishedBreaking();
+	
 	void Break();
 
 	void SetFlickerStatusOverride(const FLightFlickerStateStruct& flickerStateOverride);
@@ -92,7 +74,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Material Setup");
 	UMaterialInterface* Material;
 	
-	UPROPERTY(EditAnywhere, Category = "Material Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material Setup")
 	FRuntimeFloatCurve m_LightIntensityToEmissivity;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
@@ -103,7 +85,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
 	bool m_DefaultOn;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
+	float m_BrightnessWhenBreaking {3.0f};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
+	float m_LengthOfBreakFlash{0.3f};
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
+	bool m_ApplyFrequencyScalar;
+	
 	UPROPERTY()
 	UMaterialInstanceDynamic* m_InstancedMat;
 
