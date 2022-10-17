@@ -7,9 +7,7 @@
 #include <mutex>
 
 #include "CoreMinimal.h"
-#include "HazeUtils.h"
 #include "HazeGridActor.h"
-#include "array"
 #include "Subsystems/WorldSubsystem.h"
 #include "HazeSubsystem.generated.h"
 
@@ -40,7 +38,7 @@ class DEEPSEAHORROR_API UHazeSubsystem : public UTickableWorldSubsystem
 	std::condition_variable m_UpdateLoopConditionVariable;
 	
 public:
-	virtual ~UHazeSubsystem();
+	virtual ~UHazeSubsystem() override;
 	
 	void RegisterHazeGrid(AHazeGridActor* hazeGrid);
 	void UnregisterHazeGrid(AHazeGridActor* hazeGrid);

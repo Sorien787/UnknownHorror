@@ -20,6 +20,9 @@ public:
 	static float GetRadAngleBetweenVectors(FVector a, FVector b);
 	static FVector GetArbitraryNormalVector(FVector basisA);
 
+	template<class C>
+	static C* GetComponentFromActor(AActor* pOwner);
+
 	static float FloatSpringInterpCD(float Current, float Target, float& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity);
 	static FRotator RotatorSpringInterpCD(FRotator Current, FRotator Target, FVector4& Velocity, float DeltaTime, float InterpSpeed, float MaxVelocity);
 	static FVector4 QuatToVector4(const FQuat& Quat);
@@ -28,6 +31,16 @@ public:
 	UnrealUtilities();
 	~UnrealUtilities();
 };
+
+template <class C>
+C* UnrealUtilities::GetComponentFromActor(AActor* pOwner)
+{
+	TArray<C*> components;
+	pOwner->GetComponents<C>(components);
+	if (components.Num() == 0)
+		return nullptr;
+	return components[0];
+}
 
 
 template <class T>

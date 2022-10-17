@@ -146,11 +146,7 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		return;
 
 	m_IsFlickering = !m_IsFlickering;
-	
-	m_LightFlickerDelegate.Broadcast(m_IsFlickering);
-	m_LightIntensityDelegate.Broadcast(m_CurrentIntensity);
 
-	m_TimeLastStateTransition = currentTime;
 	if (m_IsFlickering)
 	{
 		SetLightIntensity(FMath::FRandRange(m_CurrentLightFlickerState.m_MinFlickerBrightness, m_CurrentLightFlickerState.m_MaxFlickerBrightness));	
@@ -159,5 +155,10 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	{
 		SetLightIntensity(1.0f);
 	}
+	
+	m_LightFlickerDelegate.Broadcast(m_IsFlickering);
+	m_LightIntensityDelegate.Broadcast(m_CurrentIntensity);
+
+	m_TimeLastStateTransition = currentTime;
 }
 

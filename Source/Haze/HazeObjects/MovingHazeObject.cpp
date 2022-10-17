@@ -49,6 +49,16 @@ bool AMovingHazeObject::TryGetNewObjectPlacementPoint(FVector& position, FVector
 	return true;
 }
 
+void AMovingHazeObject::OnEnterLight()
+{
+	m_bIsInLight = true;
+}
+
+void AMovingHazeObject::OnExitLight()
+{
+	m_bIsInLight = false;
+}
+
 // Sets default values
 AMovingHazeObject::AMovingHazeObject()
 {
@@ -62,6 +72,9 @@ AMovingHazeObject::AMovingHazeObject()
 
 	m_pHazeEffector = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Component"));
 	check(m_pHazeEffector != nullptr);
+
+	m_pLightSensitivityComponent = CreateDefaultSubobject<ULightSensitivityComponent>(TEXT("Haze Component"));
+	check(m_pLightSensitivityComponent != nullptr);
 }
 
 void AMovingHazeObject::AddObject(UStaticMeshComponent* pMesh)
@@ -73,10 +86,43 @@ void AMovingHazeObject::AddObject(UStaticMeshComponent* pMesh)
 	m_Objects.emplace_back(pMesh, false, extent.Length());
 }
 
+void AMovingHazeObject::MoveObject(ObjectData& objData, int i)
+{
+	FVector position;
+	FVector normal;
+	const bool foundNewPoint = TryGetNewObjectPlacementPoint(position, normal, objData.nObjectSize, i);
+
+	normal = -normal;
+		
+	if (!foundNewPoint)
+		return;
+
+	objData.pObject->SetWorldLocation(position);
+	objData.bHasMoved = true;
+	m_bHasAnyObjectMoved = true;
+
+	if (!m_bRandomizeRotation)
+		return;
+
+	FVector upVec = FVector(0, 0, 1);
+	FVector rotateAround = normal.Cross(upVec).GetUnsafeNormal();
+
+	float tilt = UnrealUtilities::GetRadAngleBetweenVectors(normal, upVec);
+
+	const float randAngle = FMath::FRandRange(0.0f, 360.0f);
+		
+	const FQuat rotator = FQuat(rotateAround, -tilt) *  FQuat(upVec,  randAngle);
+
+	objData.pObject->SetWorldRotation(rotator);
+}
+
 // Called when the game starts or when spawned
 void AMovingHazeObject::BeginPlay()
 {
 	Super::BeginPlay();
+
+	m_pLightSensitivityComponent->m_EnterLightAreaDelegate.AddDynamic(this, &AMovingHazeObject::OnEnterLight);
+	m_pLightSensitivityComponent->m_ExitLightAreaDelegate.AddDynamic(this, &AMovingHazeObject::OnExitLight);
 
 	TArray<UStaticMeshComponent*> meshComponents;
 	GetComponents<UStaticMeshComponent>(meshComponents);
@@ -111,7 +157,13 @@ void AMovingHazeObject::Tick(float DeltaTime)
 	if (!m_pHazeEffector->IsHazeActive())
 		return;
 
-	if (UnrealUtilities::IsInFrustrum(GetActorLocation(), m_pPlacementArea->Bounds.SphereRadius, GetWorld()))
+	// we can move objects if we're not lit
+	if (m_bIsInLight)
+		return;
+	
+	const bool isUnobserved = (!UnrealUtilities::IsInFrustrum(GetActorLocation(), m_pPlacementArea->Bounds.SphereRadius, GetWorld()) || !m_bIsInLight);
+
+	if (!isUnobserved)
 	{
 		m_TimeLastInFrustrum = GetWorld()->GetTimeSeconds();
 
@@ -127,9 +179,10 @@ void AMovingHazeObject::Tick(float DeltaTime)
 		return;
 	}
 
-	if (GetWorld()->GetTimeSeconds() - m_TimeLastInFrustrum < m_TimeOffScreenBeforeCanMove)
+	if (GetWorld()->GetTimeSeconds() - m_TimeLastInFrustrum < m_TimeUnobservedBeforeCanMove)
 		return;
-	
+
+
 	for (int i = 0; i < m_Objects.size(); i++)
 	{
 		ObjectData& obj = m_Objects[i];
@@ -142,32 +195,7 @@ void AMovingHazeObject::Tick(float DeltaTime)
 		if (DeltaTime * probabilityToShiftPerSecond < FMath::RandRange(0.0f, 1.0f))
 			continue;
 
-		FVector position;
-		FVector normal;
-		const bool foundNewPoint = TryGetNewObjectPlacementPoint(position, normal, obj.nObjectSize, i);
-
-		normal = -normal;
-		
-		if (!foundNewPoint)
-			continue;
-
-		obj.pObject->SetWorldLocation(position);
-		obj.bHasMoved = true;
-		m_bHasAnyObjectMoved = true;
-
-		if (!m_bRandomizeRotation)
-			continue;
-
-		FVector upVec = FVector(0, 0, 1);
-		FVector rotateAround = normal.Cross(upVec).GetUnsafeNormal();
-
-		float tilt = UnrealUtilities::GetRadAngleBetweenVectors(normal, upVec);
-
-		const float randAngle = FMath::FRandRange(0.0f, 360.0f);
-		
-		const FQuat rotator = FQuat(rotateAround, -tilt) *  FQuat(upVec,  randAngle);
-
-		obj.pObject->SetWorldRotation(rotator);
+		MoveObject(obj, i);
 	}
 
 }

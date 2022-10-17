@@ -7,6 +7,7 @@
 #include "../HazeEffectComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/SphereComponent.h"
+#include "Lighting/LightSensitivityComponent.h"
 #include "MovingHazeObject.generated.h"
 
 struct ObjectData
@@ -29,11 +30,19 @@ class DEEPSEAHORROR_API AMovingHazeObject : public AActor
 	float m_TimeLastInFrustrum = 0.0f;
 
 	bool m_bHasAnyObjectMoved = false;
+
+	bool m_bIsInLight = false;
+
+	void OnEnterLight();
+
+	void OnExitLight();
 	
 public:	
 	AMovingHazeObject();
 
 	void AddObject(UStaticMeshComponent* pMesh);
+
+	void MoveObject(ObjectData& objData, int i);
 
 protected:
 	virtual void BeginPlay() override;
@@ -42,7 +51,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-	float m_TimeOffScreenBeforeCanMove;
+	float m_TimeUnobservedBeforeCanMove;
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToShiftProbabilityPerSecond;
@@ -58,4 +67,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	UHazeEffectComponent* m_pHazeEffector;
+
+	UPROPERTY(EditAnywhere)
+	ULightSensitivityComponent* m_pLightSensitivityComponent;
 };

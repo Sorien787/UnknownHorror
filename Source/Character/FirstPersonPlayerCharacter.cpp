@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#pragma optimize("", off)
+
 #include "FirstPersonPlayerCharacter.h"
 
 #include "DrawDebugHelpers.h"
