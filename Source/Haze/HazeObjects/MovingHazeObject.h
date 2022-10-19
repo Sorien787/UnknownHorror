@@ -30,12 +30,6 @@ class DEEPSEAHORROR_API AMovingHazeObject : public AActor
 	float m_TimeLastInFrustrum = 0.0f;
 
 	bool m_bHasAnyObjectMoved = false;
-
-	bool m_bIsInLight = false;
-
-	void OnEnterLight();
-
-	void OnExitLight();
 	
 public:	
 	AMovingHazeObject();
@@ -49,12 +43,15 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(EditAnywhere)
-	float m_TimeUnobservedBeforeCanMove;
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToShiftProbabilityPerSecond;
+
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_HazeStrengthToTimeBetweenShifts;
+
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_HazeStrengthToDistanceShifted;
 
 	UPROPERTY(EditAnywhere)
 	bool m_bRandomizeRotation{false};

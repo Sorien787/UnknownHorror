@@ -3,14 +3,36 @@
 
 #include "Lighting/TrackerPointLight.h"
 #include "Common/UnrealUtilities.h"
+#include "Components/SphereComponent.h"
+#include "GameFramework/Actor.h"
 #include "Gameplay/LightModifierComponent.h"
-
-bool ATrackerPointLight::IsProvidingEnoughLight() const
+#pragma optimize("", off)
+bool UTrackerPointLight::IsProvidingEnoughLight() const
 {
 	return m_pPointLight->Intensity > m_MinIntensityToBeConsideredOn;
 }
 
-void ATrackerPointLight::OnSetLightIntensity(float lightIntensity)
+void UTrackerPointLight::OnActorOverlap(AActor* pActor)
+{
+ULightSensitivityComponent* pLightSensitiveComponent = UnrealUtilities::GetComponentFromActor<ULightSensitivityComponent>(pActor);
+
+	if (!pLightSensitiveComponent)
+		return;
+
+	const auto& it = std::find(m_pLightSensitivityComponents.begin(), m_pLightSensitivityComponents.end(), pLightSensitiveComponent);
+
+	if (it != m_pLightSensitivityComponents.end())
+		return;
+	
+	m_pLightSensitivityComponents.push_back(pLightSensitiveComponent);
+
+	if (!IsProvidingEnoughLight())
+		return;
+	
+	pLightSensitiveComponent->OnEnterLightArea();
+}
+
+void UTrackerPointLight::OnSetLightIntensity(float lightIntensity)
 {
 	const bool bIsNowProvidingEnoughLight = IsProvidingEnoughLight();
 
@@ -37,36 +59,39 @@ void ATrackerPointLight::OnSetLightIntensity(float lightIntensity)
 	}
 }
 
-// Sets default values
-ATrackerPointLight::ATrackerPointLight()
-{
-	m_pPointLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("Light"));
-	check(m_pPointLight != nullptr);
-	m_pPointLight->SetupAttachment(GetRootComponent());
-
-	m_pCollisionShape = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Area"));
-	check(m_pCollisionShape != nullptr);
-	m_pCollisionShape->SetupAttachment(GetRootComponent());
-
-	m_pLightModifier = CreateDefaultSubobject<ULightModifierComponent>(TEXT("Light Modifier"));
-	check(m_pLightModifier != nullptr);
-}
-
-// Called when the game starts or when spawned
-void ATrackerPointLight::BeginPlay()
+void UTrackerPointLight::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	USphereComponent* pCollisionShape = UnrealUtilities::GetComponentFromActor<USphereComponent>(GetOwner());
+	ULightModifierComponent* pLightModifierComponent = UnrealUtilities::GetComponentFromActor<ULightModifierComponent>(GetOwner());
+	m_pPointLight = UnrealUtilities::GetComponentFromActor<UPointLightComponent>(GetOwner());
 
-	m_pCollisionShape->SetSphereRadius(m_pPointLight->AttenuationRadius);
+	if (!pCollisionShape || !pLightModifierComponent || !m_pPointLight)
+		return;
 
-	m_pCollisionShape->OnComponentBeginOverlap.AddDynamic(this, &ATrackerPointLight::OnBoxBeginOverlap);
-	m_pCollisionShape->OnComponentBeginOverlap.AddDynamic(this, &ATrackerPointLight::OnBoxBeginOverlap);
+	m_bIsBrightEnough = IsProvidingEnoughLight();
+	TArray<AActor*> pActors;
+	pCollisionShape->GetOverlappingActors(pActors);
+	for (size_t i = 0; i < pActors.Num(); i++)
+	{
+		OnActorOverlap(pActors[i]);
+	}
+	pCollisionShape->SetSphereRadius(m_pPointLight->AttenuationRadius);
+	pCollisionShape->OnComponentBeginOverlap.AddDynamic(this, &UTrackerPointLight::OnBoxBeginOverlap);
+	pCollisionShape->OnComponentEndOverlap.AddDynamic(this, &UTrackerPointLight::OnBoxEndOverlap);
 
-	m_pLightModifier->m_LightIntensityDelegate.AddDynamic(this, &ATrackerPointLight::OnSetLightIntensity);
-	OnSetLightIntensity(m_pPointLight->Intensity);
+	pLightModifierComponent->m_LightIntensityDelegate.AddDynamic(this, &UTrackerPointLight::OnSetLightIntensity);
 }
 
-void ATrackerPointLight::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void UTrackerPointLight::InitializeComponent()
+{
+	Super::InitializeComponent();
+
+
+}
+
+void UTrackerPointLight::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	ULightSensitivityComponent* pLightSensitiveComponent = UnrealUtilities::GetComponentFromActor<ULightSensitivityComponent>(OtherActor);
 
@@ -86,24 +111,9 @@ void ATrackerPointLight::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AA
 	pLightSensitiveComponent->OnExitLightArea();
 }
 
-void ATrackerPointLight::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UTrackerPointLight::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ULightSensitivityComponent* pLightSensitiveComponent = UnrealUtilities::GetComponentFromActor<ULightSensitivityComponent>(OtherActor);
-
-	if (!pLightSensitiveComponent)
-		return;
-
-	const auto& it = std::find(m_pLightSensitivityComponents.begin(), m_pLightSensitivityComponents.end(), pLightSensitiveComponent);
-
-	if (it != m_pLightSensitivityComponents.end())
-		return;
-	
-	m_pLightSensitivityComponents.push_back(pLightSensitiveComponent);
-
-	if (!IsProvidingEnoughLight())
-		return;
-	
-	pLightSensitiveComponent->OnEnterLightArea();
+	OnActorOverlap(OtherActor);
 }
 
 

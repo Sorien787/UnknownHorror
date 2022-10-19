@@ -3,6 +3,9 @@
 
 #include "SlammingDoorActor.h"
 #include "../HazeEffectComponent.h"
+
+
+#pragma optimize("", off)
 // Sets default values
 ASlammingDoorActor::ASlammingDoorActor()
 {
@@ -34,6 +37,19 @@ void ASlammingDoorActor::SetIsInSlammableState(bool set)
 
 void ASlammingDoorActor::OnSlamFinished()
 {
+	FTimerHandle UnusedHandle;
+
+	const float currentStrength = m_pHazeEffectComponent->GetCurrentHazeStrength();
+	const float slamDelayLength = m_MinDelayBetweenSlamsByHazeStrength.EditorCurveData.Eval(currentStrength);
+	GetWorldTimerManager().SetTimer(
+		UnusedHandle, this, &ASlammingDoorActor::OnSlamCanStartAgain, slamDelayLength, false);
+	if (UnusedHandle.IsValid())
+		return;
+	OnSlamCanStartAgain();
+}
+
+void ASlammingDoorActor::OnSlamCanStartAgain()
+{
 	SetActorTickEnabled(true);
 }
 
@@ -51,7 +67,7 @@ void ASlammingDoorActor::Tick(float DeltaTime)
 
 	const float currentModifier = FMath::Abs(m_pHazeEffectComponent->GetCurrentHazeModifier());
 	const float currentStrength = m_pHazeEffectComponent->GetCurrentHazeStrength();
-	const float slamProbability = m_SlamProbabilityByHazeStrength.EditorCurveData.Eval(currentStrength);
+	const float slamProbability = DeltaTime * m_SlamProbabilityByHazeStrength.EditorCurveData.Eval(currentStrength);
 	const float slamSize = m_MaxSlamSizeByHazeModifier.EditorCurveData.Eval(currentModifier);
 	const float rolledVal = FMath::FRandRange(0.0f, 1.0f);
 

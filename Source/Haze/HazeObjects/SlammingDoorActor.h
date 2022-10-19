@@ -34,6 +34,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void OnSlamFinished();
+
+	void OnSlamCanStartAgain();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnBeginSlam(float slameSize);
@@ -43,6 +45,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_SlamProbabilityByHazeStrength;
+	
+	UPROPERTY(EditAnywhere, Category = Setup)
+	FRuntimeFloatCurve m_MinDelayBetweenSlamsByHazeStrength;
 	
 	UPROPERTY(EditAnywhere, Category = Setup)
 	FRuntimeFloatCurve m_MaxSlamSizeByHazeModifier;

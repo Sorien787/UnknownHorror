@@ -14,13 +14,19 @@ class DEEPSEAHORROR_API ULightSensitivityComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	
+	int numLightsInside = 0;
+
 public:
+
+	bool IsCurrentlyLit() const;
 	
 	FEnterLightAreaDelegate m_EnterLightAreaDelegate;
-	
+
+	UFUNCTION()
 	void OnEnterLightArea();
 
 	FExitLightAreaDelegate m_ExitLightAreaDelegate;
-
+	
+	UFUNCTION()
 	void OnExitLightArea();
 };

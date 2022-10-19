@@ -3,6 +3,14 @@
 
 #include "Haze/HazeObjects/MovingHazeObject.h"
 
+static TAutoConsoleVariable<int32> CVarMovingHazeObjectDebug(
+	TEXT("MovingHazeObjectDebug"),
+	0,
+	TEXT("Shows visualization of where objects can move to, and what their sizes are.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
+
+
 bool AMovingHazeObject::TryGetNewObjectPlacementPoint(FVector& position, FVector& normal, float objectSize, int objectIndex)
 {
 	float circleRadius = m_pPlacementArea->Bounds.SphereRadius - objectSize;
@@ -16,7 +24,10 @@ bool AMovingHazeObject::TryGetNewObjectPlacementPoint(FVector& position, FVector
 	FVector lineTraceEnd = GetActorLocation() - pointOnCircle + total;
 
 	static FName TraceTag = TEXT("MovingHazeTrace");
-	GetWorld()->DebugDrawTraceTag = TraceTag;
+	if (CVarMovingHazeObjectDebug->GetInt())
+	{
+		GetWorld()->DebugDrawTraceTag = TraceTag;
+	}
 	FCollisionQueryParams traceParams(TraceTag, false);
 	FHitResult outHit;
 	bool hasHit = GetWorld()->LineTraceSingleByObjectType(
@@ -49,16 +60,6 @@ bool AMovingHazeObject::TryGetNewObjectPlacementPoint(FVector& position, FVector
 	return true;
 }
 
-void AMovingHazeObject::OnEnterLight()
-{
-	m_bIsInLight = true;
-}
-
-void AMovingHazeObject::OnExitLight()
-{
-	m_bIsInLight = false;
-}
-
 // Sets default values
 AMovingHazeObject::AMovingHazeObject()
 {
@@ -73,7 +74,7 @@ AMovingHazeObject::AMovingHazeObject()
 	m_pHazeEffector = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Component"));
 	check(m_pHazeEffector != nullptr);
 
-	m_pLightSensitivityComponent = CreateDefaultSubobject<ULightSensitivityComponent>(TEXT("Haze Component"));
+	m_pLightSensitivityComponent = CreateDefaultSubobject<ULightSensitivityComponent>(TEXT("Light Sensitivity Component"));
 	check(m_pLightSensitivityComponent != nullptr);
 }
 
@@ -121,9 +122,6 @@ void AMovingHazeObject::BeginPlay()
 {
 	Super::BeginPlay();
 
-	m_pLightSensitivityComponent->m_EnterLightAreaDelegate.AddDynamic(this, &AMovingHazeObject::OnEnterLight);
-	m_pLightSensitivityComponent->m_ExitLightAreaDelegate.AddDynamic(this, &AMovingHazeObject::OnExitLight);
-
 	TArray<UStaticMeshComponent*> meshComponents;
 	GetComponents<UStaticMeshComponent>(meshComponents);
 	for (int i = 0; i < meshComponents.Num(); i++)
@@ -131,12 +129,6 @@ void AMovingHazeObject::BeginPlay()
 		AddObject(meshComponents[i]);
 	}
 }
-static TAutoConsoleVariable<int32> CVarMovingHazeObjectDebug(
-	TEXT("MovingHazeObjectDebug"),
-	0,
-	TEXT("Shows visualization of where objects can move to, and what their sizes are.\n"),
-	ECVF_Scalability | ECVF_RenderThreadSafe);
-
 
 // Called every frame
 void AMovingHazeObject::Tick(float DeltaTime)
@@ -157,11 +149,9 @@ void AMovingHazeObject::Tick(float DeltaTime)
 	if (!m_pHazeEffector->IsHazeActive())
 		return;
 
-	// we can move objects if we're not lit
-	if (m_bIsInLight)
-		return;
-	
-	const bool isUnobserved = (!UnrealUtilities::IsInFrustrum(GetActorLocation(), m_pPlacementArea->Bounds.SphereRadius, GetWorld()) || !m_bIsInLight);
+	const bool isInLight = m_pLightSensitivityComponent->IsCurrentlyLit();
+	const bool isInFrustrum = UnrealUtilities::IsInFrustrum(GetActorLocation(), m_pPlacementArea->Bounds.SphereRadius, GetWorld());
+	const bool isUnobserved = (!isInFrustrum || !isInLight);
 
 	if (!isUnobserved)
 	{
@@ -179,7 +169,8 @@ void AMovingHazeObject::Tick(float DeltaTime)
 		return;
 	}
 
-	if (GetWorld()->GetTimeSeconds() - m_TimeLastInFrustrum < m_TimeUnobservedBeforeCanMove)
+	const float timeBetweenNextShift = m_HazeStrengthToTimeBetweenShifts.EditorCurveData.Eval(m_pHazeEffector->GetCurrentHazeStrength());
+	if (GetWorld()->GetTimeSeconds() - m_TimeLastInFrustrum < timeBetweenNextShift)
 		return;
 
 

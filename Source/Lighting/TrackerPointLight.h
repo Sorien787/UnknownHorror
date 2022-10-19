@@ -5,13 +5,10 @@
 #include "CoreMinimal.h"
 #include "LightSensitivityComponent.h"
 #include "Components/PointLightComponent.h"
-#include "Components/SphereComponent.h"
-#include "GameFramework/Actor.h"
-#include "Gameplay/LightModifierComponent.h"
 #include "TrackerPointLight.generated.h"
 
-UCLASS()
-class DEEPSEAHORROR_API ATrackerPointLight : public AActor
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class DEEPSEAHORROR_API UTrackerPointLight : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -19,17 +16,16 @@ class DEEPSEAHORROR_API ATrackerPointLight : public AActor
 
 	bool IsProvidingEnoughLight() const;
 
+	void OnActorOverlap(AActor* pActor);
+	
 	UFUNCTION()
 	void OnSetLightIntensity(float lightIntensity);
-
-public:	
-	// Sets default values for this actor's properties
-	ATrackerPointLight();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void InitializeComponent() override;
 public:	
 
 	UFUNCTION()
@@ -38,14 +34,7 @@ public:
 	UFUNCTION()
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
-	UPROPERTY(EditAnywhere)
 	UPointLightComponent* m_pPointLight;
-	
-	UPROPERTY(EditAnywhere)
-	USphereComponent* m_pCollisionShape;
-
-	UPROPERTY(EditAnywhere)
-	ULightModifierComponent* m_pLightModifier;
 
 	UPROPERTY(EditAnywhere)
 	float m_MinIntensityToBeConsideredOn;
