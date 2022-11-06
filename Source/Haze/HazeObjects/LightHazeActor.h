@@ -19,13 +19,15 @@ public:
 	// Sets default values for this actor's properties
 	ALightHazeActor();
 
-	virtual void OnHazeStrengthChanged(float value) override;
-
 	virtual void BeginPlay() override;
 
 	virtual void OnHazeEvent() override;
 
 	virtual void OnHazeFinish() override;
+
+	virtual void OnHazeStart() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

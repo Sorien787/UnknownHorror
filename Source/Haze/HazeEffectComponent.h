@@ -10,8 +10,6 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeFinish);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeEvent);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeModifierChange, float, HazeModifier);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHazeStrengthChange, float, HazeStrength);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public HazeListener
@@ -19,26 +17,20 @@ class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public Ha
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
+
 	UHazeEffectComponent();
 	ListenerUtils<HazeComponentListener> m_HazeComponentListeners;
-private:
 	
+private:
+
+	std::unordered_map<int, float> m_HazeIdToSeed;
 
 	float m_CurrentHazeStrength{0.0f};
-	float m_CurrentHazeModifier{0.0f};
-	float m_LastHazeModifier{0.0f};
 	float m_HazeNoisePollLocation{0.0f};
 	bool m_HazeReachedThreshold{false};
 	int m_HazeID{-1};
-	float m_RandomSeed{0.0f};
 	FVector m_LastPolledLocation{FVector::ZeroVector};
 
-	void UpdateHazeMultiplierValue(float deltaTime);
-
-	float ConvertHazeValueToMultiplier() const;
-
-	void RefreshHazeSink();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -68,12 +60,6 @@ public:
 	FOnHazeFinish m_OnHazeFinish;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnHazeModifierChange m_OnHazeModifierChanged;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnHazeStrengthChange m_OnHazeStrengthChanged;
-
-	UPROPERTY(BlueprintAssignable)
 	FOnHazeEvent m_OnHazeEvent;
 
 
@@ -82,14 +68,15 @@ public:
 
 	bool IsHazeActive() const;
 
-	float GetCurrentHazeModifier() const;
+	float GetCurrentHazeModifier(int index = 0);
 
 	float GetNoiseFrequency() const;
 	
 	float GetCurrentHazeStrength() const;
-};
+	
+	void UpdateHazeMultiplierValue(float deltaTime);
 
-class IHazeModifierComponent
-{
-	virtual void OnHazeStrengthChanged(float hazeStrength) = 0;	
+	float ConvertHazeValueToMultiplier() const;
+
+	void RefreshHazeSink();
 };

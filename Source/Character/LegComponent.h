@@ -2,18 +2,38 @@
 
 #pragma once
 
+#include <deque>
+
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
 #include "LegComponent.generated.h"
 
 class ULegManager;
 
+USTRUCT(BlueprintType)
+struct FLegRaycastProfile
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float raycastSize{0.0f};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float raycastLength{0.0f};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float lateralDistance{0.0f};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float angleTowardMovementDir{0.0f};
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API ULegComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
-	bool m_bIsPlanted{true};
+	bool m_bIsFootPlanted{true};
 
 	bool m_bCanUnplant{false};
 
@@ -21,8 +41,16 @@ class DEEPSEAHORROR_API ULegComponent : public USceneComponent
 
 	float m_fPlantStartTime{0.0f};
 
-	bool m_bHasMovedEnoughToPlant{true};
+	bool m_bHasMovedEnoughToUnplant{true};
 
+	float m_fLegIKValidity{0.0f};
+
+	FVector m_stepUpVector{FVector(0, 1, 0)};
+	float m_minDistanceForStep{0.0f};
+	float m_timeTakenForStep{0.0f};
+	float m_lastStepHeight{0.0f};
+	float m_additionalStepHeight{0.0f};
+	
 
 public:	
 	// Sets default values for this component's properties
@@ -39,7 +67,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HeightByTime;
-
+	
 	UPROPERTY(BlueprintReadOnly)
 	FVector m_TracePosition;
 
@@ -52,20 +80,22 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FVector m_EndFootPosition;
 
-	FVector GetLegUpVector() const;
-	
-	void RenderDebugInfo() const;
-
-	float GetTimeSinceLastPlant() const;
-
-	float GetPlantedQuantity(float stepTime) const;
-
-	bool VerifyCanUnplant(float stepDistance);
-
 	void UnplantFoot();
+	bool TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>& raycastProfile, const FTransform& creatureTransform, const FVector& creatureVelocity,float stepTime, float stepDistance, float stepHeight, float velocityStepDistance);
+	void UpdateFootState();
 
-	void SetNewFootTargetLocation(float rayCastLength);
-
-	void UpdateFootState(float stepTime, float totalStepHeight);
+	std::deque<FVector> m_historicalPathTracePoints;
+	// perhaps we keep a queue of trace points
+	// and that queue determines where our feet need to land
+	// and where they can rise to
+	
+	bool CanUnplant() const;
+	void RenderDebugInfo() const;
+	float GetFootHeightDefaultRelative(FVector upVector) const;
+	float GetTimeSinceLastPlant() const;
+	float GetPlantedQuantity(float stepTime) const;
+	FVector GetCurrentFootPosition() const;
+	float GetLegIKValidity() const;
 
 };
+

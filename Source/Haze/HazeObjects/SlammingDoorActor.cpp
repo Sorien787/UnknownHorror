@@ -4,8 +4,6 @@
 #include "SlammingDoorActor.h"
 #include "../HazeEffectComponent.h"
 
-
-#pragma optimize("", off)
 // Sets default values
 ASlammingDoorActor::ASlammingDoorActor()
 {

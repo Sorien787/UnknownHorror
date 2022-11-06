@@ -6,7 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "Gameplay/LightModifierComponent.h"
-#pragma optimize("", off)
+
 bool UTrackerPointLight::IsProvidingEnoughLight() const
 {
 	return m_pPointLight->Intensity > m_MinIntensityToBeConsideredOn;

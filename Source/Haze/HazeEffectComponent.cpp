@@ -54,11 +54,8 @@ void UHazeEffectComponent::UpdateHazeMultiplierValue(float deltaTime)
 
 	if (!m_HazeReachedThreshold)
 		return;
-	const float perlinVal =  FMath::PerlinNoise1D(m_HazeNoisePollLocation + m_RandomSeed);
+	
 	m_HazeNoisePollLocation += deltaTime * m_HazeStrengthToNoiseFrequency.EditorCurveData.Eval(m_CurrentHazeStrength);
-	m_CurrentHazeModifier = perlinVal * newMultiplier;
-	m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeSetValue, m_CurrentHazeModifier );
-	m_OnHazeModifierChanged.Broadcast(m_CurrentHazeModifier);
 }
 
 float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
@@ -69,8 +66,6 @@ float UHazeEffectComponent::ConvertHazeValueToMultiplier() const
 void UHazeEffectComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	m_RandomSeed = FMath::FRandRange(-10000.0f, 10000.0f);
 }
 
 void UHazeEffectComponent::RefreshHazeSink()
@@ -86,10 +81,7 @@ void UHazeEffectComponent::RefreshHazeSink()
 
 	if (m_HazeID >= 0)
 	{
-		m_CurrentHazeStrength = hazeSubsystem->PollHazeStrengthAtLocation(m_LastPolledLocation, m_HazeID);
-	
-		m_HazeComponentListeners.Notify(&HazeComponentListener::OnHazeStrengthChanged, m_CurrentHazeStrength );
-	}
+		m_CurrentHazeStrength = hazeSubsystem->PollHazeStrengthAtLocation(m_LastPolledLocation, m_HazeID);}
 	
 	const FVector currentLocation = GetOwner()->GetActorLocation();
 	
@@ -132,9 +124,13 @@ bool UHazeEffectComponent::IsHazeActive() const
 	return m_HazeReachedThreshold;
 }
 
-float UHazeEffectComponent::GetCurrentHazeModifier() const
+float UHazeEffectComponent::GetCurrentHazeModifier(int index /* = 0 */)
 {
-	return m_CurrentHazeModifier;
+	if (m_HazeIdToSeed.find(index) == m_HazeIdToSeed.end())
+	{
+		m_HazeIdToSeed[index] = FMath::FRandRange(-10000.0f, 10000.0f);
+	}
+	return ConvertHazeValueToMultiplier() * FMath::PerlinNoise1D(m_HazeNoisePollLocation + m_HazeIdToSeed[index]);
 }
 
 float UHazeEffectComponent::GetCurrentHazeStrength() const

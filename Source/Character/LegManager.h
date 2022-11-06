@@ -2,47 +2,77 @@
 
 #pragma once
 
-#include <vector>
-
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "Components/SceneComponent.h"
 #include "LegComponent.h"
+#include "Components/BoxComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "LegManager.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class DEEPSEAHORROR_API ULegManager : public UActorComponent
+class DEEPSEAHORROR_API ULegManager : public USceneComponent
 {
 	GENERATED_BODY()
 
+	FFloatSpringState m_fCurrentBodyTranslationState;
+	
+	float m_fCurrentOffsetHeight = 0.0f;
+
+	float m_fMaxPawnSpeed = 0.0f;
 public:	
-	// Sets default values for this component's properties
+
 	ULegManager();
 
 protected:
-	// Called when the game starts
+
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-private:
+public:
 
-	UPROPERTY(EditAnywhere)
-	float LegUnplantThreshold{1.0f};
+	void UpdateDesiredBodyHeightDefaultRelative(float DeltaTime);
 
-	UPROPERTY(EditAnywhere)
-	float RayCastLength{1.0f};
-	
-	UPROPERTY(EditAnywhere)
-	float StepDistance{1.0f};
-	
-	UPROPERTY(EditAnywhere)
-	float StepTime{1.0f};
-
-	UPROPERTY(EditAnywhere)
-	float StepHeight{1.0f};
-	
-	TArray<ULegComponent*> m_controllableLegComponents;
+	void UpdateLegs(float DeltaTime);
 		
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetCurrentRaisedBodyPosition() const;
+	
+private:
+	UPROPERTY(EditAnywhere, Category = "Animation | Controlled Legs")
+	TArray<ULegComponent*> m_controllableLegComponents;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Controlled Legs")
+	TArray<FLegRaycastProfile> m_LegRaycastProfiles;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	float LegUnplantThreshold{1.0f};
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	FRuntimeFloatCurve m_StepDistanceByMovementSpeed;
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	FRuntimeFloatCurve m_StepTimeByMovementSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	FRuntimeFloatCurve m_ExtraStepDistanceByMovementSpeed;
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	FRuntimeFloatCurve m_StepHeightByMovementSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
+	UBoxComponent* m_pBoxComponentForGroundCollision;
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
+	float m_BoxTraceHeightUp;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
+	float m_BoxTraceHeightDown;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
+	float m_BodyTranslationSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
+	float m_BodyTranslationDamping;
 };
