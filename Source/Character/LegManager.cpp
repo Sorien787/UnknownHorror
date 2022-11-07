@@ -36,7 +36,7 @@ void ULegManager::BeginPlay()
 	TArray<UPawnMovementComponent*> movementComponents;
 	GetOwner()->GetComponents<UPawnMovementComponent>(movementComponents);
 	
-	if (movementComponents.Num() < 0)
+	if (movementComponents.Num() < 1)
 		return;
 
 	m_fMaxPawnSpeed = movementComponents[0]->GetMaxSpeed();
@@ -164,5 +164,10 @@ void ULegManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 	UpdateLegs(DeltaTime);
 
 	UpdateDesiredBodyHeightDefaultRelative(DeltaTime);
+}
+
+void ULegManager::SetBoxForBodyCollision(UBoxComponent* boxComponent)
+{
+	m_pBoxComponentForGroundCollision = boxComponent;
 }
 

@@ -36,6 +36,8 @@ public:
 		
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void SetBoxForBodyCollision(UBoxComponent* boxComponent);
+
 	UFUNCTION(BlueprintCallable)
 	FVector GetCurrentRaisedBodyPosition() const;
 	

@@ -14,16 +14,16 @@ struct FLightFlickerStateStruct
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float m_MinFlickerBrightness;
+	float m_MinFlickerBrightness {0.0f};
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float m_MaxFlickerBrightness;
+	float m_MaxFlickerBrightness{0.0f};;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float m_LightFlickerFrequency;
+	float m_LightFlickerFrequency{0.0f};;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float m_LightDesiredPercentOnline;
+	float m_LightDesiredPercentOnline{0.0f};;
 
 	FLightFlickerStateStruct();
 

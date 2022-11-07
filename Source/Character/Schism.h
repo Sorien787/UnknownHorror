@@ -19,10 +19,6 @@ class DEEPSEAHORROR_API ASchism : public APawn
 	
 	FQuat GetDesiredBodyRotation(float DeltaTime);
 
-	void SetNewBodyRotation();
-	
-	void SetNewBodyHeight();
-	
 public:	
 	// Sets default values for this actor's properties
 	ASchism();

@@ -89,6 +89,8 @@ ASchism::ASchism()
 	m_pFrontRightLeg = CreateDefaultSubobject<ULegComponent>(TEXT("Front Right Leg"));
 	check(m_pFrontRightLeg != nullptr);
 	m_pFrontRightLeg->SetupAttachment(GetRootComponent());
+
+	m_pLegManager->SetBoxForBodyCollision(m_pBoxComponentForLegManager);
 }
 
 // Called when the game starts or when spawned

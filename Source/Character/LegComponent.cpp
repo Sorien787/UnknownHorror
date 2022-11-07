@@ -174,7 +174,7 @@ void ULegComponent::UpdateFootState()
 		const float stepVerticalTime = m_HeightByTime.EditorCurveData.Eval(stepCompletionPercentage);
 
 		const FVector horizontalStepAddition = (m_EndFootPosition - m_StartFootPosition) * stepHorizontalTime;
-		const FVector verticalStepAddition = m_timeTakenForStep * (stepVerticalTime + m_additionalStepHeight) * m_stepUpVector;
+		const FVector verticalStepAddition =  (m_lastStepHeight * stepVerticalTime + m_additionalStepHeight) * m_stepUpVector;
 		m_CurrentFootPosition = m_StartFootPosition + horizontalStepAddition + verticalStepAddition;
 
 		if (stepCompletionPercentage < 1.0f)
