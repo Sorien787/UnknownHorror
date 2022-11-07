@@ -6,6 +6,7 @@
 #include "LegManager.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Haze/HazeComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Schism.generated.h"
 
@@ -37,17 +38,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	float m_x;
+	float m_LegAlignmentBodyRotationXSensitivity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-    float m_y;
+    float m_LegAlignmentBodyRotationYSensitivity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	float m_z;
+	float m_LegAlignmentBodyRotationZSensitivity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	ULegManager* m_pLegManager;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UBoxComponent* m_pBoxComponentForLegManager;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	ULegComponent* m_pFrontLeftLeg;
 	
@@ -66,6 +70,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	USkeletalMeshComponent* m_pSkeletalMesh;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UHazeComponent* m_pHazeSource;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Body Rotation")
 	float m_BodyRotationSpeed;
 

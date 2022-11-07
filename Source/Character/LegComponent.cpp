@@ -5,7 +5,6 @@
 
 #include "../Common/UnrealUtilities.h"
 #include "Kismet/KismetSystemLibrary.h"
-#pragma optimize("", off)
 
 static TAutoConsoleVariable<int32> LegDebug(
 	TEXT("LegDebug"),

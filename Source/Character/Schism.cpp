@@ -11,26 +11,23 @@ static TAutoConsoleVariable<int32> SchismDebug(
 	TEXT("Shows Schism debug visualization.\n"),
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
-#pragma optimize("", off)
 FQuat ASchism::GetDesiredBodyRotation(float DeltaTime)
 {
 	FVector forwardVector = (m_pFrontRightLeg->GetCurrentFootPosition() - m_pBackRightLeg->GetCurrentFootPosition() + m_pFrontLeftLeg->GetCurrentFootPosition() - m_pBackLeftLeg->GetCurrentFootPosition())/2.0f;
 	forwardVector = forwardVector.GetUnsafeNormal();
 	
-
 	FVector rightVector = (m_pFrontRightLeg->GetCurrentFootPosition() - m_pFrontLeftLeg->GetCurrentFootPosition() + m_pBackRightLeg->GetCurrentFootPosition() - m_pBackLeftLeg->GetCurrentFootPosition())/2.0f;
 	rightVector = rightVector.GetUnsafeNormal();
 
 	const FVector upVector = forwardVector.Cross(rightVector);
-
 	
 	rightVector = upVector.Cross(forwardVector);
 
 	if(SchismDebug.GetValueOnGameThread() > 0)
 	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + upVector * 100.0f, FColor::Green);
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + forwardVector * 100.0f, FColor::Red);
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + rightVector * 50.0f, FColor::Blue);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + upVector * 100.0f, FColor::Green, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + forwardVector * 100.0f, FColor::Red, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + rightVector * 50.0f, FColor::Blue, false, -1, 0, 1);
 	}
 	
 	FQuat desiredQuat = UKismetMathLibrary::MakeRotationFromAxes(forwardVector,rightVector, upVector).Quaternion();
@@ -44,9 +41,9 @@ FQuat ASchism::GetDesiredBodyRotation(float DeltaTime)
 
 	FVector eulerRots = currentQuatToDesiredQuat.Euler();
 
-	eulerRots.X *= m_x;
-	eulerRots.Y *= m_y;
-	eulerRots.Z *= m_z;
+	eulerRots.X *= m_LegAlignmentBodyRotationXSensitivity;
+	eulerRots.Y *= m_LegAlignmentBodyRotationYSensitivity;
+	eulerRots.Z *= m_LegAlignmentBodyRotationZSensitivity;
 	//  roll X, pitch Y, yaw Z
 	desiredQuat = currentQuat * FQuat::MakeFromEuler(eulerRots);
 	
@@ -69,6 +66,13 @@ ASchism::ASchism()
 	m_pLegManager = CreateDefaultSubobject<ULegManager>(TEXT("Leg Manager"));
 	check(m_pLegManager != nullptr);
 	m_pLegManager->SetupAttachment(GetRootComponent());
+
+	m_pBoxComponentForLegManager = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Component"));
+	check(m_pBoxComponentForLegManager != nullptr);
+	m_pBoxComponentForLegManager->SetupAttachment(GetRootComponent());
+	
+	m_pHazeSource = CreateDefaultSubobject<UHazeComponent>(TEXT("Haze Component"));
+	check(m_pHazeSource != nullptr);
 	
 	m_pBackLeftLeg = CreateDefaultSubobject<ULegComponent>(TEXT("Back Left Leg"));
 	check(m_pBackLeftLeg != nullptr);

@@ -7,7 +7,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-#pragma optimize("", off)
 static TAutoConsoleVariable<int32> LegManagerDebug(
 	TEXT("LegManagerDebug"),
 	0,
