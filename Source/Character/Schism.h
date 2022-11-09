@@ -19,6 +19,21 @@ class DEEPSEAHORROR_API ASchism : public APawn
 	
 	FQuat GetDesiredBodyRotation(float DeltaTime);
 
+	bool MakeLineTrace(FVector start, FVector end, FHitResult& hitResult);
+
+	struct AngleTestResult
+	{
+	public:
+		AngleTestResult(bool hit, float desiredAng)
+		{
+			wasHitTerrain = hit;
+			desiredAngle = desiredAng;
+		}
+		float desiredAngle{0.0f};
+		bool wasHitTerrain{false};
+	};
+	
+	AngleTestResult DoAngleTest(FVector startA, FVector endA, FVector startB, FVector endB, float defaultLength, float angleCheckDistance, float sensitivity);
 public:	
 	// Sets default values for this actor's properties
 	ASchism();
@@ -33,14 +48,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	float m_LegAlignmentBodyRotationXSensitivity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-    float m_LegAlignmentBodyRotationYSensitivity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
-	float m_LegAlignmentBodyRotationZSensitivity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	ULegManager* m_pLegManager;
@@ -69,9 +77,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UHazeComponent* m_pHazeSource;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Body Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
 	float m_BodyRotationSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Body Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
 	float m_BodyRotationDamping;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_LegAlignmentBodyRotationRollSensitivity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_LegAlignmentBodyRotationPitchSensitivity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_LegAlignmentBodyRotationYawSensitivity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_ForwardPredictionLength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_UpDownPredictionLength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_LeftRightPredictionLength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation")
+	float m_MaxAngleOffsetFromCurrentForProceduralRotation;
 };

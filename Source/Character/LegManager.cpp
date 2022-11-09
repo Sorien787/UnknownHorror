@@ -76,7 +76,7 @@ void ULegManager::UpdateDesiredBodyHeightDefaultRelative(float DeltaTime)
 		start,
 		end,
 		m_pBoxComponentForGroundCollision->GetScaledBoxExtent(),
-		GetComponentRotation(),
+		m_pBoxComponentForGroundCollision->GetComponentRotation(),
 		ObjectTypesArray,
 		false,
 		IgnoredActors,
@@ -88,7 +88,7 @@ void ULegManager::UpdateDesiredBodyHeightDefaultRelative(float DeltaTime)
 		-1);
 
 	if (bHasHit)
-		desiredOffset = axis.Dot(GetComponentLocation() - outHit.Location);
+		desiredOffset = m_BoxTraceHeightUp - outHit.Distance;
 
 	m_fCurrentOffsetHeight = UKismetMathLibrary::FloatSpringInterp(m_fCurrentOffsetHeight, desiredOffset, m_fCurrentBodyTranslationState, m_BodyTranslationSpeed, m_BodyTranslationDamping, DeltaTime);
 }
@@ -151,8 +151,7 @@ void ULegManager::UpdateLegs(float DeltaTime)
 FVector ULegManager::GetCurrentRaisedBodyPosition() const
 {
 	const FVector axis = GetComponentRotation().Quaternion().GetUpVector();
-	const FVector start = GetComponentLocation() + axis * m_BoxTraceHeightUp;
-	return start - axis * m_fCurrentOffsetHeight;
+	return  GetComponentLocation()  + axis * m_fCurrentOffsetHeight;
 }
 
 

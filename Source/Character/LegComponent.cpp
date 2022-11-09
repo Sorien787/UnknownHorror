@@ -6,12 +6,26 @@
 #include "../Common/UnrealUtilities.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+
 static TAutoConsoleVariable<int32> LegDebug(
 	TEXT("LegDebug"),
 	0,
 	TEXT("Shows Leg debug visualization.\n"),
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
+
+static TAutoConsoleVariable<int32> LegDebugRaycast(
+	TEXT("LegDebugRaycast"),
+	0,
+	TEXT("Shows Leg debug visualization.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
+
+static TAutoConsoleVariable<int32> LegDebugOverstep(
+	TEXT("LegDebugOverstep"),
+	0,
+	TEXT("Shows Leg debug visualization.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
 
 ULegComponent::ULegComponent()
 {
@@ -95,7 +109,7 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 			ObjectTypesArray.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
 
 			EDrawDebugTrace::Type drawTrace = EDrawDebugTrace::None;
-			if (LegDebug.GetValueOnGameThread() > 0)
+			if (LegDebugRaycast.GetValueOnGameThread() > 0)
 				drawTrace = EDrawDebugTrace::ForOneFrame;
 			
 			bHasHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
@@ -118,7 +132,7 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 			static FName TraceTag = TEXT("LegTrace");
 			FCollisionQueryParams traceParams(TraceTag, false, GetOwner());
 
-			if (LegDebug.GetValueOnGameThread() > 0)
+			if (LegDebugRaycast.GetValueOnGameThread() > 0)
 				GetWorld()->DebugDrawTraceTag = TraceTag;
 			
 			bHasHit = GetWorld()->LineTraceSingleByChannel(
@@ -174,7 +188,7 @@ void ULegComponent::UpdateFootState()
 		const float stepVerticalTime = m_HeightByTime.EditorCurveData.Eval(stepCompletionPercentage);
 
 		const FVector horizontalStepAddition = (m_EndFootPosition - m_StartFootPosition) * stepHorizontalTime;
-		const FVector verticalStepAddition =  (m_lastStepHeight * stepVerticalTime + m_additionalStepHeight) * m_stepUpVector;
+		const FVector verticalStepAddition =  (m_lastStepHeight + m_additionalStepHeight) * stepVerticalTime * m_stepUpVector;
 		m_CurrentFootPosition = m_StartFootPosition + horizontalStepAddition + verticalStepAddition;
 
 		if (stepCompletionPercentage < 1.0f)
@@ -220,6 +234,8 @@ void ULegComponent::UnplantFoot()
 {
 	// we're unplanting from start to finish
 	// iterate along the line, see if we're far below the line from start to finish
+	m_EndFootPosition = m_TracePosition;
+	
 	m_additionalStepHeight = 0.0f;
 	for (auto pathTracePoint = m_historicalPathTracePoints.begin(); pathTracePoint < m_historicalPathTracePoints.end(); ++pathTracePoint)
 	{
@@ -235,14 +251,15 @@ void ULegComponent::UnplantFoot()
 
 		const FVector startToPathPointNormalized = startToPathPoint.GetUnsafeNormal();
 		const FVector startToEndNormalized = startToEnd.GetUnsafeNormal();
-		
-		const FVector closestToPathPointOnLine = m_StartFootPosition + startToEndNormalized * FVector::DotProduct(startToEnd, startToPathPointNormalized);
+
+		const float dotProd = FVector::DotProduct(startToEndNormalized, startToPathPoint);
+		const FVector closestToPathPointOnLine = m_StartFootPosition + startToEndNormalized * dotProd;
 		const FVector pointOnLineToPathPoint = *pathTracePoint - closestToPathPointOnLine;
 
 		// height above the start-end using the foot up vector as vertical that the terrain has trace
 		const float heightAbove = FVector::DotProduct(m_stepUpVector, pointOnLineToPathPoint);
 
-		if (LegDebug.GetValueOnGameThread() > 0)
+		if (LegDebugOverstep.GetValueOnGameThread() > 0)
 		{
 			FColor drawColor = heightAbove > 0 ? FColor::Red : FColor::Green;
 			DrawDebugLine(GetWorld(), closestToPathPointOnLine, *pathTracePoint, drawColor, false, m_timeTakenForStep);			
@@ -253,7 +270,6 @@ void ULegComponent::UnplantFoot()
 	
 	m_historicalPathTracePoints.clear();
 	m_bIsFootPlanted = false;
-	m_EndFootPosition = m_TracePosition;
 	m_fUnplantStartTime = GetWorld()->GetTimeSeconds();
 	m_bHasMovedEnoughToUnplant = false;
 }
