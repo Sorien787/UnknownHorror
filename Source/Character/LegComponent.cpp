@@ -82,11 +82,13 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 		const float& lateralOffsetLength = thisRaycast.lateralDistance;
 		const float& useSphereCast = thisRaycast.raycastSize;
 		const float& raycastLength = thisRaycast.raycastLength;
+		const float& angle = m_bReverseRaycastDirection ? -thisRaycast.angleTowardMovementDir : thisRaycast.angleTowardMovementDir;
 
 		const FVector lateralOffset = rightVecSign * rightVector * lateralOffsetLength;
 		const FVector raycastCenter = legDefault + lateralOffset + movementDirectionOffset;
-		
-		const FVector raycastHalfSpan = (raycastLength / 2.0f) * creatureQuat.GetUpVector();
+
+		const FVector raycastDirection = FQuat::MakeFromEuler(FVector(0.0f, angle, 0.0f)) * creatureQuat.GetUpVector();
+		const FVector raycastHalfSpan = (raycastLength / 2.0f) * raycastDirection;
 		const FVector lineTraceStart = raycastCenter + raycastHalfSpan;
 		const FVector lineTraceEnd = raycastCenter - raycastHalfSpan;
 
@@ -131,9 +133,6 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 		{
 			static FName TraceTag = TEXT("LegTrace");
 			FCollisionQueryParams traceParams(TraceTag, false, GetOwner());
-
-			if (LegDebugRaycast.GetValueOnGameThread() > 0)
-				GetWorld()->DebugDrawTraceTag = TraceTag;
 			
 			bHasHit = GetWorld()->LineTraceSingleByChannel(
 				OUT outHit,
@@ -141,6 +140,10 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 				lineTraceEnd,
 				ECollisionChannel::ECC_WorldStatic,
 				traceParams);
+
+			
+			if (LegDebugRaycast.GetValueOnGameThread() > 0)
+				UnrealUtilities::DrawLineTrace(GetWorld(), bHasHit, lineTraceStart, lineTraceEnd, outHit);
 		}
 
 		if (bHasHit)

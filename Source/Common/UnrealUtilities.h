@@ -19,7 +19,7 @@ public:
 	static bool IsInFrustrum( FVector location, float size, UWorld* pWorld);
 	static float GetRadAngleBetweenVectors(FVector a, FVector b);
 	static FVector GetArbitraryNormalVector(FVector basisA);
-
+	static void DrawLineTrace(UWorld* world, bool hit, FVector start, FVector end, FHitResult hitRes);
 	template<class C>
 	static C* GetComponentFromActor(AActor* pOwner);
 

@@ -51,6 +51,11 @@ FVector UnrealUtilities::GetArbitraryNormalVector(FVector basisA)
 	return basisB;
 }
 
+void UnrealUtilities::DrawLineTrace(UWorld* world, bool hit, FVector start, FVector end, FHitResult hitRes)
+{
+	DrawDebugLine(world, start, hit ? hitRes.Location : end, hit ? FColor::Green : FColor::Red, false, 0.0f, 0, 5.0f);
+}
+
 FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const float range, const AActor* pIgnoreActor)
 {
 	FVector playerViewPointLocation;

@@ -3,6 +3,7 @@
 
 #include "Schism.h"
 
+#include "Common/UnrealUtilities.h"
 #include "Kismet/KismetMathLibrary.h"
 
 static TAutoConsoleVariable<int32> SchismDebug(
@@ -55,15 +56,20 @@ bool ASchism::MakeLineTrace(FVector start, FVector end, FHitResult& hitResult)
 	static FName TraceTag = TEXT("SchismTrace");
 	FCollisionQueryParams traceParams(TraceTag, false, GetOwner());
 
-	if (SchismDebug.GetValueOnGameThread() > 0)
-		GetWorld()->DebugDrawTraceTag = TraceTag;
-			
-	return GetWorld()->LineTraceSingleByChannel(
+
+	bool hit = GetWorld()->LineTraceSingleByChannel(
 		OUT hitResult,
 		start,
 		end,
 		ECollisionChannel::ECC_WorldStatic,
 		traceParams);
+
+	
+	if (SchismDebug.GetValueOnGameThread() > 0)
+	{
+		UnrealUtilities::DrawLineTrace(GetWorld(), hit, start, end, hitResult);
+	}
+	return hit;
 }
 
 ASchism::AngleTestResult ASchism::DoAngleTest(FVector startA, FVector endA, FVector startB, FVector endB, float defaultLength, float angleCheckDistance, float sensitivity)
@@ -87,9 +93,9 @@ ASchism::AngleTestResult ASchism::DoAngleTest(FVector startA, FVector endA, FVec
 	float resultant = forwardLength - backwardLength;
 	// turn the resultant difference into a desired quaternion
 	// can get desired angle tilt by tan
-	float theta = -FMath::Atan(resultant / (2 * angleCheckDistance)) * sensitivity;
+	float theta = -FMath::RadiansToDegrees(FMath::Atan(resultant / (2 * angleCheckDistance)) * sensitivity);
 	theta = FMath::Clamp(theta, -m_MaxAngleOffsetFromCurrentForProceduralRotation, m_MaxAngleOffsetFromCurrentForProceduralRotation);
-	
+
 	return AngleTestResult(foundGeom, theta);
 }
 
@@ -170,14 +176,24 @@ void ASchism::Tick(float DeltaTime)
 	const FVector backwardDownPoint = backwardPoint - upDownPredictionVector;
 	const FVector backwardUpPoint = backwardPoint + upDownPredictionVector;
 
-	AngleTestResult result = DoAngleTest(GetActorLocation(), forwardPoint, GetActorLocation(), backwardPoint, m_ForwardPredictionLength, m_ForwardPredictionLength, m_LegAlignmentBodyRotationPitchSensitivity);
-
+	AngleTestResult resultPitch = DoAngleTest(GetActorLocation(), forwardPoint, GetActorLocation(), backwardPoint, m_ForwardPredictionLength, m_ForwardPredictionLength, m_LegAlignmentBodyRotationPitchSensitivity);
+	if (!resultPitch.wasHitTerrain)
+		resultPitch = DoAngleTest(forwardPoint, forwardDownPoint, backwardPoint, backwardDownPoint, m_UpDownPredictionLength, m_ForwardPredictionLength, m_LegAlignmentBodyRotationPitchSensitivity);
+	if (!resultPitch.wasHitTerrain)
+		resultPitch.desiredAngle = -m_MaxAngleOffsetFromCurrentForProceduralRotation;
+	AngleTestResult resultRoll = DoAngleTest(GetActorLocation(), rightPoint, GetActorLocation(), leftPoint, m_LeftRightPredictionLength, m_LeftRightPredictionLength, m_LegAlignmentBodyRotationRollSensitivity);
 	// add an additional pitch based on the above result (?)
 	// pitch is y component
-	FQuat additionalQuat = FQuat::MakeFromEuler(FVector(0.0f, result.desiredAngle, 0.0f));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, *FString::Printf(TEXT("Pitch Angle: %f"), resultPitch.desiredAngle));	
+	FQuat additionalQuat = FQuat::MakeFromEuler(FVector(0.0f, resultPitch.desiredAngle, 0.0f));
 
 	FQuat desiredQuat = actorQuat * additionalQuat;
-		
+	if(SchismDebug.GetValueOnGameThread() > 0)
+	{
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetUpVector() * 100.0f, FColor::Green, false, -1, 0, 10);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetForwardVector() * 100.0f, FColor::Red, false, -1, 0, 10);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetRightVector() * 100.0f, FColor::Blue, false, -1, 0, 10);
+	}
 	FQuat newActorQuat = UKismetMathLibrary::QuaternionSpringInterp(actorQuat, desiredQuat,  m_RotSpringState, m_BodyRotationSpeed, m_BodyRotationDamping, DeltaTime);
 	// rotate until rightLength and leftLength are equal
 	// so, essentially, want to measure the difference

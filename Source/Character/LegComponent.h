@@ -62,10 +62,13 @@ protected:
 
 public:	
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool m_bReverseRaycastDirection{false};
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FRuntimeFloatCurve m_DistanceByTime;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FRuntimeFloatCurve m_HeightByTime;
 	
 	UPROPERTY(BlueprintReadOnly)
