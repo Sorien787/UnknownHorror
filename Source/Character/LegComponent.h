@@ -34,23 +34,18 @@ class DEEPSEAHORROR_API ULegComponent : public USceneComponent
 	GENERATED_BODY()
 
 	bool m_bIsFootPlanted{true};
-
+	
 	bool m_bCanUnplant{false};
 
 	float m_fUnplantStartTime{0.0f};
 
 	float m_fPlantStartTime{0.0f};
-
-	bool m_bHasMovedEnoughToUnplant{true};
-
-	float m_fLegIKValidity{0.0f};
-
 	FVector m_stepUpVector{FVector(0, 1, 0)};
-	float m_minDistanceForStep{0.0f};
 	float m_timeTakenForStep{0.0f};
 	float m_lastStepHeight{0.0f};
 	float m_additionalStepHeight{0.0f};
 	
+	std::deque<FVector> m_historicalPathTracePoints;
 
 public:	
 	// Sets default values for this component's properties
@@ -59,7 +54,8 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
+	
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 public:	
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -70,6 +66,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FRuntimeFloatCurve m_HeightByTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int m_LegGroup;
 	
 	UPROPERTY(BlueprintReadOnly)
 	FVector m_TracePosition;
@@ -84,21 +83,14 @@ public:
 	FVector m_EndFootPosition;
 
 	void UnplantFoot();
-	bool TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>& raycastProfile, const FTransform& creatureTransform, const FVector& creatureVelocity,float stepTime, float stepDistance, float stepHeight, float velocityStepDistance);
-	void UpdateFootState();
+	bool TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>& raycastProfile, const FTransform& creatureTransform, const FVector& creatureVelocity,float stepTime, float stepHeight, float velocityStepDistance);
 
-	std::deque<FVector> m_historicalPathTracePoints;
-	// perhaps we keep a queue of trace points
-	// and that queue determines where our feet need to land
-	// and where they can rise to
-	
-	bool CanUnplant() const;
+	float GetSqDistanceFromStartPoint() const;
+	bool GetIsPlanted() const;
+	int GetLegGrouping() const;
 	void RenderDebugInfo() const;
 	float GetFootHeightDefaultRelative(FVector upVector) const;
 	float GetTimeSinceLastPlant() const;
-	float GetPlantedQuantity(float stepTime) const;
 	FVector GetCurrentFootPosition() const;
-	float GetLegIKValidity() const;
-
 };
 

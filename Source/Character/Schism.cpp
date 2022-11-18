@@ -47,8 +47,8 @@ FQuat ASchism::GetDesiredBodyRotation(float DeltaTime)
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetForwardVector() * 100.0f, FColor::Red, false, -1, 0, 10);
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetRightVector() * 100.0f, FColor::Blue, false, -1, 0, 10);
 	}
-	
-	return UKismetMathLibrary::QuaternionSpringInterp(currentQuat, desiredQuat,  m_RotSpringState, m_BodyRotationSpeed, m_BodyRotationDamping, DeltaTime);
+	return desiredQuat;
+	// return UKismetMathLibrary::QuaternionSpringInterp(currentQuat, desiredQuat,  m_RotSpringState, m_BodyRotationSpeed, m_BodyRotationDamping, DeltaTime);
 }
 
 bool ASchism::MakeLineTrace(FVector start, FVector end, FHitResult& hitResult)
@@ -72,29 +72,33 @@ bool ASchism::MakeLineTrace(FVector start, FVector end, FHitResult& hitResult)
 	return hit;
 }
 
-ASchism::AngleTestResult ASchism::DoAngleTest(FVector startA, FVector endA, FVector startB, FVector endB, float defaultLength, float angleCheckDistance, float sensitivity)
+ASchism::AngleTestResult ASchism::DoAngleTest(FVector startA, FVector endA, FVector startB, FVector endB, float defaultLength, float angleCheckDistanceStart, float angleCheckDistanceFinish)
 {
 	FHitResult hit;
-	float forwardLength = defaultLength;
+	float forwardLength = angleCheckDistanceFinish;
 	bool foundGeom = false;
 	if (MakeLineTrace(startA, endA, hit))
 	{
 		foundGeom = true;
 		forwardLength = hit.Distance;
 	}
-	float backwardLength = defaultLength;
+	forwardLength -= angleCheckDistanceStart;
+	float backwardLength = angleCheckDistanceFinish;
 	if (MakeLineTrace(startB, endB, hit))
 	{
 		foundGeom = true;
 		backwardLength = hit.Distance;
 	}
+	backwardLength -= angleCheckDistanceStart;
 	
 	// if forward > backward, tilt forward
-	float resultant = forwardLength - backwardLength;
+	float lengthDifference = angleCheckDistanceFinish - angleCheckDistanceStart;
+	float resultant = FMath::Clamp(forwardLength - backwardLength, -lengthDifference, lengthDifference);
 	// turn the resultant difference into a desired quaternion
 	// can get desired angle tilt by tan
-	float theta = -FMath::RadiansToDegrees(FMath::Atan(resultant / (2 * angleCheckDistance)) * sensitivity);
-	theta = FMath::Clamp(theta, -m_MaxAngleOffsetFromCurrentForProceduralRotation, m_MaxAngleOffsetFromCurrentForProceduralRotation);
+	float theta = FMath::Atan(resultant / (2 * defaultLength));
+	float maxTheta = FMath::Atan(lengthDifference / (2 * defaultLength));
+	theta = theta / maxTheta;
 
 	return AngleTestResult(foundGeom, theta);
 }
@@ -139,6 +143,10 @@ ASchism::ASchism()
 	check(m_pFrontRightLeg != nullptr);
 	m_pFrontRightLeg->SetupAttachment(GetRootComponent());
 
+	m_pMovementComponent = CreateDefaultSubobject<UWallClimbingMovementComponent>(TEXT("Movement Component"));
+	check(m_pMovementComponent != nullptr);
+
+	m_pLegManager->SetMovementComponent(m_pMovementComponent);
 	m_pLegManager->SetBoxForBodyCollision(m_pBoxComponentForLegManager);
 }
 
@@ -161,9 +169,9 @@ void ASchism::Tick(float DeltaTime)
 	//
 	//
 	FQuat actorQuat = GetActorRotation().Quaternion();
-	const FVector forwardBackwardPredictionVector = actorQuat.GetForwardVector() * m_ForwardPredictionLength; 
-	const FVector leftRightPredictionVector = actorQuat.GetRightVector() * m_LeftRightPredictionLength;
-	const FVector upDownPredictionVector = actorQuat.GetUpVector() * m_UpDownPredictionLength;
+	const FVector forwardBackwardPredictionVector = actorQuat.GetForwardVector() * m_ForwardPredictionLengthMax; 
+	const FVector leftRightPredictionVector = actorQuat.GetRightVector() * m_LeftRightPredictionLengthMax;
+	const FVector upDownPredictionVector = actorQuat.GetUpVector() * m_UpDownPredictionLengthMax;
 		
 	const FVector forwardPoint = GetActorLocation() + forwardBackwardPredictionVector;
 	const FVector leftPoint = GetActorLocation() - leftRightPredictionVector;
@@ -176,16 +184,21 @@ void ASchism::Tick(float DeltaTime)
 	const FVector backwardDownPoint = backwardPoint - upDownPredictionVector;
 	const FVector backwardUpPoint = backwardPoint + upDownPredictionVector;
 
-	AngleTestResult resultPitch = DoAngleTest(GetActorLocation(), forwardPoint, GetActorLocation(), backwardPoint, m_ForwardPredictionLength, m_ForwardPredictionLength, m_LegAlignmentBodyRotationPitchSensitivity);
+	AngleTestResult resultPitch = DoAngleTest(GetActorLocation(), forwardPoint, GetActorLocation(), backwardPoint, m_ForwardPredictionLengthMax, m_ForwardPredictionLengthMax, m_ForwardPredictionLengthMin);
 	if (!resultPitch.wasHitTerrain)
-		resultPitch = DoAngleTest(forwardPoint, forwardDownPoint, backwardPoint, backwardDownPoint, m_UpDownPredictionLength, m_ForwardPredictionLength, m_LegAlignmentBodyRotationPitchSensitivity);
+		resultPitch = DoAngleTest(forwardPoint, forwardDownPoint, backwardPoint, backwardDownPoint,  m_ForwardPredictionLengthMax, m_UpDownPredictionLengthMax, m_UpDownPredictionLengthMin);
 	if (!resultPitch.wasHitTerrain)
-		resultPitch.desiredAngle = -m_MaxAngleOffsetFromCurrentForProceduralRotation;
-	AngleTestResult resultRoll = DoAngleTest(GetActorLocation(), rightPoint, GetActorLocation(), leftPoint, m_LeftRightPredictionLength, m_LeftRightPredictionLength, m_LegAlignmentBodyRotationRollSensitivity);
+		resultPitch.desiredAngle = 1.0f;
+	// AngleTestResult resultRoll = DoAngleTest(GetActorLocation(), rightPoint, GetActorLocation(), leftPoint, m_LeftRightPredictionLengthMax, m_LeftRightPredictionLength, m_LegAlignmentBodyRotationRollSensitivity);
 	// add an additional pitch based on the above result (?)
 	// pitch is y component
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, *FString::Printf(TEXT("Pitch Angle: %f"), resultPitch.desiredAngle));	
-	FQuat additionalQuat = FQuat::MakeFromEuler(FVector(0.0f, resultPitch.desiredAngle, 0.0f));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, *FString::Printf(TEXT("Pitch Angle: %f"), resultPitch.desiredAngle));
+
+	float pitchAngularVelocity =  -FMath::Sign(resultPitch.desiredAngle) * m_TurnSpeedByAngularOffsetToDesired.EditorCurveData.Eval(abs(resultPitch.desiredAngle));
+
+	
+	
+	FQuat additionalQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAngularVelocity * DeltaTime, 0.0f));
 
 	FQuat desiredQuat = actorQuat * additionalQuat;
 	if(SchismDebug.GetValueOnGameThread() > 0)
@@ -194,10 +207,10 @@ void ASchism::Tick(float DeltaTime)
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetForwardVector() * 100.0f, FColor::Red, false, -1, 0, 10);
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + desiredQuat.GetRightVector() * 100.0f, FColor::Blue, false, -1, 0, 10);
 	}
-	FQuat newActorQuat = UKismetMathLibrary::QuaternionSpringInterp(actorQuat, desiredQuat,  m_RotSpringState, m_BodyRotationSpeed, m_BodyRotationDamping, DeltaTime);
+	// FQuat newActorQuat = UKismetMathLibrary::QuaternionSpringInterp(actorQuat, desiredQuat,  m_RotSpringState, m_BodyRotationSpeed, m_BodyRotationDamping, DeltaTime);
 	// rotate until rightLength and leftLength are equal
 	// so, essentially, want to measure the difference
-	SetActorRotation(newActorQuat);
+	SetActorRotation(desiredQuat);
 	// if there's uneven terrain ahead of us, leftLength and rightLength will capture that data
 }
 

@@ -38,6 +38,8 @@ public:
 
 	void SetBoxForBodyCollision(UBoxComponent* boxComponent);
 
+	void SetMovementComponent(UPawnMovementComponent* movementComponent);
+
 	UFUNCTION(BlueprintCallable)
 	FVector GetCurrentRaisedBodyPosition() const;
 	
@@ -52,7 +54,7 @@ private:
 	float LegUnplantThreshold{1.0f};
 	
 	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
-	FRuntimeFloatCurve m_StepDistanceByMovementSpeed;
+	FRuntimeFloatCurve m_StepTimeDelayByMovementSpeed;
 	
 	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
 	FRuntimeFloatCurve m_StepTimeByMovementSpeed;
@@ -63,8 +65,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
 	FRuntimeFloatCurve m_StepHeightByMovementSpeed;
 
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	float m_MinimumVelocityForStepTaking;
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | Step Parameters")
+	float m_MinimumStepDistance;
+	
 	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
 	UBoxComponent* m_pBoxComponentForGroundCollision;
+
+	UPROPERTY(EditAnywhere, Category = "Animation | Components")
+	UPawnMovementComponent* m_pMovementComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
 	float m_BoxTraceHeightUp;
@@ -78,3 +89,4 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Animation | Body Translation")
 	float m_BodyTranslationDamping;
 };
+

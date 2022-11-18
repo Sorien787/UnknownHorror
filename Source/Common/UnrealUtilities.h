@@ -53,6 +53,8 @@ protected:
 
 	FVector m_GridOrigin;
 
+	T m_defaultValue;
+
 	float m_GridElementSize;
 
 	int ConvertGridInputToIndex(FIntVector input) const
@@ -80,6 +82,10 @@ public:
 		const FVector pos = FVector(x, y, z);
 		const FIntVector pos_gridSpace = ConvertFloatInputToGridInput(pos);
 		const int index = ConvertGridInputToIndex(pos_gridSpace);
+		
+		if (index < 0 || index >= m_BasicGrid.size())
+			return m_defaultValue;
+		
 		return m_BasicGrid[index];
 	}
 	

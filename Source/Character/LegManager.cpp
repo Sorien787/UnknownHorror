@@ -3,6 +3,7 @@
 
 #include "LegManager.h"
 
+#include "WallClimbingMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -93,23 +94,27 @@ void ULegManager::UpdateDesiredBodyHeightDefaultRelative(float DeltaTime)
 	m_fCurrentOffsetHeight = UKismetMathLibrary::FloatSpringInterp(m_fCurrentOffsetHeight, desiredOffset, m_fCurrentBodyTranslationState, m_BodyTranslationSpeed, m_BodyTranslationDamping, DeltaTime);
 }
 
+void ULegManager::SetMovementComponent(UPawnMovementComponent* movementComponent)
+{
+	m_pMovementComponent = movementComponent;
+}
+
 void ULegManager::UpdateLegs(float DeltaTime)
 {
-	ULegComponent* bestLeg = nullptr;
-
-	float totalLegUnplantQuantity = 0.0f;
 
 	const FTransform& actorTransform = GetOwner()->GetTransform();
 	const FVector actorVelocity = GetOwner()->GetVelocity();
 	const float actorSpeed = actorVelocity.Length();
 
 	FVector actorVelocityDirection = GetOwner()->GetActorQuat().GetForwardVector();
+
 	if (actorSpeed > FLT_EPSILON)
 	{
 		actorVelocityDirection = actorVelocity / actorSpeed;
 	}
 	
 	float actorSpeedNormalized = actorSpeed;
+	
 	if (m_fMaxPawnSpeed > FLT_EPSILON)
 	{
 		actorSpeedNormalized/=m_fMaxPawnSpeed;		
@@ -117,35 +122,68 @@ void ULegManager::UpdateLegs(float DeltaTime)
 	
 	const float extraStepDistanceByVelocity = m_ExtraStepDistanceByMovementSpeed.EditorCurveData.Eval(actorSpeedNormalized);
 	const float stepTime = m_StepTimeByMovementSpeed.EditorCurveData.Eval(actorSpeedNormalized);
-	const float stepDistance = m_StepDistanceByMovementSpeed.EditorCurveData.Eval(actorSpeedNormalized);
+	const float stepDelayTime = m_StepTimeDelayByMovementSpeed.EditorCurveData.Eval(actorSpeedNormalized);
+	const float stepVelocity = m_MinimumVelocityForStepTaking;
 	const float stepHeight = m_StepHeightByMovementSpeed.EditorCurveData.Eval(actorSpeedNormalized);
+	const bool velocityStepRequired = m_pMovementComponent->Velocity.SquaredLength() > stepVelocity * FMath::Abs(stepVelocity);
+	
+	const ULegComponent* bestLegToLift = m_controllableLegComponents[0];
 	
 	for (const auto& leg : m_controllableLegComponents)
 	{
-		leg->TrySetNewFootTargetLocation(m_LegRaycastProfiles, actorTransform, actorVelocityDirection, stepTime, stepDistance, stepHeight, extraStepDistanceByVelocity);
-		totalLegUnplantQuantity += leg->GetTimeSinceLastPlant();
-
-		// if leg internally can't unplant, early out
-		leg->UpdateFootState();
-
-		if (!leg->CanUnplant())
+		leg->TrySetNewFootTargetLocation(m_LegRaycastProfiles, actorTransform, actorVelocityDirection, stepTime, stepHeight, extraStepDistanceByVelocity);
+		
+		if (!leg->GetIsPlanted())
 			continue;
 
 		// or if leg, due to other legs being better candidates, cant unplant, early out
-		if (bestLeg && (bestLeg->GetTimeSinceLastPlant() > leg->GetTimeSinceLastPlant()))
+		if (bestLegToLift && (bestLegToLift->GetSqDistanceFromStartPoint() > leg->GetSqDistanceFromStartPoint()))
 			continue;
 		
-		bestLeg = leg;
+		bestLegToLift = leg;
 	}
 
 	// if leg state means no new leg can unplant, early out
-	if (totalLegUnplantQuantity < LegUnplantThreshold)
+	
+	if (!bestLegToLift || (bestLegToLift->GetSqDistanceFromStartPoint() < m_MinimumStepDistance && !velocityStepRequired))
 		return;
 
-	if (!bestLeg)
+	// for a stagger, both feet can be down at the same time. In fact, we WANT both feet down at the same time.
+	// for a sprint, both feet can leave the ground as long as they're in rhythm.
+	// figure out the last leg(s) that lifted
+	//
+
+	const ULegComponent* lastLegToLift = nullptr;
+	
+	for (const auto& leg : m_controllableLegComponents)
+	{
+		if (leg == bestLegToLift)
+			continue;
+
+		if (lastLegToLift && lastLegToLift->GetTimeSinceLastPlant() < leg->GetTimeSinceLastPlant())
+			continue;
+		
+		lastLegToLift = leg;
+	}
+
+	// use LastLegToLift's time to figure out when we lift this leg
+	// it's possible that LastLegToLift is still negative (I.E, still in the air)
+	// that's fine - just use the quantity and determine if it's larger.
+
+	if (lastLegToLift && lastLegToLift->GetTimeSinceLastPlant() < stepDelayTime)
 		return;
 
-	bestLeg->UnplantFoot();
+
+	// if this leg is lifting, collate all the legs that are in the same group and lift those, too.
+	
+	for (const auto& leg : m_controllableLegComponents)
+	{
+		if(leg->GetLegGrouping() != bestLegToLift->GetLegGrouping())
+			continue;
+		
+		leg->UnplantFoot();
+	}
+	
 }
 
 FVector ULegManager::GetCurrentRaisedBodyPosition() const

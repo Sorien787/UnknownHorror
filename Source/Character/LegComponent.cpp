@@ -29,7 +29,7 @@ static TAutoConsoleVariable<int32> LegDebugOverstep(
 
 ULegComponent::ULegComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
@@ -37,7 +37,7 @@ ULegComponent::ULegComponent()
 void ULegComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	SetComponentTickEnabled(false);
 	m_CurrentFootPosition = GetComponentLocation();
 	m_StartFootPosition = GetComponentLocation();
 	m_EndFootPosition = GetComponentLocation();
@@ -45,7 +45,28 @@ void ULegComponent::BeginPlay()
 
 }
 
-bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>& raycastProfile, const FTransform& creatureTransform, const FVector& creatureVelocity, float stepTime, float stepDistance, float stepHeight, float velocityStepDistance)
+void ULegComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	const float stepCompletionPercentage = (GetWorld()->GetTimeSeconds() - m_fUnplantStartTime) / m_timeTakenForStep;
+	const float stepHorizontalTime = m_DistanceByTime.EditorCurveData.Eval(stepCompletionPercentage);
+	const float stepVerticalTime = m_HeightByTime.EditorCurveData.Eval(stepCompletionPercentage);
+
+	const FVector horizontalStepAddition = (m_EndFootPosition - m_StartFootPosition) * stepHorizontalTime;
+	const FVector verticalStepAddition =  (m_lastStepHeight + m_additionalStepHeight) * stepVerticalTime * m_stepUpVector;
+	m_CurrentFootPosition = m_StartFootPosition + horizontalStepAddition + verticalStepAddition;
+
+	if (stepCompletionPercentage < 1.0f)
+		return;
+	
+	m_bIsFootPlanted = true;
+	m_CurrentFootPosition = m_EndFootPosition;
+	m_StartFootPosition = m_CurrentFootPosition;
+	m_fPlantStartTime = GetWorld()->GetTimeSeconds();
+
+	SetComponentTickEnabled(false);
+}
+
+bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>& raycastProfile, const FTransform& creatureTransform, const FVector& creatureVelocity, float stepTime, float stepHeight, float velocityStepDistance)
 {
 	if (LegDebug.GetValueOnGameThread() > 0)
 		RenderDebugInfo();
@@ -53,7 +74,6 @@ bool ULegComponent::TrySetNewFootTargetLocation(const TArray<FLegRaycastProfile>
 	if (m_bIsFootPlanted)
 	{
 		m_stepUpVector = creatureTransform.Rotator().Quaternion().GetUpVector();
-		m_minDistanceForStep = stepDistance;
 		m_timeTakenForStep = stepTime;
 		m_lastStepHeight = stepHeight;
 	}
@@ -167,8 +187,7 @@ void ULegComponent::RenderDebugInfo() const
 	DrawDebugSphere(GetWorld(), m_StartFootPosition, 5, 26, startEndRenderColor, false);
 	DrawDebugSphere(GetWorld(), m_EndFootPosition, 5, 26, startEndRenderColor, false);
 	
-	const FColor renderColor = m_bHasMovedEnoughToUnplant ? FColor::Blue : FColor::Red;
-	DrawDebugLine(GetWorld(), m_StartFootPosition, m_EndFootPosition, renderColor, false);
+	DrawDebugLine(GetWorld(), m_StartFootPosition, m_EndFootPosition, FColor::Blue, false);
 	DrawDebugSphere(GetWorld(), m_CurrentFootPosition, 15, 26, FColor::Purple, false);
 }
 
@@ -178,54 +197,26 @@ float ULegComponent::GetFootHeightDefaultRelative(FVector upVector) const
 	return upVector.Dot(defaultToCurrent);
 }
 
-void ULegComponent::UpdateFootState()
+float ULegComponent::GetSqDistanceFromStartPoint() const
 {
-	if (m_bIsFootPlanted)
-	{
-		m_bHasMovedEnoughToUnplant |= FVector::Distance(m_StartFootPosition, m_TracePosition) > m_minDistanceForStep;
-	}
-	else
-	{
-		const float stepCompletionPercentage = (GetWorld()->GetTimeSeconds() - m_fUnplantStartTime) / m_timeTakenForStep;
-		const float stepHorizontalTime = m_DistanceByTime.EditorCurveData.Eval(stepCompletionPercentage);
-		const float stepVerticalTime = m_HeightByTime.EditorCurveData.Eval(stepCompletionPercentage);
-
-		const FVector horizontalStepAddition = (m_EndFootPosition - m_StartFootPosition) * stepHorizontalTime;
-		const FVector verticalStepAddition =  (m_lastStepHeight + m_additionalStepHeight) * stepVerticalTime * m_stepUpVector;
-		m_CurrentFootPosition = m_StartFootPosition + horizontalStepAddition + verticalStepAddition;
-
-		if (stepCompletionPercentage < 1.0f)
-			return;
-		
-		m_bIsFootPlanted = true;
-		m_CurrentFootPosition = m_EndFootPosition;
-		m_StartFootPosition = m_CurrentFootPosition;
-		m_fPlantStartTime = GetWorld()->GetTimeSeconds();
-	}
+	return (m_TracePosition - m_StartFootPosition).SizeSquared();
 }
 
-bool ULegComponent::CanUnplant() const
+bool ULegComponent::GetIsPlanted() const
 {
-	return m_bHasMovedEnoughToUnplant;
+	return m_bIsFootPlanted;
 }
 
-float ULegComponent::GetLegIKValidity() const
+int ULegComponent::GetLegGrouping() const
 {
-	return m_fLegIKValidity;
+	return m_LegGroup;
 }
 
 float ULegComponent::GetTimeSinceLastPlant() const
 {
 	if (!m_bIsFootPlanted)
-		return 0.0f;
+		return 	GetWorld()->GetTimeSeconds() - m_fUnplantStartTime - m_timeTakenForStep;
 	return GetWorld()->GetTimeSeconds() - m_fPlantStartTime;
-}
-
-float ULegComponent::GetPlantedQuantity(float StepTime) const
-{
-	if (m_bIsFootPlanted)
-		return 0.0f;
-	return 1 - (GetWorld()->GetTimeSeconds()-m_fUnplantStartTime) / StepTime;
 }
 
 FVector ULegComponent::GetCurrentFootPosition() const
@@ -252,7 +243,6 @@ void ULegComponent::UnplantFoot()
 		if ((startToPathPoint.SquaredLength() < FLT_EPSILON) || (startToPathPoint.SquaredLength() > startToEnd.SquaredLength()))
 			continue;
 
-		const FVector startToPathPointNormalized = startToPathPoint.GetUnsafeNormal();
 		const FVector startToEndNormalized = startToEnd.GetUnsafeNormal();
 
 		const float dotProd = FVector::DotProduct(startToEndNormalized, startToPathPoint);
@@ -274,6 +264,6 @@ void ULegComponent::UnplantFoot()
 	m_historicalPathTracePoints.clear();
 	m_bIsFootPlanted = false;
 	m_fUnplantStartTime = GetWorld()->GetTimeSeconds();
-	m_bHasMovedEnoughToUnplant = false;
+	SetComponentTickEnabled(true);
 }
 
