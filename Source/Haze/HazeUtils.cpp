@@ -86,7 +86,10 @@ float DiffusionGrid::SampleGrid(const float x, const float y, const float z) con
 			}
 		}
 	}
-	return totDensity / totLen;
+
+	if (totLen > FLT_EPSILON)
+		return totDensity / totLen;
+	return 0.0f;
 }
 
 void DiffusionGrid::AddDiffusionSource(const float x, const float y, const float z, const float sourceStrength)

@@ -10,6 +10,48 @@
 class DEEPSEAHORROR_API UnrealUtilities
 {
 public:
+	template<class T>
+	class RisingEdgeTrigger
+	{
+	public:
+		RisingEdgeTrigger(T initVal){storedValue = initVal;}
+		bool PollEdge(T newValue){ bool returnVal = false; if (newValue > storedValue){returnVal = true;} storedValue = newValue; return returnVal;}
+	private:
+		T storedValue;
+	};
+
+	template<class T>
+	class GreaterThanTrigger
+	{
+	public:
+		GreaterThanTrigger(T initVal){triggerValue = initVal;}
+		bool PollEdge(T newValue){ bool returnVal = false; if (newValue > triggerValue){triggered = true; returnVal = true;}else{triggered = false;} return returnVal;}
+	private:
+		T triggerValue;
+		bool triggered = false;
+	};
+
+	template<class T>
+	class LessThanTrigger
+	{
+	public:
+		LessThanTrigger(T initVal){triggerValue = initVal;}
+		bool PollEdge(T newValue){ bool returnVal = false; if (newValue < triggerValue){triggered = true; returnVal = true;}else{triggered = false;} return returnVal;}
+	private:
+		T triggerValue;
+		bool triggered = false;
+	};
+
+	template<class T>
+	class FallingEdgeTrigger
+	{
+	public:
+		FallingEdgeTrigger(T initVal){storedValue = initVal;}
+		bool PollEdge(T newValue){ bool returnVal = false; if (newValue < storedValue){returnVal = true;}storedValue = newValue; return returnVal;}
+	private:
+		T storedValue;
+	};
+	
 	static FVector RaycastActorToWorldPosition(const UWorld* world, const float range, const AActor* pIgnoreActor);
 	static TArray<FHitResult> RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor);
 	static FRotator GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation);

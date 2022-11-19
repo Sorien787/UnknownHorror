@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Haze/HazeEffectComponent.h"
 #include "Interaction/InteractionUserComponent.h"
 #include "FirstPersonPlayerCharacter.generated.h"
 
@@ -91,6 +92,10 @@ public:
 
 	void InteractionStateUpdate(float DeltaTime);
 
+	void HazeDispersalUpdate(float DeltaTime);
+	
+	void CameraEffectsUpdate(float DeltaTime);
+
 	// INPUT FUNCTIONS //
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
@@ -128,7 +133,6 @@ public:
 		void UnlockCamera();
 
 
-	// FPS camera
 	UPROPERTY(VisibleAnywhere)
 		UCameraComponent* m_CharacterCamera;
 	
@@ -137,12 +141,64 @@ public:
 	
 	UPROPERTY(VisibleAnywhere)
 		UInteractionUserComponent* m_InteractionUserComponent;
+
+	UPROPERTY(VisibleAnywhere)
+		UHazeEffectComponent* m_pHazeEffectComponent;
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_EnterBoxComponent;
 	
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_ExitBoxComponent;
+
+	UPROPERTY(EditAnywhere)
+		UAudioComponent* m_HeartbeatAudioComponent;
+
+	UPROPERTY(EditAnywhere)
+		UAudioComponent* m_RingingAudioComponent;
+	
+	UPROPERTY(EditAnywhere)
+	UAudioComponent* m_DroneAudioComponent;
+	
+	// FPS camera
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
+		UMaterialParameterCollection* m_VisualsMaterialParameterCollection;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
+		FRuntimeFloatCurve m_HazeEffectPulseProfile;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
+		FRuntimeFloatCurve m_HazeEffectPulseTimeByHazeStrength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
+		FRuntimeFloatCurve m_HazeEffectBloomByHazeStrength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
+		FRuntimeFloatCurve m_HazeEffectChromaticAbberation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
+		FRuntimeFloatCurve m_HazeEffectPulseVolumeByHazeStrength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
+		FRuntimeFloatCurve m_HazeEffectPulsePitchByHazeStrength;
+
+	UnrealUtilities::RisingEdgeTrigger<float> m_HeartBeatSFXTrigger{0.0f};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
+		FRuntimeFloatCurve m_HazeEffectRingingVolumeByHazeStrength;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
+		FRuntimeFloatCurve m_HazeEffectDroneVolumeByHazeStrength;
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Haze Setup")
+		FRuntimeFloatCurve m_HazeDispersalByCurrentHaze;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Haze Setup")
+		float m_MaximumGainedHaze;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Haze Setup")
+		float m_MaximumHazeApplication;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
 		float m_CameraLookNormalizedSpeed;
@@ -198,6 +254,9 @@ public:
 
 	float m_currentYawOffset = 0.0f;
 	float m_currentPitchOffset = 0.0f;
+
+	float m_fCurrentHaze = 0.0f;
+	float m_fCurrentHeartbeatTime = 0.0f;
 
 	float m_currentMaxYawOffset = 0.0f;
 	float m_currentMaxPitchOffset = 0.0f;

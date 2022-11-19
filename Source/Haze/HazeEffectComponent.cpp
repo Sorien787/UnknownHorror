@@ -108,6 +108,11 @@ void UHazeEffectComponent::OnRefreshHazeGridPosition()
 	m_HazeID = hazeSubsystem->GetHazeIDAtLocation(currentLocation, m_HazeID);
 
 	m_LastPolledLocation = currentLocation;
+
+	if (m_HazeID != -1)
+		return;
+	
+	m_CurrentHazeStrength = 0.0f;
 }
 
 void UHazeEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

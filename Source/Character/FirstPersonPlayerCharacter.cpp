@@ -8,7 +8,10 @@
 #include "Interaction/InteractionUserComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Common/UnrealUtilities.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
 
 void AFirstPersonPlayerCharacter::ClampViewOffsetToShoulder(float DeltaTime)
 {
@@ -69,6 +72,18 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 	m_ExitBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Exit Box"));
 	check(m_ExitBoxComponent != nullptr);
 	m_ExitBoxComponent->SetupAttachment(GetRootComponent());
+
+	m_pHazeEffectComponent = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Effect"));
+	check(m_pHazeEffectComponent != nullptr);
+	
+	m_DroneAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("Drone Audio"));
+	check(m_DroneAudioComponent != nullptr);
+
+	m_RingingAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("Ring Audio"));
+	check(m_RingingAudioComponent != nullptr);
+
+	m_HeartbeatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("Heart Thump Audio"));
+	check(m_HeartbeatAudioComponent != nullptr);
 }
 
 // Called when the game starts or when spawned
@@ -89,6 +104,9 @@ void AFirstPersonPlayerCharacter::BeginPlay()
 
 	m_InteractionUserComponent->AddInteractionEnterBox(m_EnterBoxComponent);
 	m_InteractionUserComponent->AddInteractionExitBox(m_ExitBoxComponent);
+
+	m_DroneAudioComponent->SetVolumeMultiplier(0.0f);
+	m_RingingAudioComponent->SetVolumeMultiplier(0.0f);
 }
 
 // Called every frame
@@ -99,6 +117,8 @@ void AFirstPersonPlayerCharacter::Tick(float DeltaTime)
 	LookStateUpdate(DeltaTime);
 	CrouchStateUpdate(DeltaTime);
 	InteractionStateUpdate(DeltaTime);
+	HazeDispersalUpdate(DeltaTime);
+	CameraEffectsUpdate(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -287,6 +307,45 @@ void AFirstPersonPlayerCharacter::InteractionStateUpdate(float DeltaTime)
 	{
 		UnlockCamera();
 	}
+}
+
+void AFirstPersonPlayerCharacter::HazeDispersalUpdate(float DeltaTime)
+{
+	m_fCurrentHaze +=  DeltaTime * FMath::Min(m_MaximumHazeApplication, m_pHazeEffectComponent->GetCurrentHazeStrength());
+	m_fCurrentHaze -= DeltaTime * m_HazeDispersalByCurrentHaze.EditorCurveData.Eval(m_fCurrentHaze / m_MaximumGainedHaze);
+	m_fCurrentHaze = FMath::Clamp(m_fCurrentHaze, 0.0f, m_MaximumGainedHaze);
+}
+
+void AFirstPersonPlayerCharacter::CameraEffectsUpdate(float DeltaTime)
+{
+
+	const float effectiveHazeStrength = m_fCurrentHaze / m_MaximumGainedHaze;
+	
+	m_fCurrentHeartbeatTime += DeltaTime / m_HazeEffectPulseTimeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_fCurrentHeartbeatTime = fmod(m_fCurrentHeartbeatTime, 1.0f);
+	const float heartBeatPoint = m_HazeEffectPulseProfile.EditorCurveData.Eval(m_fCurrentHeartbeatTime);
+
+	if(m_HeartBeatSFXTrigger.PollEdge(heartBeatPoint))
+	{
+		m_HeartbeatAudioComponent->Play();
+	}
+	const float heartbeatVol = m_HazeEffectPulseVolumeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_HeartbeatAudioComponent->SetVolumeMultiplier(heartbeatVol);
+	const float heartbeatPitch = m_HazeEffectPulsePitchByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_HeartbeatAudioComponent->SetPitchMultiplier(heartbeatPitch);
+	const float ringingVol = m_HazeEffectRingingVolumeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_RingingAudioComponent->SetVolumeMultiplier(ringingVol);
+	if(GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("Vol: %f"), heartbeatVol));	
+	const float droneVol = m_HazeEffectDroneVolumeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_DroneAudioComponent->SetVolumeMultiplier(droneVol);
+	
+	UMaterialParameterCollectionInstance* pMaterialParameterCollectionInstance = GetWorld()->GetParameterCollectionInstance(m_VisualsMaterialParameterCollection);
+	pMaterialParameterCollectionInstance->SetScalarParameterValue("PulseHeight", heartBeatPoint);
+	pMaterialParameterCollectionInstance->SetScalarParameterValue("Strength", effectiveHazeStrength);
+
+	m_CharacterCamera->PostProcessSettings.BloomIntensity = m_HazeEffectBloomByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_CharacterCamera->PostProcessSettings.SceneFringeIntensity = m_HazeEffectChromaticAbberation.EditorCurveData.Eval(effectiveHazeStrength);
 }
 
 void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
