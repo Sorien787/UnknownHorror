@@ -96,6 +96,8 @@ public:
 	
 	void CameraEffectsUpdate(float DeltaTime);
 
+	void AudioEffectsUpdate(float DeltaTime);
+
 	// INPUT FUNCTIONS //
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
@@ -133,36 +135,41 @@ public:
 		void UnlockCamera();
 
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UCameraComponent* m_CharacterCamera;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		USpringArmComponent* m_pCameraBoomArm;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UInteractionUserComponent* m_InteractionUserComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UHazeEffectComponent* m_pHazeEffectComponent;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UBoxComponent* m_EnterBoxComponent;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UBoxComponent* m_ExitBoxComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UAudioComponent* m_HeartbeatAudioComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UAudioComponent* m_RingingAudioComponent;
 	
-	UPROPERTY(EditAnywhere)
-	UAudioComponent* m_DroneAudioComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
+		UAudioComponent* m_DroneAudioComponent;
 	
-	// FPS camera
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
 		UMaterialParameterCollection* m_VisualsMaterialParameterCollection;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio setup")
+		USoundClass* m_InWorldSoundClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio setup")
+		FRuntimeFloatCurve m_AudioLowPassByHazeStrength;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Animation Setup")
 		FRuntimeFloatCurve m_HazeEffectPulseProfile;
@@ -182,7 +189,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
 		FRuntimeFloatCurve m_HazeEffectPulsePitchByHazeStrength;
 
-	UnrealUtilities::RisingEdgeTrigger<float> m_HeartBeatSFXTrigger{0.0f};
+	UnrealUtilities::RisingEdgeTrigger<float> m_HeartBeatSFXTrigger;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
 		FRuntimeFloatCurve m_HazeEffectRingingVolumeByHazeStrength;
@@ -190,7 +197,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Audio Setup")
 		FRuntimeFloatCurve m_HazeEffectDroneVolumeByHazeStrength;
 	
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Haze Setup")
 		FRuntimeFloatCurve m_HazeDispersalByCurrentHaze;
 
@@ -210,7 +216,7 @@ public:
 		float m_DefaultCrouchSpeed = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
-		float m_DefaultSpeed = 150.0f;
+		float m_DefaultSpeed = 150.0f;6
 
 	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
 		float m_SprintSpeed = 400.0f;

@@ -14,6 +14,7 @@ public:
 	class RisingEdgeTrigger
 	{
 	public:
+		RisingEdgeTrigger(){}
 		RisingEdgeTrigger(T initVal){storedValue = initVal;}
 		bool PollEdge(T newValue){ bool returnVal = false; if (newValue > storedValue){returnVal = true;} storedValue = newValue; return returnVal;}
 	private:
@@ -46,6 +47,7 @@ public:
 	class FallingEdgeTrigger
 	{
 	public:
+		FallingEdgeTrigger(){}
 		FallingEdgeTrigger(T initVal){storedValue = initVal;}
 		bool PollEdge(T newValue){ bool returnVal = false; if (newValue < storedValue){returnVal = true;}storedValue = newValue; return returnVal;}
 	private:

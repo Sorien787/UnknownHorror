@@ -54,6 +54,8 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+
+	m_HeartBeatSFXTrigger = UnrealUtilities::RisingEdgeTrigger<float>(0.0f);
 	m_pCameraBoomArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Cam Boom Arm"));
 	m_pCameraBoomArm->SetupAttachment(GetMesh(), "cameraSocket");
 	
@@ -119,6 +121,7 @@ void AFirstPersonPlayerCharacter::Tick(float DeltaTime)
 	InteractionStateUpdate(DeltaTime);
 	HazeDispersalUpdate(DeltaTime);
 	CameraEffectsUpdate(DeltaTime);
+	AudioEffectsUpdate(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -346,6 +349,13 @@ void AFirstPersonPlayerCharacter::CameraEffectsUpdate(float DeltaTime)
 
 	m_CharacterCamera->PostProcessSettings.BloomIntensity = m_HazeEffectBloomByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
 	m_CharacterCamera->PostProcessSettings.SceneFringeIntensity = m_HazeEffectChromaticAbberation.EditorCurveData.Eval(effectiveHazeStrength);
+}
+
+void AFirstPersonPlayerCharacter::AudioEffectsUpdate(float DeltaTime)
+{
+	const float effectiveHazeStrength = m_fCurrentHaze / m_MaximumGainedHaze;
+	const float desiredFrequency = m_AudioLowPassByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
+	m_InWorldSoundClass->Properties.LowPassFilterFrequency = desiredFrequency;
 }
 
 void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
