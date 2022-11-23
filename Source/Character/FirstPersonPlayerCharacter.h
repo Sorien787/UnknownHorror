@@ -216,7 +216,7 @@ public:
 		float m_DefaultCrouchSpeed = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
-		float m_DefaultSpeed = 150.0f;6
+		float m_DefaultSpeed = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
 		float m_SprintSpeed = 400.0f;
