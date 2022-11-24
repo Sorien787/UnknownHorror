@@ -24,11 +24,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void SetIsInSlammableState(bool set);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable)
+	void SetIsInSlammableState(bool set);
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnStopSlammable();
 

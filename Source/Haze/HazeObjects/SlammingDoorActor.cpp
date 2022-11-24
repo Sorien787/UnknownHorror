@@ -48,7 +48,8 @@ void ASlammingDoorActor::OnSlamFinished()
 
 void ASlammingDoorActor::OnSlamCanStartAgain()
 {
-	SetActorTickEnabled(true);
+	if (m_bIsInSlammableState)
+		SetActorTickEnabled(true);
 }
 
 

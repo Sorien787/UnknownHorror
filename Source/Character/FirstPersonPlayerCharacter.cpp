@@ -9,6 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Common/UnrealUtilities.h"
 #include "Components/AudioComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
@@ -40,6 +41,10 @@ void AFirstPersonPlayerCharacter::ClampViewOffsetToShoulder(float DeltaTime)
 		if (m_currentPitchOffset < allowedPitch)
 			m_currentPitchOffset = allowedPitch;
 	}
+}
+
+void AFirstPersonPlayerCharacter::ClampViewOffsetToMaximum(float maximumPitch, float maximumYaw)
+{
 }
 
 void AFirstPersonPlayerCharacter::ClampViewOffsetToZero(float DeltaTime)
@@ -360,14 +365,13 @@ void AFirstPersonPlayerCharacter::AudioEffectsUpdate(float DeltaTime)
 
 void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 {
-	const bool bCanEnterLook = true;
 	const bool tryEnterLookState = m_bIsInputLocked || m_bWantsToLook;
 
 	// use the controller for !m_bIsLooking
 
 	// use the head for m_bIsLooking, + the additional angles
 
-	if (tryEnterLookState && !m_bIsLooking && bCanEnterLook)
+	if (tryEnterLookState && !m_bIsLooking)
 	{
 		m_bIsLooking = true;
 
@@ -398,11 +402,6 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 		// but we want to be looking along our control rotation
 		// so set our control reotation to match our look state as best as possible
 		
-		const FTransform cameraBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
-		const FQuat cameraBoneQuat = cameraBoneTransform.GetRotation();
-	
-		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
-		const FQuat totalQuat = cameraBoneQuat * extraQuat;
 		const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
 		const float pitch = currentHeadQuat.Euler().Y;
 		const float yaw = currentHeadQuat.Euler().Z;
@@ -413,7 +412,7 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 		const float pitchAfterLimit = FMath::Clamp(pitch, -89, 89);
 		
-		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAfterLimit, yaw));
+		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAfterLimit, yaw));/
 		FRotator actorRotation = GetActorRotation();
 		const FQuat actorRot = FQuat::MakeFromRotator(actorRotation);
 		const float pitch2 = actorRot.Euler().Y;
@@ -432,13 +431,7 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 	{
 		const FTransform headBoneTransform = GetMesh()->GetSocketTransform(m_HeadBoneName);
 		const FQuat headBoneRotation = headBoneTransform.GetRotation();
-		const FVector eulerAngles = headBoneRotation.Euler();
 		ClampViewOffsetToShoulder(DeltaTime);
-		if (eulerAngles.X > 0)
-		{
-			int i = 0;
-			i++;
-		}
 		const FQuat extraQuat = FQuat::MakeFromEuler(FVector(0.0f, m_currentPitchOffset, m_currentYawOffset));
 
 		targetHeadQuat = headBoneRotation * extraQuat;
@@ -478,7 +471,6 @@ void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
 		// init params
 		const UCapsuleComponent* MyCapsuleComponent = GetCapsuleComponent();
 		const float SweepInflation =15.0f;
-		const ACharacter* DefaultCharacter = GetClass()->GetDefaultObject<ACharacter>();
 		const UWorld* MyWorld = GetWorld();
 		const float UnscaledHalfHeight = MyCapsuleComponent->GetUnscaledCapsuleHalfHeight();
 		const float ComponentScale = MyCapsuleComponent->GetShapeScale();
@@ -492,7 +484,7 @@ void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
 
 		// generate collision params
 		FCollisionShape CapsuleCollision = FCollisionShape::MakeCapsule(CapsuleExtent);
-		const ECollisionChannel CollisionChannel = GetMesh()->GetCollisionObjectType();
+
 		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CrouchTrace), false, this);
 		CapsuleParams.bDebugQuery = true;
 		FCollisionResponseParams ResponseParam;

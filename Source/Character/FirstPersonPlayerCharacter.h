@@ -7,7 +7,6 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Haze/HazeEffectComponent.h"
 #include "Interaction/InteractionUserComponent.h"
 #include "FirstPersonPlayerCharacter.generated.h"
@@ -212,64 +211,64 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
 		float m_CameraShoulderReturnSpeeds;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
-		float m_DefaultCrouchSpeed = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Movement Setup")
+		float m_DefaultCrouchSpeed;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
-		float m_DefaultSpeed = 150.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Movement Setup")
+		float m_DefaultSpeed;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Movement Setup")
-		float m_SprintSpeed = 400.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Movement Setup")
+		float m_SprintSpeed;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_HeadSnapBackSpeed = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_HeadSnapBackSpeed;
 	
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_ShoulderStartAngle = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_ShoulderStartAngle;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_ShoulderEndAngle = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_ShoulderEndAngle;
 	
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-	float m_ShoulderLowAngle = -10.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+	float m_ShoulderLowAngle;
 	
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_MaxHeadYaw = 120.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_MaxHeadYaw;
 	
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_MaxHeadPitch = 80.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_MaxHeadPitch;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
-		float m_LookSensitivityVal = 0.1f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
+		float m_LookSensitivityVal;
 
-	UPROPERTY(EditAnywhere, Category = "Setup|Camera Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
 		FName m_HeadBoneName;
 	
-	bool m_bWantsToSprint{false};
+	bool m_bWantsToSprint;
 
-	bool m_bIsSprinting{false};
+	bool m_bIsSprinting;
 
-	bool m_bWantsToCrouch{false};
+	bool m_bWantsToCrouch;
 
-	bool m_bForcedToCrouch{false};
+	bool m_bForcedToCrouch;
 
 
-	bool m_bForcedIntoStaticCamera{false};
+	bool m_bForcedIntoStaticCamera;
 
-	bool m_bMouseInputToActorRotation{false};
+	bool m_bMouseInputToActorRotation;
 
-	float m_currentYawOffset = 0.0f;
-	float m_currentPitchOffset = 0.0f;
+	float m_currentYawOffset;
+	float m_currentPitchOffset;
 
-	float m_fCurrentHaze = 0.0f;
-	float m_fCurrentHeartbeatTime = 0.0f;
+	float m_fCurrentHaze;
+	float m_fCurrentHeartbeatTime;
 
-	float m_currentMaxYawOffset = 0.0f;
-	float m_currentMaxPitchOffset = 0.0f;
+	float m_currentMaxYawOffset;
+	float m_currentMaxPitchOffset;
 	
-	bool m_bIsLooking{false};
-	bool m_bWantsToLook{false};
+	bool m_bIsLooking;
+	bool m_bWantsToLook;
 
-	bool m_bIsInputLocked{false};
+	bool m_bIsInputLocked;
 };
 
