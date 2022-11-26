@@ -412,7 +412,7 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 		const float pitchAfterLimit = FMath::Clamp(pitch, -89, 89);
 		
-		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAfterLimit, yaw));/
+		const FQuat controlQuat = FQuat::MakeFromEuler(FVector(0.0f, pitchAfterLimit, yaw));
 		FRotator actorRotation = GetActorRotation();
 		const FQuat actorRot = FQuat::MakeFromRotator(actorRotation);
 		const float pitch2 = actorRot.Euler().Y;
