@@ -343,8 +343,6 @@ void AFirstPersonPlayerCharacter::CameraEffectsUpdate(float DeltaTime)
 	m_HeartbeatAudioComponent->SetPitchMultiplier(heartbeatPitch);
 	const float ringingVol = m_HazeEffectRingingVolumeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
 	m_RingingAudioComponent->SetVolumeMultiplier(ringingVol);
-	if(GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("Vol: %f"), heartbeatVol));	
 	const float droneVol = m_HazeEffectDroneVolumeByHazeStrength.EditorCurveData.Eval(effectiveHazeStrength);
 	m_DroneAudioComponent->SetVolumeMultiplier(droneVol);
 	

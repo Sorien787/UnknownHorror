@@ -39,7 +39,6 @@ void AInteractionPoint::TryRevealWidget()
 {
 	if (m_CurrentWidgetState != CurrentWidgetState::Hidden || !m_bIsCurrentlyActive)
 		return;
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Revealing Widget!"));
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	Execute_InteractionWidgetReveal(this);
 }
@@ -49,7 +48,6 @@ void AInteractionPoint::TryHideWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Hidden)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Hiding Widget!"));
 	Execute_InteractionWidgetHide(this);
 }
 
@@ -58,7 +56,6 @@ void AInteractionPoint::TryFocusWidget()
 	if (m_CurrentWidgetState == CurrentWidgetState::Interactable || !m_bIsCurrentlyActive)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Interactable;
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focusing Widget!"));
 	Execute_InteractionWidgetFocus(this);
 }
 
@@ -67,7 +64,6 @@ void AInteractionPoint::TryUnfocusWidget()
 	if (m_CurrentWidgetState != CurrentWidgetState::Interactable || !m_bIsCurrentlyActive)
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Unfocusing Widget!"));
 	Execute_InteractionWidgetUnfocus(this);
 }
 
