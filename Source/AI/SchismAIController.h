@@ -6,6 +6,7 @@
 #include "AIAlertLevel.h"
 #include "UObject/ObjectKey.h"
 #include "AIController.h"
+#include "BehaviorTree/BehaviorTreeTypes.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "SchismAIController.generated.h"
 
@@ -18,14 +19,26 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	
 	GENERATED_BODY()
 
-	virtual void BeginPlay() override;
-
-	virtual void Tick(float DeltaSeconds) override;
-
-	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
-	
 	ASchismAIController();
 
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
+
+	void OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimulus);
+	void StimulusLoadUpdate(float DeltaSeconds);
+	void OnAlertDataUpdate(float DeltaSeconds);
+	void OnBlackboardVarsUpdate();
+	void OnVisibleActorUpdate();
+	void TickAlertData(FActorAlertData& alertData, float DeltaTime);
+	void OnBestActorAlertDataUpdate();
+	
+	static void TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData);
+	void DebugDrawAlertData(const FActorAlertData& AlertData) const;
+	bool ShouldRemovePerceptionData(const FActorAlertData& AlertData) const;
+
+
+	
 	UFUNCTION(BlueprintCallable)
 	EAIAlertLevel GetCurrentAlertLevel();
 
@@ -35,14 +48,22 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	UFUNCTION(BlueprintCallable)
 	AActor* GetCurrentActorOfInterest();
 
+	UFUNCTION(BlueprintCallable)
+	void LoseInterestInActor(AActor* pActor);
+
+	UFUNCTION(BlueprintCallable)
+	void ClearLoseInterestInActor(AActor* pActor);
 	
-	TMap<TObjectKey<AActor>, FActorAlertData> m_CachedAlertData;
+	TMap<TObjectKey<AActor>, TArray<FActorAlertData>> m_AudioAlertData;
+	TMap<TObjectKey<AActor>, FActorAlertData> m_VisualAlertData;
+	TSet<TObjectKey<AActor>> m_LostInterestSet;
 
-	void OnBestActorAlertDataUpdate();
+	FDefaultActorAlertData m_DefaultAlertData;
+	ISharedActorAlertData* m_BestActorAlertData;
+	AActor* m_BestActorOfInterest = nullptr;
+	bool m_bActorVisible = false;
 
-	void OnTargetPositionUpdate();
 
-	TObjectKey<AActor> m_BestActorAlertData;
 	
 public:
 	 UPROPERTY(EditAnywhere)
@@ -54,14 +75,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
 	UBehaviorTree* m_pBTAsset;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName AlertLevelBlackboardKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName TargetLocationBlackboardKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName HasVisuallyDetectedPlayerBlackboardKey;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	FRuntimeFloatCurve m_AngleFromCenterToVisualFalloffModifier;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
-	float m_MinimumPerceptionBeforeCulling;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
-	float m_MaximumDefaultPerception;
+	FRuntimeFloatCurve m_TotalAudioInterestToVisualScalar;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	float m_MinimumTimeBeforeCulling;

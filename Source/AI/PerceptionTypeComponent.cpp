@@ -39,6 +39,16 @@ const float UPerceptionTypeComponent::GetAudioPerceptionDistanceScalar(float cur
 	return m_AudioFalloffModifierByDistance.EditorCurveData.Eval(currentInterestNormalized);
 }
 
+const float UPerceptionTypeComponent::GetVisualDecayDelay() const
+{
+	return m_TimeBeforeVisualInterestDecayBegin;
+}
+
+const float UPerceptionTypeComponent::GetAudioDecayDelay() const
+{
+	return m_TimeBeforeAudioInterestDecayBegin;
+}
+
 const float UPerceptionTypeComponent::GetUncertaintyDistance(float currentInterestNormalized) const
 {
 	return m_UncertaintyDistanceByCurrentSuspicion.EditorCurveData.Eval(currentInterestNormalized);

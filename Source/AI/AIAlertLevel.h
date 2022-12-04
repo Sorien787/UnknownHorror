@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/UserDefinedEnum.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "AIAlertLevel.generated.h"
 
+class UPerceptionTypeComponent;
 /**
  * 
  */
@@ -33,57 +35,52 @@ struct FAlertLevelDetectionThreshold
  float HighDetectionThreshold;
 };
 
-USTRUCT(BlueprintType)
-struct FActorAlertData
+struct ISharedActorAlertData
 {
- GENERATED_BODY();
+ ISharedActorAlertData(float _InitPerceptionStrength, float _EventTime, FVector _EventLocation, FAISenseID _SenseID) :
+ SenseID(_SenseID),
+ EventLocation(_EventLocation),
+ EventTime(_EventTime),
+ CurrentPerceptionStrength(_InitPerceptionStrength){}
 
- FActorAlertData(EAIAlertLevel inMaxAlertLevel, uint8 inPriority, float maximumInterest) :
-  MaxAlertLevel(inMaxAlertLevel),
-  CurrentAlertLevel(EAIAlertLevel::IDLE),
-  Priority(inPriority),
-  MaximumInterest(maximumInterest),
-  LastTimeStimulusReceived(0.0f),
-  CurrentPerceptionStrength(0.0f){}
-
- FActorAlertData() :
-  MaxAlertLevel(EAIAlertLevel::INVESTIGATING),
-  CurrentAlertLevel(EAIAlertLevel::IDLE),
-  Priority(0),
-  MaximumInterest(0.0f),
-  LastTimeStimulusReceived(0.0f),
-  CurrentPerceptionStrength(0.0f){}
-
- UPROPERTY(EditAnywhere)
- EAIAlertLevel MaxAlertLevel;
-
- UPROPERTY(EditAnywhere)
- EAIAlertLevel CurrentAlertLevel;
-
- UPROPERTY(EditAnywhere)
- uint8 Priority;
-
- UPROPERTY(EditAnywhere)
- float MaximumInterest;
-
- UPROPERTY(EditAnywhere)
- float LastTimeStimulusReceived;
-
- UPROPERTY(EditAnywhere)
- float CurrentPerceptionStrength;
+ virtual ~ISharedActorAlertData(){};
+ 
+public:
+ 
+ FAISenseID SenseID;
+ FVector EventLocation;
+ EAIAlertLevel CurrentAlertLevel {EAIAlertLevel::IDLE};
+ float EventTimeoutValue {0.0f};
+ float EventTime{0.0f};
+ float CurrentPerceptionStrength{0.0f};
+ 
+ virtual EAIAlertLevel GetMaximumAlertLevel() const = 0;
+ virtual float GetMaximumPerceptionStrength() const = 0;
 };
 
-USTRUCT(BlueprintType)
-struct FActorAlertActorData
+struct FDefaultActorAlertData : public ISharedActorAlertData
 {
- GENERATED_BODY()
+ FDefaultActorAlertData() : ISharedActorAlertData(0.0f, 0.0f, FVector::ZeroVector, FAISenseID()){};
+ 
+ virtual EAIAlertLevel GetMaximumAlertLevel() const override {return EAIAlertLevel::IDLE;}
+ virtual float GetMaximumPerceptionStrength() const override {return 0.0f;}
+};
 
- FActorAlertActorData(FActorAlertData data, AActor* actor) : AlertData(data), Actor(actor){}
- FActorAlertActorData() : Actor(nullptr){}
 
- UPROPERTY(EditAnywhere)
- FActorAlertData AlertData;
+struct FActorAlertData : public ISharedActorAlertData
+{
+ FActorAlertData(UPerceptionTypeComponent* _pPerceptionComponent, FAISenseID _SenseID, float _InitPerceptionStrength, float _EventTime, FVector _EventLocation) : ISharedActorAlertData(_InitPerceptionStrength, _EventTime, _EventLocation, _SenseID), pPerceptionComponent(_pPerceptionComponent){}
 
- UPROPERTY(EditAnywhere)
+ UPerceptionTypeComponent* pPerceptionComponent;
+ 
+ virtual EAIAlertLevel GetMaximumAlertLevel() const override;
+ virtual float GetMaximumPerceptionStrength() const override;
+};
+
+
+struct FActorAlertActorData : public FActorAlertData
+{
+ FActorAlertActorData(UPerceptionTypeComponent* _pPerceptionComponent, FAISenseID _SenseID, float _InitPerceptionStrength, float _EventTime, FVector _EventLocation, AActor* actor) : FActorAlertData(_pPerceptionComponent, _SenseID, _InitPerceptionStrength, _EventTime, _EventLocation), Actor(actor){}
+
  AActor* Actor;
 };

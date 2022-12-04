@@ -3,3 +3,14 @@
 
 #include "AI/AIAlertLevel.h"
 
+#include "PerceptionTypeComponent.h"
+
+EAIAlertLevel FActorAlertData::GetMaximumAlertLevel() const
+{
+	return pPerceptionComponent->GetMaximumAlertLevel();
+}
+
+float FActorAlertData::GetMaximumPerceptionStrength() const
+{
+	return pPerceptionComponent->GetMaximumInterest();
+}

@@ -3,6 +3,7 @@
 
 #include "AI/SchismAIController.h"
 #include "PerceptionTypeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Common/UnrealUtilities.h"
 #include "Delegates/DelegateSignatureImpl.inl"
 #include "Engine/SkeletalMeshSocket.h"
@@ -27,127 +28,128 @@ void ASchismAIController::BeginPlay()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
+ASchismAIController::ASchismAIController()
+{
+	m_pMyPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("AI Perception Component");
+
+	check(m_pMyPerceptionComponent != nullptr);
+	SetPerceptionComponent(*m_pMyPerceptionComponent);
+	m_pMyPerceptionComponent->bEditableWhenInherited = true;
+	
+	PrimaryActorTick.bCanEverTick = true;
+	
+	m_pSightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Sense"));
+	m_pHearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Sense"));
+	
+	m_pSightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	m_pSightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	m_pSightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	
+	m_pMyPerceptionComponent->ConfigureSense(*m_pSightConfig);
+	
+	m_pHearingConfig->DetectionByAffiliation.bDetectEnemies = true;
+	m_pHearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	m_pHearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	m_pMyPerceptionComponent->ConfigureSense(*m_pHearingConfig);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimulus)
+{
+	if ( !Actor || m_LostInterestSet.Contains(Actor))
+		return;
+	
+	UPerceptionTypeComponent* pPerceptionTypeComponent = UnrealUtilities::GetComponentFromActor<UPerceptionTypeComponent>(Actor);
+
+	if (!pPerceptionTypeComponent)
+		return;
+	
+	const float DeltaSecondsWorld = GetWorld()->GetDeltaSeconds();
+
+	FVector PerceptionSourceTranslation = FVector::ZeroVector;
+	FRotator PerceptionSourceRotation = FRotator::ZeroRotator;
+	GetActorEyesViewPoint(PerceptionSourceTranslation, PerceptionSourceRotation);
+	const FVector OffsetFromSource = (Actor->GetActorLocation() - PerceptionSourceTranslation);
+	float stimulusStrength = DeltaSecondsWorld * Stimulus.Strength;
+	
+	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		float perceptionAudioInterestScalar = 1;
+		if(m_AudioAlertData.Contains(Actor))
+		{
+			float TotalAudioInterest = 0;
+			const TArray<FActorAlertData>& AudioAlertData = m_AudioAlertData[Actor];
+			for(size_t nAudioIndex = 0; nAudioIndex < AudioAlertData.Num(); nAudioIndex++)
+			{
+				TotalAudioInterest += AudioAlertData[nAudioIndex].CurrentPerceptionStrength;
+			}
+			perceptionAudioInterestScalar = m_TotalAudioInterestToVisualScalar.EditorCurveData.Eval(TotalAudioInterest);
+		}
+	
+
+		const float perceptionGeneralScalar = pPerceptionTypeComponent->GetVisualPerceptionModifier();
+		const float perceptionDistanceScalar = pPerceptionTypeComponent->GetVisualPerceptionDistanceScalar(OffsetFromSource.Length());
+
+		const float fieldOfViewDegrees = m_pSightConfig->PeripheralVisionAngleDegrees;
+		const float angularOffsetDegrees = FMath::RadiansToDegrees(UnrealUtilities::GetRadAngleBetweenVectors(PerceptionSourceRotation.Quaternion().GetForwardVector(), OffsetFromSource));
+		const float perceptionAngleScalar =  m_AngleFromCenterToVisualFalloffModifier.EditorCurveData.Eval(angularOffsetDegrees / fieldOfViewDegrees); 
+		stimulusStrength *= perceptionDistanceScalar * perceptionGeneralScalar * perceptionAngleScalar * perceptionAudioInterestScalar;
+
+		if(!m_VisualAlertData.Contains(Actor))
+		{
+			m_VisualAlertData.Add(Actor,FActorAlertData(pPerceptionTypeComponent, Stimulus.Type, stimulusStrength, GetWorld()->GetTimeSeconds(), Actor->GetActorLocation()));
+		}
+		else
+		{
+			m_VisualAlertData[Actor].EventTimeoutValue = 0.0f;
+			m_VisualAlertData[Actor].CurrentPerceptionStrength += stimulusStrength;
+			m_VisualAlertData[Actor].EventLocation = Actor->GetActorLocation();
+			m_VisualAlertData[Actor].CurrentPerceptionStrength = FMath::Min(m_VisualAlertData[Actor].CurrentPerceptionStrength, m_VisualAlertData[Actor].pPerceptionComponent->GetMaximumInterest());
+		}
+		
+	}
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		const float perceptionDistanceScalar = pPerceptionTypeComponent->GetAudioPerceptionDistanceScalar(OffsetFromSource.Length());
+		stimulusStrength *= perceptionDistanceScalar;
+		if (!m_AudioAlertData.Contains(Actor))
+		{
+			m_AudioAlertData.Add(Actor, TArray<FActorAlertData>());
+		}
+		m_AudioAlertData[Actor].Emplace(pPerceptionTypeComponent, Stimulus.Type,stimulusStrength, GetWorld()->GetTimeSeconds(), Actor->GetActorLocation());
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
 void ASchismAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	TMap<TObjectKey<AActor>, FActorPerceptionInfo>::TIterator iterator = m_pMyPerceptionComponent->GetPerceptualDataIterator();
-	for (; iterator; ++iterator)
-	{
-		AActor* pActor = iterator->Key.ResolveObjectPtr();
-		
-		if (!pActor)
-		{
-			m_CachedAlertData.Remove(iterator->Key);
-			continue;
-		}
-		const UPerceptionTypeComponent* pPerceptionTypeComponent = UnrealUtilities::GetComponentFromActor<UPerceptionTypeComponent>(pActor);
+	StimulusLoadUpdate(DeltaSeconds);
+	OnAlertDataUpdate(DeltaSeconds);
+	OnBestActorAlertDataUpdate();
+	OnVisibleActorUpdate();
+	OnBlackboardVarsUpdate();
+}
 
-		FVector actorLocation = iterator.Key().ResolveObjectPtr()->GetActorLocation();
-		
-		FActorPerceptionInfo perceptionInfo = iterator->Value;
-		
-		for (size_t i = 0; i < perceptionInfo.LastSensedStimuli.Num(); i++)
-		{
-			const FAIStimulus& lastStimulus = perceptionInfo.LastSensedStimuli[i];
-			if (lastStimulus.GetAge() > FLT_EPSILON || !lastStimulus.IsActive())
-				continue;
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::DebugDrawAlertData(const FActorAlertData& AlertData) const
+{
+	if (!AIPerceptionDebug.GetValueOnGameThread())
+		return;
+	// remove the alert data since it's not really relevant anymore.
 	
-			if (!m_CachedAlertData.Contains(pActor))
-			{
-				EAIAlertLevel defaultMaximumAlertLevel = EAIAlertLevel::INVESTIGATING;
-				uint8 defaultPriority = 0;
-				float maximumInterest = m_MaximumDefaultPerception;
-	
-				if (pPerceptionTypeComponent)
-				{
-					defaultMaximumAlertLevel = pPerceptionTypeComponent->GetMaximumAlertLevel();
-					defaultPriority = pPerceptionTypeComponent->GetPriority();
-					maximumInterest = pPerceptionTypeComponent->GetMaximumInterest();
-				}
-				m_CachedAlertData.Add(pActor, FActorAlertData( defaultMaximumAlertLevel, defaultPriority, maximumInterest));
-			}
+	DrawDebugString(GetWorld(), AlertData.EventLocation, *FString::Printf(TEXT("Current perception strength: %f \n Maximum perception: %f\n Maximum alert level: %s\n Current alert level: %s\n Priority: %i\n"),
+		AlertData.CurrentPerceptionStrength,
+		AlertData.pPerceptionComponent->GetMaximumInterest(),
+		*StaticEnum<EAIAlertLevel>()->GetValueAsString(AlertData.pPerceptionComponent->GetMaximumAlertLevel()),
+		*StaticEnum<EAIAlertLevel>()->GetValueAsString(AlertData.CurrentAlertLevel),
+		AlertData.pPerceptionComponent->GetPriority()), nullptr, FColor::White, 0.05f);
+}
 
-			FActorAlertData& alertData = m_CachedAlertData[pActor];
-			const float normalizedPerceptionStrength = alertData.CurrentPerceptionStrength/alertData.MaximumInterest;
-			const float distanceFromSource = GetPawn() ? (pActor->GetActorLocation() - GetPawn()->GetActorLocation()).Length() : 0.0f;
-			float strengthMultiplier = 1.0f;
-			if (lastStimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
-			{
-				if (pPerceptionTypeComponent)
-				{
-					const float perceptionGeneralScalar = pPerceptionTypeComponent->GetVisualPerceptionModifier();
-					const float perceptionDistanceScalar = pPerceptionTypeComponent->GetVisualPerceptionDistanceScalar(distanceFromSource);
-					FVector vec;
-					FRotator rot;
-					GetActorEyesViewPoint(vec, rot);
-					const float perceptionAngleScalar =  m_AngleFromCenterToVisualFalloffModifier.EditorCurveData.Eval(FMath::RadiansToDegrees(UnrealUtilities::GetRadAngleBetweenVectors(rot.Quaternion().GetForwardVector(), pActor->GetActorLocation()-vec))); 
-					strengthMultiplier = DeltaSeconds * perceptionDistanceScalar * perceptionGeneralScalar * perceptionAngleScalar;
-					
-				}
-				else
-					strengthMultiplier = DeltaSeconds * strengthMultiplier;
-			}
-			else if (lastStimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
-			{
-				if (pPerceptionTypeComponent)
-				{
-					strengthMultiplier *= pPerceptionTypeComponent->GetAudioPerceptionDistanceScalar(distanceFromSource);
-				}
-			}
-			alertData.CurrentPerceptionStrength += strengthMultiplier * lastStimulus.Strength;
-			alertData.LastTimeStimulusReceived = GetWorld()->GetTimeSeconds();
-		}
-		if (!m_CachedAlertData.Contains(pActor))
-			continue;
-		
-		FActorAlertData& AlertData = m_CachedAlertData[pActor];
-
-		float defaultPerceptionDecay = 1.0f;
-		if (pPerceptionTypeComponent)
-			defaultPerceptionDecay = pPerceptionTypeComponent->GetPerceptionDecay(AlertData.CurrentPerceptionStrength / AlertData.MaximumInterest);
-		AlertData.CurrentPerceptionStrength -= DeltaSeconds * defaultPerceptionDecay;
-		AlertData.CurrentPerceptionStrength = FMath::Clamp(AlertData.CurrentPerceptionStrength, 0.0f, AlertData.MaximumInterest);
-		// our perception strength has decreased - check if we need to drop down an alert level
-		EAIAlertLevel& currentAlertLevel = AlertData.CurrentAlertLevel;
-	
-		if (currentAlertLevel > EAIAlertLevel::IDLE)
-		{
-			const EAIAlertLevel lowerAlertLevel = (EAIAlertLevel) ((uint8)currentAlertLevel-1);
-			const FAlertLevelDetectionThreshold& threshold = m_AlertLevelThresholds[lowerAlertLevel];
-
-			if (AlertData.CurrentPerceptionStrength < threshold.LowDetectionThreshold)
-				AlertData.CurrentAlertLevel = lowerAlertLevel;
-		}
-	
-		if (currentAlertLevel < EAIAlertLevel::DETECTION)
-		{
-			const EAIAlertLevel maximumAlertLevel = AlertData.MaxAlertLevel;
-			const EAIAlertLevel higherAlertLevel = (EAIAlertLevel)(FMath::Min((uint8)((uint8)currentAlertLevel + 1u), (uint8)maximumAlertLevel));
-			const FAlertLevelDetectionThreshold& threshold = m_AlertLevelThresholds[higherAlertLevel];
-	
-			if (AlertData.CurrentPerceptionStrength > threshold.HighDetectionThreshold)
-				AlertData.CurrentAlertLevel = higherAlertLevel;
-		}
-		
-		if ((AlertData.CurrentPerceptionStrength < m_MinimumPerceptionBeforeCulling) && (GetWorld()->GetTimeSeconds() - AlertData.LastTimeStimulusReceived) > m_MinimumTimeBeforeCulling)
-		{
-			m_CachedAlertData.Remove(pActor);
-			return;
-		}
-
-		if (!AIPerceptionDebug.GetValueOnGameThread())
-			continue;
-
-
-		// remove the alert data since it's not really relevant anymore.
-
-		DrawDebugString(GetWorld(), actorLocation, *FString::Printf(TEXT("Current perception strength: %f \n Maximum perception: %f\n Maximum alert level: %s\n Current alert level: %s\n Priority: %i\n"),
-			AlertData.CurrentPerceptionStrength,
-			AlertData.MaximumInterest,
-			*StaticEnum<EAIAlertLevel>()->GetValueAsString(AlertData.MaxAlertLevel),
-			*StaticEnum<EAIAlertLevel>()->GetValueAsString(AlertData.CurrentAlertLevel),
-			AlertData.Priority), nullptr, FColor::White, 0.05f);
-	}
+//////////////////////////////////////////////////////////////////////////////////////////
+bool ASchismAIController::ShouldRemovePerceptionData(const FActorAlertData& AlertData) const
+{
+	return (AlertData.EventTimeoutValue > m_MinimumTimeBeforeCulling);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -173,98 +175,199 @@ void ASchismAIController::GetActorEyesViewPoint(FVector& OutLocation, FRotator& 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-ASchismAIController::ASchismAIController()
+void ASchismAIController::StimulusLoadUpdate(float DeltaSeconds)
 {
-	m_pMyPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("AI Perception Component");
-	check(m_pMyPerceptionComponent != nullptr);
-	SetPerceptionComponent(*m_pMyPerceptionComponent);
-	m_pMyPerceptionComponent->bEditableWhenInherited = true;
+	auto it = m_pMyPerceptionComponent->GetPerceptualDataIterator();
+	while(it)
+	{
+		for (size_t i = 0; i < it.Value().LastSensedStimuli.Num(); i++)
+		{
+			if (it.Value().LastSensedStimuli[i].GetAge() > FLT_EPSILON)
+				continue;
+			
+			OnReceiveNewStimulus(it.Key().ResolveObjectPtr(), it.Value().LastSensedStimuli[i]);
+		}
+		++it;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::OnAlertDataUpdate(float DeltaSeconds)
+{
+	for (TMap<TObjectKey<AActor>, TArray<FActorAlertData>>::TIterator Iter = m_AudioAlertData.CreateIterator(); Iter; ++Iter)
+	{
+		for (TArray<FActorAlertData>::TIterator IterAlertData = Iter->Value.CreateIterator(); IterAlertData; ++IterAlertData)
+		{
+			TickAlertData(*IterAlertData, DeltaSeconds);
+			DebugDrawAlertData(*IterAlertData);
+			
+			if (!ShouldRemovePerceptionData(*IterAlertData))
+				continue;
+			
+			IterAlertData.RemoveCurrent();
+		}
+		if (Iter.Value().IsEmpty())
+			Iter.RemoveCurrent();
+	}
 	
-	PrimaryActorTick.bCanEverTick = true;
+	for (TMap<TObjectKey<AActor>, FActorAlertData>::TIterator IterAlertData = m_VisualAlertData.CreateIterator(); IterAlertData; ++IterAlertData)
+	{
+		TickAlertData(IterAlertData.Value(), DeltaSeconds);
+		DebugDrawAlertData(IterAlertData.Value());
+		
+		if (!ShouldRemovePerceptionData(IterAlertData.Value()))
+			continue;
+		
+		IterAlertData.RemoveCurrent();
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::OnBlackboardVarsUpdate()
+{
+	Blackboard->SetValueAsVector(TargetLocationBlackboardKey, m_BestActorOfInterest ? m_BestActorOfInterest->GetActorLocation() : FVector::ZeroVector);
+	Blackboard->SetValueAsEnum(AlertLevelBlackboardKey, static_cast<uint8>(m_BestActorAlertData->CurrentAlertLevel));
+	Blackboard->SetValueAsBool(HasVisuallyDetectedPlayerBlackboardKey, m_bActorVisible);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::OnVisibleActorUpdate()
+{
+	m_bActorVisible = false;
 	
-	m_pSightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Sense"));
-	m_pHearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Sense"));
+	if(!m_BestActorOfInterest)
+		return;
+
+	FActorPerceptionBlueprintInfo Info;
+	if (!m_pMyPerceptionComponent->GetActorsPerception(m_BestActorOfInterest, Info))
+		return;
 	
-	m_pSightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	m_pSightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	m_pSightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	const FAISenseID sightSenseID = UAISense::GetSenseID<UAISense_Sight>();
+	const FAIStimulus& sightStimulus = Info.LastSensedStimuli[sightSenseID];
+	// only actually in sight if age is less than float epsilon (just seen)
+	m_bActorVisible = sightStimulus.GetAge() < FLT_EPSILON && m_BestActorAlertData->CurrentAlertLevel == EAIAlertLevel::DETECTION;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::TickAlertData(FActorAlertData& AlertData, float DeltaTime)
+{
+	float decayDelay = 0;
+	if (AlertData.SenseID == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		decayDelay = AlertData.pPerceptionComponent->GetVisualDecayDelay();
+	}
+	else if (AlertData.SenseID == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		decayDelay = AlertData.pPerceptionComponent->GetAudioDecayDelay();
+	}
+	if (decayDelay < GetWorld()->GetTimeSeconds() -  AlertData.EventTime)
+	{
+		AlertData.CurrentPerceptionStrength -= DeltaTime * AlertData.pPerceptionComponent->GetPerceptionDecay(AlertData.CurrentPerceptionStrength / AlertData.pPerceptionComponent->GetMaximumInterest());
+		AlertData.CurrentPerceptionStrength = FMath::Max(0.0f, AlertData.CurrentPerceptionStrength);
+	}
+
+	EAIAlertLevel& currentAlertLevel = AlertData.CurrentAlertLevel;
 	
-	m_pMyPerceptionComponent->ConfigureSense(*m_pSightConfig);
+	if (currentAlertLevel > EAIAlertLevel::IDLE)
+	{
+		const EAIAlertLevel lowerAlertLevel = (EAIAlertLevel) ((uint8)currentAlertLevel-1);
+		const FAlertLevelDetectionThreshold& threshold = m_AlertLevelThresholds[lowerAlertLevel];
+
+		if (AlertData.CurrentPerceptionStrength < threshold.LowDetectionThreshold)
+			AlertData.CurrentAlertLevel = lowerAlertLevel;
+	}
 	
-	m_pHearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-	m_pHearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	m_pHearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-	m_pMyPerceptionComponent->ConfigureSense(*m_pHearingConfig);
+	if (currentAlertLevel < EAIAlertLevel::DETECTION)
+	{
+		const EAIAlertLevel maximumAlertLevel = AlertData.pPerceptionComponent->GetMaximumAlertLevel();
+		const EAIAlertLevel higherAlertLevel = (EAIAlertLevel)(FMath::Min((uint8)((uint8)currentAlertLevel + 1u), (uint8)maximumAlertLevel));
+		const FAlertLevelDetectionThreshold& threshold = m_AlertLevelThresholds[higherAlertLevel];
+	
+		if (AlertData.CurrentPerceptionStrength > threshold.HighDetectionThreshold)
+			AlertData.CurrentAlertLevel = higherAlertLevel;
+	}
+	
+	if (currentAlertLevel == EAIAlertLevel::IDLE)
+	{
+		AlertData.EventTimeoutValue += DeltaTime;
+	}
+	else
+	{
+		AlertData.EventTimeoutValue = 0.0f;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void ASchismAIController::TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData)
+{
+	// pick via alert level
+	if (bestActorAlertData->CurrentAlertLevel > newActorAlertData.CurrentAlertLevel)
+		return;
+	// and then by perception strength
+	if (bestActorAlertData->CurrentAlertLevel == newActorAlertData.CurrentAlertLevel && bestActorAlertData->CurrentPerceptionStrength > newActorAlertData.CurrentPerceptionStrength)
+		return;
+	
+	bestActorAlertData = &newActorAlertData;
+	pBestActor = pNewActor;
 }
 
 EAIAlertLevel ASchismAIController::GetCurrentAlertLevel()
 {
-	if (m_BestActorAlertData.ResolveObjectPtr() == nullptr)
-		return EAIAlertLevel::IDLE;
-	return m_CachedAlertData[m_BestActorAlertData].CurrentAlertLevel;
+	return m_BestActorAlertData->CurrentAlertLevel;
 }
 
 FVector ASchismAIController::GetCurrentPointOfInterest()
 {
-	if (m_BestActorAlertData.ResolveObjectPtr() == nullptr)
-		return FVector::ZeroVector;
-	return m_BestActorAlertData.ResolveObjectPtr()->GetActorLocation();
+	return m_BestActorAlertData->EventLocation;
 }
 
 AActor* ASchismAIController::GetCurrentActorOfInterest()
 {
-	return m_BestActorAlertData.ResolveObjectPtr();
+	return m_BestActorOfInterest;
+}
+
+void ASchismAIController::LoseInterestInActor(AActor* pActor)
+{
+	m_LostInterestSet.Add(pActor);
+	for (TMap<TObjectKey<AActor>, TArray<FActorAlertData>>::TIterator Iter = m_AudioAlertData.CreateIterator(); Iter; ++Iter)
+	{
+		if (Iter.Key() != pActor)
+			continue;
+		Iter.RemoveCurrent();
+		break;
+	}
+	
+	for (TMap<TObjectKey<AActor>, FActorAlertData>::TIterator IterAlertData = m_VisualAlertData.CreateIterator(); IterAlertData; ++IterAlertData)
+	{
+		if (IterAlertData.Key() != pActor)
+			continue;
+		IterAlertData.RemoveCurrent();
+		break;
+	}
+}
+
+void ASchismAIController::ClearLoseInterestInActor(AActor* pActor)
+{
+	m_LostInterestSet.Remove(pActor);
 }
 
 void ASchismAIController::OnBestActorAlertDataUpdate()
 {
-	TMap<TObjectKey<AActor>, FActorAlertData>::TIterator iterator = TMap<TObjectKey<AActor>, FActorAlertData>::TIterator(m_CachedAlertData);
-	FActorAlertData defaultActorAlertData = FActorAlertData(EAIAlertLevel::IDLE, 0, 0);
-	FActorAlertData &currentBestAlertData = defaultActorAlertData;
-	AActor* bestActor = nullptr;
-	for (; iterator; ++iterator)
+	bool isActorOfInterestVisible = false;
+	AActor* initialBestActor = m_BestActorOfInterest;
+	m_BestActorAlertData = &m_DefaultAlertData;
+	m_BestActorOfInterest = nullptr;
+	for (TMap<TObjectKey<AActor>, TArray<FActorAlertData>>::TIterator Iter = m_AudioAlertData.CreateIterator(); Iter; ++Iter)
 	{
-		AActor* pActor = iterator.Key().ResolveObjectPtr();
-		if (!pActor)
-			continue;
-		
-		FActorAlertData& newAlertData = iterator.Value();
-		
-		// add priority to alert data to determine the object we should take most note of
-		const uint8 totalPriority = (uint8)newAlertData.CurrentAlertLevel + newAlertData.Priority;
-		const uint8 lastBestTotalPriority = (uint8)currentBestAlertData.CurrentAlertLevel + currentBestAlertData.Priority;
-		// if last one had higher combined priority, take it.
-		if (lastBestTotalPriority > totalPriority)
-			continue;
-		// if the combined priorities are equal, then ignore this new one if the priority is less (prioritise > priority)
-		if (lastBestTotalPriority == totalPriority && newAlertData.Priority < currentBestAlertData.Priority)
-			continue;
-
-		currentBestAlertData = newAlertData;
-		bestActor = pActor;
+		for (TArray<FActorAlertData>::TIterator IterAlertData = Iter->Value.CreateIterator(); IterAlertData; ++IterAlertData)
+		{
+			TryExchangeAlertData(m_BestActorOfInterest, m_BestActorAlertData, Iter->Key.ResolveObjectPtr(),*IterAlertData);
+		}
 	}
-	
-	if (m_BestActorAlertData == TObjectKey<AActor>(bestActor))
-		return;
-	
-	m_BestActorAlertData = TObjectKey<AActor>(bestActor);
 
-}
-
-void ASchismAIController::OnTargetPositionUpdate()
-{
-	// we have an exact point, but we want to be randomly roaming in the points' radius.
-	//
-
-	AActor* pActor = m_BestActorAlertData.ResolveObjectPtr();
-	if (!pActor)
-		return;
-
-	FActorAlertData& alertData = m_CachedAlertData[m_BestActorAlertData];
-	
-	const UPerceptionTypeComponent* pPerceptionTypeComponent = UnrealUtilities::GetComponentFromActor<UPerceptionTypeComponent>(pActor);
-	
-	float uncertainty = pPerceptionTypeComponent->GetUncertaintyDistance(alertData.CurrentPerceptionStrength / alertData.MaximumInterest);
-		
+	for (TMap<TObjectKey<AActor>, FActorAlertData>::TIterator IterAlertData = m_VisualAlertData.CreateIterator(); IterAlertData; ++IterAlertData)
+	{
+		TryExchangeAlertData(m_BestActorOfInterest, m_BestActorAlertData, IterAlertData.Key().ResolveObjectPtr(),IterAlertData.Value());
+	}
 }
 

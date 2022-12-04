@@ -32,6 +32,12 @@ class DEEPSEAHORROR_API UPerceptionTypeComponent : public UActorComponent
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_AudioFalloffModifierByDistance;
+
+	UPROPERTY(EditAnywhere)
+	float m_TimeBeforeAudioInterestDecayBegin;
+
+	UPROPERTY(EditAnywhere)
+	float m_TimeBeforeVisualInterestDecayBegin;
 	
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_UncertaintyDistanceByCurrentSuspicion;
@@ -52,6 +58,10 @@ public:
 	const float GetVisualPerceptionDistanceScalar(float currentInterestNormalized) const;
 
 	const float GetAudioPerceptionDistanceScalar(float currentInterestNormalized) const;
+	
+	const float GetVisualDecayDelay() const;
+
+	const float GetAudioDecayDelay() const;
 	
 	const float GetUncertaintyDistance(float currentInterestNormalized) const;
 
