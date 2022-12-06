@@ -63,7 +63,8 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	AActor* m_BestActorOfInterest = nullptr;
 	bool m_bActorVisible = false;
 
-
+	UFUNCTION()
+	void OnTargetPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus);
 	
 public:
 	 UPROPERTY(EditAnywhere)

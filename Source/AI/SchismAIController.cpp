@@ -25,6 +25,7 @@ void ASchismAIController::BeginPlay()
 	RunBehaviorTree(m_pBTAsset);
 	PrimaryActorTick.bCanEverTick = true;
 	SetActorTickEnabled(true);
+	m_pMyPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ASchismAIController::OnTargetPerceptionUpdate);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -94,16 +95,16 @@ void ASchismAIController::OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimul
 		const float angularOffsetDegrees = FMath::RadiansToDegrees(UnrealUtilities::GetRadAngleBetweenVectors(PerceptionSourceRotation.Quaternion().GetForwardVector(), OffsetFromSource));
 		const float perceptionAngleScalar =  m_AngleFromCenterToVisualFalloffModifier.EditorCurveData.Eval(angularOffsetDegrees / fieldOfViewDegrees); 
 		stimulusStrength *= perceptionDistanceScalar * perceptionGeneralScalar * perceptionAngleScalar * perceptionAudioInterestScalar;
-
+		stimulusStrength = FMath::Min(stimulusStrength, pPerceptionTypeComponent->GetMaximumInterest());
 		if(!m_VisualAlertData.Contains(Actor))
 		{
-			m_VisualAlertData.Add(Actor,FActorAlertData(pPerceptionTypeComponent, Stimulus.Type, stimulusStrength, GetWorld()->GetTimeSeconds(), Actor->GetActorLocation()));
+			m_VisualAlertData.Add(Actor,FActorAlertData(pPerceptionTypeComponent, Stimulus.Type, stimulusStrength, GetWorld()->GetTimeSeconds(),Stimulus.StimulusLocation));
 		}
 		else
 		{
 			m_VisualAlertData[Actor].EventTimeoutValue = 0.0f;
 			m_VisualAlertData[Actor].CurrentPerceptionStrength += stimulusStrength;
-			m_VisualAlertData[Actor].EventLocation = Actor->GetActorLocation();
+			m_VisualAlertData[Actor].EventLocation = Stimulus.StimulusLocation;
 			m_VisualAlertData[Actor].CurrentPerceptionStrength = FMath::Min(m_VisualAlertData[Actor].CurrentPerceptionStrength, m_VisualAlertData[Actor].pPerceptionComponent->GetMaximumInterest());
 		}
 		
@@ -112,11 +113,12 @@ void ASchismAIController::OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimul
 	{
 		const float perceptionDistanceScalar = pPerceptionTypeComponent->GetAudioPerceptionDistanceScalar(OffsetFromSource.Length());
 		stimulusStrength *= perceptionDistanceScalar;
+		stimulusStrength = FMath::Min(stimulusStrength, pPerceptionTypeComponent->GetMaximumInterest());
 		if (!m_AudioAlertData.Contains(Actor))
 		{
 			m_AudioAlertData.Add(Actor, TArray<FActorAlertData>());
 		}
-		m_AudioAlertData[Actor].Emplace(pPerceptionTypeComponent, Stimulus.Type,stimulusStrength, GetWorld()->GetTimeSeconds(), Actor->GetActorLocation());
+		m_AudioAlertData[Actor].Emplace(pPerceptionTypeComponent, Stimulus.Type,stimulusStrength, GetWorld()->GetTimeSeconds(), Stimulus.StimulusLocation);
 	}
 }
 
@@ -182,6 +184,8 @@ void ASchismAIController::StimulusLoadUpdate(float DeltaSeconds)
 	{
 		for (size_t i = 0; i < it.Value().LastSensedStimuli.Num(); i++)
 		{
+			if(it.Value().LastSensedStimuli[i].Type != UAISense::GetSenseID<UAISense_Sight>())
+				return;
 			if (it.Value().LastSensedStimuli[i].GetAge() > FLT_EPSILON)
 				continue;
 			
@@ -349,6 +353,13 @@ void ASchismAIController::LoseInterestInActor(AActor* pActor)
 void ASchismAIController::ClearLoseInterestInActor(AActor* pActor)
 {
 	m_LostInterestSet.Remove(pActor);
+}
+
+void ASchismAIController::OnTargetPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus)
+{
+	if(Stimulus.Type != UAISense::GetSenseID<UAISense_Hearing>())
+		return;
+	OnReceiveNewStimulus(Actor, Stimulus);
 }
 
 void ASchismAIController::OnBestActorAlertDataUpdate()
