@@ -18,6 +18,48 @@ static TAutoConsoleVariable<int32> AIPerceptionDebug(
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
 
+// states:
+// Idle
+// Roaming
+// Searching
+// and then we have the funky states:
+// Chasing
+// Skulking
+// Stalking
+
+// Idle -> Roaming -> Searching -> Other
+// Based on current alert state
+
+// Stalk enter state:
+// Middle tension, Detection maxed
+// We stay in stalking state when:
+// We can perceive our quarry (Detection), and we're not perceived (not being looked at)
+// Or we get to where we last perceived our quarry (< Detection, last Detection location)
+// So we need a "Get last detection location" I suppose
+// Exit state: Searching ( if we get to that spot) or Chasing (if we're otherwise triggered)
+
+// Nodes:
+// Get Last Detection Location
+// Get Time Noticed Observed By Prey (= Time Observed By Prey, Time Detecting)
+// Get Time Since Observing Prey ( Use Current Time, Time Detecting)
+// Get Time Since Noticed Observed By Prey ( Use Current Time, Time Observed By Prey, Time Detecting)
+// Used in Behaviour Tree to determine when we leave Skulk, etc.
+
+// Skulk enter State:
+// Low Tension, Detection Maxed (Or initiated directly by tension system)
+// We stay in Skulking state when:
+// We can perceive our quarry (Detection) and we're not perceived for X seconds (based on tension)
+// Otherwise, X seconds after we've lost Detection
+// Exit state:
+
+// Chase Enter State:
+// High Tension, Detection Maxed
+// We stay in chase state:
+// We perceive our quarry
+// We get to where we last perceived our quarry (and it's not there)
+// Exit state:
+// Searching, or Attack
+
 //////////////////////////////////////////////////////////////////////////////////////////
 void ASchismAIController::BeginPlay()
 {
