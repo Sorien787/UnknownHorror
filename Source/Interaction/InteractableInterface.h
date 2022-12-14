@@ -38,16 +38,24 @@ public:
 
 	virtual float GetCameraPitchTolerance() const = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void IsInteractionAvailableOverride(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
 	void IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, bool& returnResult);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
 
-	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, bool& returnResult);
+	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FTransform GetInteractionPointTransform(const int interactorId);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FTransform GetDesiredTransformForInteraction(const int interactorId, const UInteractionUserComponent* pInteractionUser);
+
+	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser);
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();
 

@@ -27,15 +27,12 @@ public:
 	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
 
 	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) override;
-
+	
 	virtual bool IsFastInteraction() const override;
 
 	virtual float GetCameraYawTolerance() const override;
 
 	virtual float GetCameraPitchTolerance() const override;
-	
-	UPROPERTY(EditAnywhere, Category = "Components")
-		USceneComponent* m_pWidgetAttachment;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
@@ -55,6 +52,10 @@ public:
 
 	void OnInteractorIdEnabledSet_Implementation(int id) override;
 
+	virtual FTransform GetInteractionPointTransform_Implementation(const int interactorId) override;
+
+	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser) override;
+	
 	IInteractionTriggerInterface* FindInteractionPointById(int id);
 
 	// void OnInteractorIdsEnabledSet_Implementation(TArray<int> ids) override;

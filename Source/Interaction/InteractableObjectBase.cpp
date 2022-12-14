@@ -48,7 +48,24 @@ void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pI
 {
 	m_pCurrentUser = pInteractionUser;
 	bool result;
-	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, pointRelativePosition, pointRelativeRotation, result);
+	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, result);
+}
+
+FTransform AInteractableObjectBase::GetInteractionPointTransform_Implementation(const int interactorId)
+{
+	for (int i = 0; i < m_pInteractionPoints.Num(); i++)
+	{
+		if (m_pInteractionPoints[i]->GetInteractorId() != interactorId)
+			continue;
+		
+		return m_pInteractionPoints[i]->GetInteractorTransform();
+	}
+	return GetActorTransform();
+}
+
+FTransform AInteractableObjectBase::GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser)
+{
+	return GetInteractionPointTransform(interactorId);
 }
 
 bool AInteractableObjectBase::IsFastInteraction() const

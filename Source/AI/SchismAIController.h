@@ -10,9 +10,23 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "SchismAIController.generated.h"
 
+
+// in already loud environments, more sound shouldnt be an issue
+// in already visually stimulating environments more visuals shouldnt be an issue
+
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class ESchismDetectionState : uint8
+{
+	NONE = 0,
+	CHASE = 1,
+	SKULK = 2,
+	SNEAK = 3,
+	COUNT = 4
+};
+
 UCLASS()
 class DEEPSEAHORROR_API ASchismAIController : public AAIController
 {
@@ -33,7 +47,7 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	void TickAlertData(FActorAlertData& alertData, float DeltaTime);
 	void OnBestActorAlertDataUpdate();
 	
-	static void TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData);
+	void TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData) const;
 	void DebugDrawAlertData(const FActorAlertData& AlertData) const;
 	bool ShouldRemovePerceptionData(const FActorAlertData& AlertData) const;
 
@@ -48,15 +62,25 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	UFUNCTION(BlueprintCallable)
 	AActor* GetCurrentActorOfInterest();
 
+	// downgrades the alert level for a given actor to a maximum, sets the perception that maximum as well
+	// obviously, if the actor makes an amount of stimulus thereafter, this interest can be re-upgraded
+	UFUNCTION(BlueprintCallable)
+	void DowngradeAlertLevelForActor(AActor* pActor, EAIAlertLevel maximumAlertLevel);
+
+	// Gets the last known location for the most interesting detection
+	UFUNCTION(BlueprintCallable)
+	FVector GetLastDetectionLocation(EAIAlertLevel alertLevel);
+
 	UFUNCTION(BlueprintCallable)
 	void LoseInterestInActor(AActor* pActor);
 
 	UFUNCTION(BlueprintCallable)
 	void ClearLoseInterestInActor(AActor* pActor);
 	
-	TMap<TObjectKey<AActor>, TArray<FActorAlertData>> m_AudioAlertData;
+	TMap<TObjectKey<AActor>, FActorAlertData> m_AudioAlertData;
 	TMap<TObjectKey<AActor>, FActorAlertData> m_VisualAlertData;
 	TSet<TObjectKey<AActor>> m_LostInterestSet;
+	TMap<EAIAlertLevel, FVector> m_LastActorDetectionLocations;
 
 	FDefaultActorAlertData m_DefaultAlertData;
 	ISharedActorAlertData* m_BestActorAlertData;
@@ -89,7 +113,10 @@ public:
 	FRuntimeFloatCurve m_AngleFromCenterToVisualFalloffModifier;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
-	FRuntimeFloatCurve m_TotalAudioInterestToVisualScalar;
+	FRuntimeFloatCurve m_ImportanceSensitivityScalar;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
+	FRuntimeFloatCurve m_CompetingDesensitivityScalar;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	float m_MinimumTimeBeforeCulling;

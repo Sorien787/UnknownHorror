@@ -64,6 +64,14 @@ void UHazeSubsystem::RegisterHazeGrid(AHazeGridActor* hazeGrid)
 	if (it != m_HazeGrids.end())
 		return;
 	m_HazeGrids.push_back(hazeGrid);
+	if(m_OverrideHazeDiffusionCoefficient > 0.0f)
+	{
+		hazeGrid->diffusionCoefficient = m_OverrideHazeDiffusionCoefficient;
+	}
+	if (m_OverrideHazeDrainageCoefficient > 0.0f)
+	{
+		hazeGrid->drainageCoefficient = m_OverrideHazeDrainageCoefficient;
+	}
 }
 
 void UHazeSubsystem::UnregisterHazeGrid(AHazeGridActor* hazeGrid)
@@ -82,6 +90,28 @@ float UHazeSubsystem::PollHazeStrengthAtLocation(FVector strengthAtLocation, int
 void UHazeSubsystem::AddHazeSourceAtLocation(FVector strengthAtLocation, float strength, int hazeGridID)
 {
 	m_HazeGrids[hazeGridID]->AddSampleToGrid(strengthAtLocation, strength);
+}
+
+void UHazeSubsystem::OverrideHazeGridsDiffusionValue(float diffusionValue)
+{
+	m_OverrideHazeDiffusionCoefficient = diffusionValue;
+	if (m_OverrideHazeDiffusionCoefficient < 0.0f)
+		return;
+	for (size_t nGridIndex = 0; nGridIndex < m_HazeGrids.size(); nGridIndex++)
+	{
+		m_HazeGrids[nGridIndex]->diffusionCoefficient = m_OverrideHazeDiffusionCoefficient;
+	}
+}
+
+void UHazeSubsystem::OverrideHazeGridsDrainageValue(float drainageValue)
+{
+	m_OverrideHazeDrainageCoefficient = drainageValue;
+	if (m_OverrideHazeDrainageCoefficient < 0.0f)
+		return;
+	for (size_t nGridIndex = 0; nGridIndex < m_HazeGrids.size(); nGridIndex++)
+	{
+		m_HazeGrids[nGridIndex]->drainageCoefficient = m_OverrideHazeDrainageCoefficient;
+	}
 }
 
 int UHazeSubsystem::GetHazeIDAtLocation(FVector newLocation, int hazeGridID) const
