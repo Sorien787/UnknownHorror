@@ -6,6 +6,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "TensionSubsystem.generated.h"
 
+class ALurkLocationActor;
 /**
  * 
  */
@@ -26,6 +27,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetCurrentTension() const;
 
+	UFUNCTION()
+	void RegisterLurkLocation(ALurkLocationActor* pLurkActor);
+
+	UFUNCTION(BlueprintCallable)
+	ALurkLocationActor* GetLurkLocation(uint8 type, FVector location) const;
+
 	UPROPERTY(EditAnywhere)
 	float m_fMaximumTension;
 
@@ -33,4 +40,6 @@ public:
 	FRuntimeFloatCurve m_TensionDecayCurve;
 
 	float m_fCurrentTension{0.0f};
+
+	std::vector<ALurkLocationActor*> m_LurkLocations;
 };
