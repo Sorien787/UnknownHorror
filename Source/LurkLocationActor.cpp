@@ -50,6 +50,11 @@ bool ALurkLocationActor::GetIsActive() const
 	return m_IsActive;
 }
 
+UAnimMontage* ALurkLocationActor::GetMontage() const
+{
+	return m_MontageToPlay;
+}
+
 bool ALurkLocationActor::IsValidLurkType(EAIType AIType) const
 {
 	for (const auto& it : m_ValidType)

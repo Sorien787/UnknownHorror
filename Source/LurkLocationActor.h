@@ -42,6 +42,8 @@ public:
 
 	bool GetIsActive() const;
 
+	UAnimMontage* GetMontage() const;
+	
 	bool IsValidLurkType(EAIType AIType) const;
 	
 	UPROPERTY(EditAnywhere)
@@ -50,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	UAnimMontage* m_LurkAnim;
 
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* m_MontageToPlay;
+	
 	UPROPERTY(EditAnywhere)
 	TArray<EAIType> m_ValidType;
 };
