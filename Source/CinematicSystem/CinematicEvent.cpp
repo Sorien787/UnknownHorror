@@ -9,6 +9,9 @@ ACinematicEvent::ACinematicEvent()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	UColliderTriggerType* triggerType = CreateDefaultSubobject<UColliderTriggerType>(TEXT("ColliderTrig"));
+	triggerType->CreationMethod = 
+	Events.Add(triggerType);
 }
 
 // Called when the game starts or when spawned
@@ -18,7 +21,7 @@ void ACinematicEvent::BeginPlay()
 	// {
 	// 	Events[nEventIndex]->
 	// }
-	
+
 }
 
 // Called every frame

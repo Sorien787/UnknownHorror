@@ -5,7 +5,7 @@
 
 class ACinematicEvent;
 
-UCLASS()
+UCLASS(BlueprintType)
 class UITriggerType : public UObject
 {
 	GENERATED_BODY()
@@ -22,7 +22,7 @@ public:
 	virtual void Initialize_Internal(ACinematicEvent* parent);
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class UTriggerStageTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -31,7 +31,7 @@ class UTriggerStageTriggerType : public UITriggerType
 	ETriggerStage m_TriggerStage = ETriggerStage::First;
 };
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class UColliderTriggerType : public UITriggerType
 {
 	GENERATED_BODY()

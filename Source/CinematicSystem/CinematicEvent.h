@@ -16,13 +16,13 @@ struct DEEPSEAHORROR_API FCinematicEventCollection
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETriggerStage TriggerStage;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UITriggerType*> TriggersForNextStage;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UITriggerType*> EffectsWhenTriggered;
 
 	// maybe have some effects with an enum:
@@ -36,14 +36,14 @@ UCLASS()
 class DEEPSEAHORROR_API ACinematicEvent : public AActor
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	TArray<FCinematicEventCollection> Events;
-
+	
 	TArray<size_t> TickableEvents;
 public:
 	// Sets default values for this actor's properties
 	ACinematicEvent();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<UITriggerType*> Events;
 
 protected:
 	// Called when the game starts or when spawned
