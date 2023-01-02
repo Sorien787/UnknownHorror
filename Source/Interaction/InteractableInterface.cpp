@@ -10,6 +10,11 @@ void IInteractableInterface::IsInteractionAvailableOverride_Implementation(const
 	return;
 }
 
+void IInteractableInterface::GetPossibleAvailableInteractions_Implementation(const UInteractionUserComponent* pInteractionUser, TArray<int>& result)
+{
+	return;
+}
+
 void IInteractableInterface::OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& result)
 {
 	return;
@@ -19,4 +24,9 @@ FTransform IInteractableInterface::GetDesiredTransformForInteraction_Implementat
 	const UInteractionUserComponent* pInteractionUser)
 {
 	return FTransform::Identity;
+}
+
+bool IInteractableInterface::TryCancelInteraction_Implementation()
+{
+	return false;
 }

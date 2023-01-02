@@ -37,25 +37,26 @@ public:
 	virtual float GetCameraYawTolerance() const = 0;
 
 	virtual float GetCameraPitchTolerance() const = 0;
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void IsInteractionAvailableOverride(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
-
 	void IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void GetPossibleAvailableInteractions(const UInteractionUserComponent* pInteractionUser, TArray<int>& result);
+	void GetPossibleAvailableInteractions_Implementation(const UInteractionUserComponent* pInteractionUser, TArray<int>& result);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
-
 	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	FTransform GetInteractionPointTransform(const int interactorId);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FTransform GetDesiredTransformForInteraction(const int interactorId, const UInteractionUserComponent* pInteractionUser);
-
 	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser);
 	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FTransform GetInteractionPointTransform(const int interactorId);
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();
 
@@ -64,4 +65,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractorIdEnabledSet(int id);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	bool TryCancelInteraction();
+	virtual bool TryCancelInteraction_Implementation();
 };

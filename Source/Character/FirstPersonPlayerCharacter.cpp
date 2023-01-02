@@ -72,13 +72,13 @@ AFirstPersonPlayerCharacter::AFirstPersonPlayerCharacter()
 	m_InteractionUserComponent = CreateDefaultSubobject<UInteractionUserComponent>(TEXT("Interaction User"));
 	check(m_InteractionUserComponent != nullptr);
 	
-	m_EnterBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Enter Box"));
-	check(m_EnterBoxComponent != nullptr);
-	m_EnterBoxComponent->SetupAttachment(GetRootComponent());
+	m_EnterInteractionSphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Interaction Enter Sphere Collider"));
+	check(m_EnterInteractionSphereCollider != nullptr);
+	m_EnterInteractionSphereCollider->SetupAttachment(GetRootComponent());
 
-	m_ExitBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Exit Box"));
-	check(m_ExitBoxComponent != nullptr);
-	m_ExitBoxComponent->SetupAttachment(GetRootComponent());
+	m_ExitInteractionSphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Interaction Exit Sphere Collider"));
+	check(m_ExitInteractionSphereCollider != nullptr);
+	m_ExitInteractionSphereCollider->SetupAttachment(GetRootComponent());
 
 	m_pHazeEffectComponent = CreateDefaultSubobject<UHazeEffectComponent>(TEXT("Haze Effect"));
 	check(m_pHazeEffectComponent != nullptr);
@@ -109,8 +109,8 @@ void AFirstPersonPlayerCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = m_DefaultSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = m_DefaultCrouchSpeed;
 
-	m_InteractionUserComponent->AddInteractionEnterBox(m_EnterBoxComponent);
-	m_InteractionUserComponent->AddInteractionExitBox(m_ExitBoxComponent);
+	m_InteractionUserComponent->AddInteractionEnterShape(m_EnterInteractionSphereCollider);
+	m_InteractionUserComponent->AddInteractionExitShape(m_ExitInteractionSphereCollider);
 
 	m_DroneAudioComponent->SetVolumeMultiplier(0.0f);
 	m_RingingAudioComponent->SetVolumeMultiplier(0.0f);

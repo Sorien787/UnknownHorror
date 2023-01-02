@@ -24,6 +24,32 @@ enum class InteractionUserType : uint8
 
 };
 
+UINTERFACE(MinimalAPI, NotBlueprintable)
+class UInteractingCharacter : public UInterface
+{
+	GENERATED_BODY()
+};
+
+class DEEPSEAHORROR_API IInteractingCharacter
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintCallable)
+	virtual void IsInteractionAvailableOverride(const int interactorId, bool& returnResult) = 0;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void GetPossibleAvailableInteractions(TArray<int>& result) = 0;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void OnInteractWithInteractor(const int interactorId, bool& returnResult) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual FTransform GetDesiredTransformForInteraction(const int interactorId) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void TryStopInteracting() = 0;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UInteractionUserComponent : public UActorComponent
 {
@@ -59,9 +85,9 @@ public:
 	
 	IInteractionTriggerInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
 
-	void AddInteractionEnterBox(UBoxComponent* pBox);
+	void AddInteractionEnterShape(UShapeComponent* pBox);
 
-	void AddInteractionExitBox(UBoxComponent* pBox);
+	void AddInteractionExitShape(UShapeComponent* pBox);
 
 	const float GetInteractionRange() const;
 private:
@@ -71,7 +97,7 @@ private:
 	
 	UFUNCTION()
 		void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-	
+
 	bool m_bInteractionsEnabled{ true };
 
 	TSet<IInteractionTriggerInterface*> m_InteractionCandidates;
@@ -96,17 +122,17 @@ public:
 	UPROPERTY(EditAnywhere)
 		bool m_bNeedsRaycastToDetectInteractionProximity{true};
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		bool m_bIsPlayerInteractionUser{true};
 	
 	UPROPERTY(EditAnywhere)
 		float m_fInteractionRange{3000.0f};
 	
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* m_pEnterBox;
+		UShapeComponent* m_pEnterShape;
 
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* m_pExitBox;
+		UShapeComponent* m_pExitShape;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		InteractionUserType m_UserType;
@@ -114,11 +140,12 @@ public:
 	UPROPERTY(EditAnywhere)
 		FVector m_DefaultHandOffset;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		float m_DefaultCameraYawTolerance = 20.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		float m_DefaultCameraPitchTolerance = 20.0f;
-
-	bool m_bIsCurrentlyInInteractionAnimation = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		bool m_bIsCurrentlyInInteractionAnimation = false;
 };

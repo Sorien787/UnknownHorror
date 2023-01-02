@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Haze/HazeComponent.h"
+#include "Interaction/InteractionUserComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Schism.generated.h"
 
@@ -35,6 +36,7 @@ class DEEPSEAHORROR_API ASchism : public APawn
 	};
 	
 	AngleTestResult DoAngleTest(FVector startA, FVector endA, FVector startB, FVector endB, float defaultLength, float angleCheckDistanceStart, float angleCheckDistanceFinish);
+
 public:	
 	// Sets default values for this actor's properties
 	ASchism();
@@ -78,6 +80,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UHazeComponent* m_pHazeSource;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UInteractionUserComponent* m_pInteractionuser;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation Parameters")
 	float m_LegAlignmentBodyRotationYawSensitivity;

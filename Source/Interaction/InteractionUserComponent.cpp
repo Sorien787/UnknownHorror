@@ -210,16 +210,16 @@ void UInteractionUserComponent::EnableInteractions()
 
 /////////////////////////////////////
 ///// Box overlap functions
-void UInteractionUserComponent::AddInteractionEnterBox(UBoxComponent* pBox)
+void UInteractionUserComponent::AddInteractionEnterShape(UShapeComponent* pBox)
 {
-	m_pEnterBox = pBox;
-	m_pEnterBox->OnComponentBeginOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxBeginOverlap);
+	m_pEnterShape = pBox;
+	m_pEnterShape->OnComponentBeginOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxBeginOverlap);
 }
 
-void UInteractionUserComponent::AddInteractionExitBox(UBoxComponent* pBox)
+void UInteractionUserComponent::AddInteractionExitShape(UShapeComponent* pBox)
 {
-	m_pExitBox = pBox;
-	m_pExitBox->OnComponentEndOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxEndOverlap);
+	m_pExitShape = pBox;
+	m_pExitShape->OnComponentEndOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxEndOverlap);
 }
 
 void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

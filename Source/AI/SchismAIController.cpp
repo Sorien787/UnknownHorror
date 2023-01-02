@@ -176,6 +176,7 @@ void ASchismAIController::OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimul
 		else
 		{
 			m_VisualAlertData[Actor].EventTimeoutValue = 0.0f;
+			m_VisualAlertData[Actor].EventTime = GetWorld()->GetTimeSeconds();
 			m_VisualAlertData[Actor].CurrentPerceptionStrength += stimulusStrength;
 			m_VisualAlertData[Actor].EventLocation = Stimulus.StimulusLocation;
 		}
@@ -212,7 +213,7 @@ void ASchismAIController::OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimul
 	
 			if (stimulusStrength < currentAlertData.CurrentPerceptionStrength)
 				return;
-			
+			currentAlertData.EventTime = GetWorld()->GetTimeSeconds();
 			currentAlertData.EventTimeoutValue = 0.0f;
 			currentAlertData.CurrentPerceptionStrength = stimulusStrength;
 			currentAlertData.EventLocation = Stimulus.StimulusLocation;
@@ -323,9 +324,29 @@ void ASchismAIController::OnAlertDataUpdate(float DeltaSeconds)
 //////////////////////////////////////////////////////////////////////////////////////////
 void ASchismAIController::OnBlackboardVarsUpdate()
 {
-	Blackboard->SetValueAsVector(TargetLocationBlackboardKey, m_BestActorOfInterest ? m_BestActorOfInterest->GetActorLocation() : FVector::ZeroVector);
+	Blackboard->SetValueAsVector(MostInterestingLocationBlackboardKey, m_BestActorOfInterest ? m_BestActorOfInterest->GetActorLocation() : FVector::ZeroVector);
+	Blackboard->SetValueAsObject(MostInterestingActorBlackboardKey, m_BestActorOfInterest);
 	Blackboard->SetValueAsEnum(AlertLevelBlackboardKey, static_cast<uint8>(m_BestActorAlertData->CurrentAlertLevel));
 	Blackboard->SetValueAsBool(HasVisuallyDetectedPlayerBlackboardKey, m_bActorVisible);
+	const float searchRadius = m_SearchPrecisionByCurrentAlertness.EditorCurveData.Eval(m_BestActorAlertData->CurrentPerceptionStrength);
+	Blackboard->SetValueAsFloat( RelevantSearchRadiusBlackboardKey, searchRadius);
+	const float searchProbability = m_SearchProbabilityByCurrentAlertness.EditorCurveData.Eval(m_BestActorAlertData->CurrentPerceptionStrength);
+	Blackboard->SetValueAsFloat( SearchProbabilityByPerceptionBlackboardKey, searchProbability);
+
+	if (!AIPerceptionDebug.GetValueOnGameThread())
+		return;
+
+	FString valA = m_bActorVisible ? "Yes" : "No";
+	FString valB = m_BestActorOfInterest ? m_BestActorOfInterest->GetName() : "Invalid";
+	FString str = FString::Printf(
+		TEXT("MostInterestingActorBlackboardKey: %s, \n Current Alert Level: %s \n Has Visually Detected Most Interesting Actor: %s \n Relevant Search Radius: %f \n Search Probability: %f"),
+		*valB,
+		*UEnum::GetValueAsString(m_BestActorAlertData->CurrentAlertLevel),
+		*valA,
+		searchRadius,
+		searchProbability
+		);
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow,str );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -396,7 +417,7 @@ void ASchismAIController::TickAlertData(FActorAlertData& AlertData, float DeltaT
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void ASchismAIController::TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData) const
+void ASchismAIController::TryExchangeAlertData(AActor* pBestActor, ISharedActorAlertData* bestActorAlertData, AActor* pNewActor, FActorAlertData& newActorAlertData) const
 {
 	// pick via alert level
 	if (bestActorAlertData->CurrentAlertLevel > newActorAlertData.CurrentAlertLevel)
@@ -460,6 +481,13 @@ FVector ASchismAIController::GetLastDetectionLocation(EAIAlertLevel alertLevel)
 		return FVector::ZeroVector;
 	return m_LastActorDetectionLocations[alertLevel];
 }
+
+bool ASchismAIController::GetIsInterestedObjectVisible()
+{
+	ISharedActorAlertData* alertData = m_BestActorAlertData;
+	return alertData->EventTimeoutValue < 0.1f;
+}
+
 
 void ASchismAIController::LoseInterestInActor(AActor* pActor)
 {

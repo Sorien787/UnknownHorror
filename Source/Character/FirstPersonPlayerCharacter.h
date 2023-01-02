@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Haze/HazeEffectComponent.h"
 #include "Interaction/InteractionUserComponent.h"
@@ -147,10 +148,10 @@ public:
 		UHazeEffectComponent* m_pHazeEffectComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-		UBoxComponent* m_EnterBoxComponent;
+		USphereComponent* m_EnterInteractionSphereCollider;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-		UBoxComponent* m_ExitBoxComponent;
+		USphereComponent* m_ExitInteractionSphereCollider;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UAudioComponent* m_HeartbeatAudioComponent;

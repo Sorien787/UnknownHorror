@@ -27,8 +27,32 @@ enum class ESchismDetectionState : uint8
 	COUNT = 4
 };
 
+UINTERFACE(MinimalAPI, NotBlueprintable)
+class UAIControllerShared : public UInterface
+{
+	GENERATED_BODY()
+};
+
+class DEEPSEAHORROR_API IAIControllerShared
+{
+	GENERATED_BODY()
+public:
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void DowngradeAlertLevelForActor(AActor* pActor, EAIAlertLevel maximumAlertLevel) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void LoseInterestInActor(AActor* pActor) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void ClearLoseInterestInActor(AActor* pActor) = 0;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual bool GetIsInterestedObjectVisible() = 0;
+};
+
 UCLASS()
-class DEEPSEAHORROR_API ASchismAIController : public AAIController
+class DEEPSEAHORROR_API ASchismAIController : public AAIController, public IAIControllerShared
 {
 	
 	GENERATED_BODY()
@@ -47,7 +71,7 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	void TickAlertData(FActorAlertData& alertData, float DeltaTime);
 	void OnBestActorAlertDataUpdate();
 	
-	void TryExchangeAlertData(const AActor* pBestActor, const ISharedActorAlertData* bestActorAlertData, const AActor* pNewActor, const FActorAlertData& newActorAlertData) const;
+	void TryExchangeAlertData(AActor* pBestActor, ISharedActorAlertData* bestActorAlertData, AActor* pNewActor, FActorAlertData& newActorAlertData) const;
 	void DebugDrawAlertData(const FActorAlertData& AlertData) const;
 	bool ShouldRemovePerceptionData(const FActorAlertData& AlertData) const;
 
@@ -62,20 +86,27 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	UFUNCTION(BlueprintCallable)
 	AActor* GetCurrentActorOfInterest();
 
-	// downgrades the alert level for a given actor to a maximum, sets the perception that maximum as well
-	// obviously, if the actor makes an amount of stimulus thereafter, this interest can be re-upgraded
-	UFUNCTION(BlueprintCallable)
-	void DowngradeAlertLevelForActor(AActor* pActor, EAIAlertLevel maximumAlertLevel);
-
-	// Gets the last known location for the most interesting detection
 	UFUNCTION(BlueprintCallable)
 	FVector GetLastDetectionLocation(EAIAlertLevel alertLevel);
-
+	
+	//////////////////////////////////////////////////////////////////
+	//IAIControllerShared
 	UFUNCTION(BlueprintCallable)
-	void LoseInterestInActor(AActor* pActor);
-
+	virtual void DowngradeAlertLevelForActor(AActor* pActor, EAIAlertLevel maximumAlertLevel) override;
+	
 	UFUNCTION(BlueprintCallable)
-	void ClearLoseInterestInActor(AActor* pActor);
+	virtual void LoseInterestInActor(AActor* pActor) override;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void ClearLoseInterestInActor(AActor* pActor) override;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual bool GetIsInterestedObjectVisible() override;
+	//~IAIControllerShared
+	//////////////////////////////////////////////////////////////////
+	///
+	UFUNCTION()
+	void OnTargetPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus);
 	
 	TMap<TObjectKey<AActor>, FActorAlertData> m_AudioAlertData;
 	TMap<TObjectKey<AActor>, FActorAlertData> m_VisualAlertData;
@@ -87,8 +118,7 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController
 	AActor* m_BestActorOfInterest = nullptr;
 	bool m_bActorVisible = false;
 
-	UFUNCTION()
-	void OnTargetPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus);
+
 	
 public:
 	 UPROPERTY(EditAnywhere)
@@ -104,11 +134,20 @@ public:
 	FName AlertLevelBlackboardKey;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
-	FName TargetLocationBlackboardKey;
+	FName MostInterestingLocationBlackboardKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName MostInterestingActorBlackboardKey;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
 	FName HasVisuallyDetectedPlayerBlackboardKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName RelevantSearchRadiusBlackboardKey;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName SearchProbabilityByPerceptionBlackboardKey;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	FRuntimeFloatCurve m_AngleFromCenterToVisualFalloffModifier;
 	
@@ -117,6 +156,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	FRuntimeFloatCurve m_CompetingDesensitivityScalar;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
+	FRuntimeFloatCurve m_SearchPrecisionByCurrentAlertness;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
+	FRuntimeFloatCurve m_SearchProbabilityByCurrentAlertness;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	float m_MinimumTimeBeforeCulling;
