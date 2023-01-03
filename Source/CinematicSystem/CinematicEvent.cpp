@@ -69,8 +69,7 @@ void ACinematicEvent::OnTriggerCalled(int triggerID)
 
 void ACinematicEvent::LoadNextEventCollections()
 {
-	RelevantEvents.Empty();
-	TickableEvents.Empty();
+
 	
 	for(size_t nIndex = 0; nIndex < RelevantEvents.Num(); nIndex++)
 	{
@@ -80,6 +79,8 @@ void ACinematicEvent::LoadNextEventCollections()
 			EventCollection.TriggersForNextStage[nIndexEvent]->OnTriggerBecomeInvalid(this);
 		}
 	}
+	RelevantEvents.Empty();
+	TickableEvents.Empty();
 	if (m_CurrentTriggerStage == ETriggerStage::Exit)
 		return;
 	for(size_t nIndex = 0; nIndex < Events.Num(); nIndex++)

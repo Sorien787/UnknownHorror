@@ -8,7 +8,6 @@
 ULightModifierComponent::ULightModifierComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 }
 
 
@@ -17,7 +16,7 @@ void ULightModifierComponent::BeginPlay()
 {	
 	Super::BeginPlay();
 	SetComponentTickEnabled(false);
-	
+	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 	m_IsFlickering = false;
 	m_InstancedMat = UMaterialInstanceDynamic::Create(Material, this);
 	
@@ -65,7 +64,7 @@ void ULightModifierComponent::Break()
 	SwitchOff();
 	SetLightIntensity(m_BrightnessWhenBreaking);
 	m_LightBreakDelegate.Broadcast();
-	GetWorld()->GetTimerManager().SetTimer(m_BreakTimerHandle, this, &ULightModifierComponent::OnFinishedBreaking, m_LengthOfBreakFlash, false, 0.1f);
+	GetWorld()->GetTimerManager().SetTimer(m_BreakTimerHandle, this, &ULightModifierComponent::OnFinishedBreaking, m_LengthOfBreakFlash, false, m_LengthOfBreakFlash);
 }
 
 void ULightModifierComponent::SetFlickerStatusOverride(const FLightFlickerStateStruct& flickerStateOverride)
@@ -106,7 +105,7 @@ void ULightModifierComponent::SetLightIntensity(float intensity)
 		pLightComponent->SetIntensity(intensity * m_DefaultBrightness);
 	}
 	const float desiredStrength = m_LightIntensityToEmissivity.EditorCurveData.Eval(intensity);
-	m_InstancedMat->SetScalarParameterValue("Emissive_Strength",desiredStrength );
+	m_InstancedMat->SetScalarParameterValue("Emissive_Strength", desiredStrength );
 }
 
 void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComponent)

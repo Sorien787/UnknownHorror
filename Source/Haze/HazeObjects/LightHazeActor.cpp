@@ -46,7 +46,8 @@ void ALightHazeActor::OnHazeStart()
 void ALightHazeActor::Tick(float DeltaSeconds)
 {
 	const float value = m_pHazeEffectComponent->GetCurrentHazeStrength();
-	
+	if (value <= FLT_EPSILON)
+		return;
 	m_pLightModifier->SetFlickerStatusOverride(FLightFlickerStateStruct(
     m_LightMinBrightness.EditorCurveData.Eval(value),
     m_LightMaxBrightness.EditorCurveData.Eval(value),

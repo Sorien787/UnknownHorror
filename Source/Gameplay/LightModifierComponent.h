@@ -17,15 +17,7 @@ class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
 {
 private:
 	GENERATED_BODY()
-
-	bool m_IsBroken{false};
-
-	bool m_IsOn{false};
 	
-	bool m_IsFlickering{false};
-	
-	float m_CurrentIntensity{0.0f};
-
 	float m_TimeLastStateTransition{0.0f};
 
 	FTimerHandle m_BreakTimerHandle;
@@ -61,6 +53,18 @@ UFUNCTION(BlueprintCallable)
 	void SetLightIntensity(float intensity = 1.0f);
 
 public:	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool m_IsBroken{false};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool m_IsOn{false};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool m_IsFlickering{false};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float m_CurrentIntensity{0.0f};
 
 	UPROPERTY(BlueprintAssignable)
 	FLightIntensityDelegate m_LightIntensityDelegate;

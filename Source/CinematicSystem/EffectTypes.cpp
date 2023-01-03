@@ -20,7 +20,7 @@ void ULightModifierBreakType::OnEffectTriggered()
 
 void USoundEffectType::OnEffectTriggered()
 {
-	UnrealUtilities::GetComponentFromActor<UAudioComponent>(pRelevantActor)->AdjustVolume(FadeTime, VolumeModifier);
+	UnrealUtilities::GetComponentFromActor<UAudioComponent>(pRelevantActor)->Play();
 }
 
 void UParticleEffectType::OnEffectTriggered()
