@@ -58,9 +58,9 @@ void ACinematicEvent::OnTriggerCalled(int triggerID)
 			continue;
 
 		m_CurrentTriggerStage = EventCollection.NextTriggerStage;
-		for(size_t nIndexEvent = 0; nIndexEvent < EventCollection.EffectsWhenTriggered.Num(); nIndexEvent++)
+		for(size_t nIndexEvent2 = 0; nIndexEvent2 < EventCollection.EffectsWhenTriggered.Num(); nIndexEvent2++)
 		{
-			EventCollection.EffectsWhenTriggered[nIndexEvent]->OnEffectTriggered();
+			EventCollection.EffectsWhenTriggered[nIndexEvent2]->OnEffectTriggered();
 		}
 		LoadNextEventCollections();
 		break;

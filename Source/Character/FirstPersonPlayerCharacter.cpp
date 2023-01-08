@@ -487,7 +487,7 @@ void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
 		CapsuleParams.bDebugQuery = true;
 		FCollisionResponseParams ResponseParam;
 		GetMesh()->InitSweepCollisionParams(CapsuleParams, ResponseParam);
-		DrawDebugCapsule(MyWorld, PawnLocation, CapsuleExtent.Z, CapsuleExtent.X, FQuat::Identity, FColor::Emerald);
+		//DrawDebugCapsule(MyWorld, PawnLocation, CapsuleExtent.Z, CapsuleExtent.X, FQuat::Identity, FColor::Emerald);
 		// make the overlap test
 		m_bForcedToCrouch = MyWorld->OverlapBlockingTestByChannel(PawnLocation, FQuat::Identity, ECC_WorldStatic, CapsuleCollision, CapsuleParams, ResponseParam);
 	}
