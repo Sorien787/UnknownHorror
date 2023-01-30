@@ -1,33 +1,37 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "InteractionUserComponent.h"
 
-#include "InteractableObject.h"
+#include "InteractionPoint.h"
 #include "../Common/UnrealUtilities.h"
 
+static TAutoConsoleVariable<int32> InteractionUserDebug(
+	TEXT("InteractionUserDebug"),
+	0,
+	TEXT("InteractionUserDebug.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
+
 // Sets default values for this component's properties
-UInteractionUserComponent::UInteractionUserComponent()
+UInteractionPlayerComponent::UInteractionPlayerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
 // Called when the game starts
-void UInteractionUserComponent::BeginPlay()
+void UInteractionPlayerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void UInteractionUserComponent::SetInteractionUserType(InteractionUserType userType)
+void UInteractionPlayerComponent::SetInteractionUserType(InteractionUserType userType)
 {
 	m_UserType = userType;
 }
 
-IInteractionTriggerInterface* UInteractionUserComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable) const
+IInteractionTriggerInterface* UInteractionPlayerComponent::ClosestInteractionQuery(bool ignoreCurrentInteractable)
 {
-	if (!m_bIsPlayerInteractionUser)
-		return nullptr;
-	
-	TArray<FHitResult> hits = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner());
+	TArray<FHitResult> hits = UnrealUtilities::RaycastActorToWorldHit(GetWorld(), m_fInteractionRange, GetOwner(), ECollisionChannel::ECC_GameTraceChannel1);
 
 	IInteractionTriggerInterface* pClosestObject = nullptr;
 	float closestInteractableDistance = FLT_MAX;
@@ -71,7 +75,7 @@ IInteractionTriggerInterface* UInteractionUserComponent::ClosestInteractionQuery
 	return pClosestObject;
 }
 
-void UInteractionUserComponent::FocusedInteractionUpdate()
+void UInteractionPlayerComponent::FocusedInteractionUpdate()
 {
 	// only ignore the closest interactable if the current using interactable is not null (since that one will be closest)
 	IInteractionTriggerInterface* pClosestInteractable = ClosestInteractionQuery();
@@ -91,7 +95,7 @@ void UInteractionUserComponent::FocusedInteractionUpdate()
 		SetNewFocusedInteractable(pClosestInteractable);
 }
 
-void UInteractionUserComponent::RevealInteractionUpdate()
+void UInteractionPlayerComponent::RevealInteractionUpdate()
 {
 	for (const auto& element : m_InteractionCandidates)
 	{
@@ -104,7 +108,7 @@ void UInteractionUserComponent::RevealInteractionUpdate()
 	}
 }
 
-void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UInteractionPlayerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
@@ -113,30 +117,35 @@ void UInteractionUserComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	RevealInteractionUpdate();
 }
 
-void UInteractionUserComponent::ClearFocusedInteractable()
+void UInteractionPlayerComponent::OnInteractionStarted(const TScriptInterface<IInteractableInterface> interf)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focused interaction cleared"));
-	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractionPoint->TryUnfocusWidget();
-	m_pCurrentFocusedInteractionPoint = nullptr;
+	UInteractionComponentBase::OnInteractionStarted(interf);
+	DisableInteractions();
 }
 
-void UInteractionUserComponent::SetNewFocusedInteractable(IInteractionTriggerInterface* pNewInteractable)
+void UInteractionPlayerComponent::OnInteractionFinished(const TScriptInterface<IInteractableInterface> interf)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("New Focused interaction"));
-	m_pCurrentFocusedInteractionPoint = pNewInteractable;
-	if (m_bShouldTriggerWidgets)
-		m_pCurrentFocusedInteractionPoint->TryFocusWidget();
-}
-
-
-void UInteractionUserComponent::OnInteractionFinished()
-{
-	m_bIsCurrentlyInInteractionAnimation = false;
+	UInteractionComponentBase::OnInteractionFinished(interf);
 	EnableInteractions();
 }
 
-void UInteractionUserComponent::OnInteractButtonPressed()
+void UInteractionPlayerComponent::ClearFocusedInteractable()
+{
+	if(InteractionUserDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Focused interaction cleared"));
+	m_pCurrentFocusedInteractionPoint->TryUnfocusWidget();
+	m_pCurrentFocusedInteractionPoint = nullptr;
+}
+
+void UInteractionPlayerComponent::SetNewFocusedInteractable(IInteractionTriggerInterface* pNewInteractable)
+{
+	if(InteractionUserDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("New Focused interaction"));
+	m_pCurrentFocusedInteractionPoint = pNewInteractable;
+	m_pCurrentFocusedInteractionPoint->TryFocusWidget();
+}
+
+void UInteractionPlayerComponent::OnInteractButtonPressed()
 {
 	if (!m_pCurrentFocusedInteractionPoint || !m_bInteractionsEnabled)
 		return;
@@ -144,40 +153,29 @@ void UInteractionUserComponent::OnInteractButtonPressed()
 	OnInteractWithFocusedInteractable();
 }
 
-bool UInteractionUserComponent::IsCurrentlyInInteractionAnimation() const
-{
-	return m_bIsCurrentlyInInteractionAnimation;
-}
-
-float UInteractionUserComponent::GetAnimCameraYaw() const
+float UInteractionPlayerComponent::GetAnimCameraYaw() const
 {
 	if (!m_pCurrentUsingInteractionPoint)
 		return m_DefaultCameraYawTolerance;
 	return m_pCurrentUsingInteractionPoint->GetCameraYawTolerance();
 }
 
-float UInteractionUserComponent::GetAnimCameraPitch() const
+float UInteractionPlayerComponent::GetAnimCameraPitch() const
 {
 	if (!m_pCurrentUsingInteractionPoint)
 		return m_DefaultCameraPitchTolerance;
 	return m_pCurrentUsingInteractionPoint->GetCameraPitchTolerance();
 }
 
-void UInteractionUserComponent::OnInteractWithFocusedInteractable()
+void UInteractionPlayerComponent::OnInteractWithFocusedInteractable()
 {
-	
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Interact with focused interactable"));
+	if(InteractionUserDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Interact with focused interactable"));
 	m_pCurrentUsingInteractionPoint = m_pCurrentFocusedInteractionPoint;
 	m_pCurrentUsingInteractionPoint->TryInteract(this);
-	if (!m_pCurrentUsingInteractionPoint->GetIsFastInteractable())
-	{
-		m_bIsCurrentlyInInteractionAnimation = true;
-		DisableInteractions();
-	}
-	m_pCurrentFocusedInteractionPoint = nullptr;
 }
 
-void UInteractionUserComponent::DisableInteractions()
+void UInteractionPlayerComponent::DisableInteractions()
 {
 	if (!m_bInteractionsEnabled)
 		return;
@@ -189,12 +187,12 @@ void UInteractionUserComponent::DisableInteractions()
 	PrimaryComponentTick.SetTickFunctionEnable(false);
 }
 
-const float UInteractionUserComponent::GetInteractionRange() const
+const float UInteractionPlayerComponent::GetInteractionRange() const
 {
 	return m_fInteractionRange;
 }
 
-void UInteractionUserComponent::EnableInteractions()
+void UInteractionPlayerComponent::EnableInteractions()
 {
 	if (m_bInteractionsEnabled)
 		return;
@@ -210,19 +208,19 @@ void UInteractionUserComponent::EnableInteractions()
 
 /////////////////////////////////////
 ///// Box overlap functions
-void UInteractionUserComponent::AddInteractionEnterShape(UShapeComponent* pBox)
+void UInteractionPlayerComponent::AddInteractionEnterShape(UShapeComponent* pBox)
 {
 	m_pEnterShape = pBox;
-	m_pEnterShape->OnComponentBeginOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxBeginOverlap);
+	m_pEnterShape->OnComponentBeginOverlap.AddDynamic(this, &UInteractionPlayerComponent::OnBoxBeginOverlap);
 }
 
-void UInteractionUserComponent::AddInteractionExitShape(UShapeComponent* pBox)
+void UInteractionPlayerComponent::AddInteractionExitShape(UShapeComponent* pBox)
 {
 	m_pExitShape = pBox;
-	m_pExitShape->OnComponentEndOverlap.AddDynamic(this, &UInteractionUserComponent::OnBoxEndOverlap);
+	m_pExitShape->OnComponentEndOverlap.AddDynamic(this, &UInteractionPlayerComponent::OnBoxEndOverlap);
 }
 
-void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UInteractionPlayerComponent::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
 
@@ -237,7 +235,7 @@ void UInteractionUserComponent::OnBoxBeginOverlap(UPrimitiveComponent* Overlappe
 }
 
 
-void UInteractionUserComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void UInteractionPlayerComponent::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	AInteractionPoint* pInteractable = Cast<AInteractionPoint>(OtherActor);
 	if (!pInteractable || !m_InteractionCandidates.Contains(pInteractable))

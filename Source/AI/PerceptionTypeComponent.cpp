@@ -3,59 +3,36 @@
 
 #include "AI/PerceptionTypeComponent.h"
 
+#include "Perception/AISenseConfig_Hearing.h"
+#include "Perception/AISenseConfig_Sight.h"
 // Sets default values for this component's properties
 UPerceptionTypeComponent::UPerceptionTypeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-EAIAlertLevel UPerceptionTypeComponent::GetMaximumAlertLevel() const
-{
-	return m_MaxAlertLevel;
-}
-
-float UPerceptionTypeComponent::GetMaximumInterest() const
-{
-	return m_MaxInterest;
-}
 
 uint8 UPerceptionTypeComponent::GetPriority() const
 {
 	return m_Priority;
 }
 
-const float UPerceptionTypeComponent::GetVisualPerceptionModifier() const
+bool UPerceptionTypeComponent::GetCanBeIgnored() const
 {
-	return m_VisualPerceptionModifier;
+	return m_CanBeIgnored;
 }
 
-const float UPerceptionTypeComponent::GetVisualPerceptionDistanceScalar(float currentInterestNormalized) const
+const FPerceptionTypeModifier* UPerceptionTypeComponent::GetPerceptionTypeModifierForSense(FAISenseID senseID) const
 {
-	return m_VisualFalloffModifierByDistance.EditorCurveData.Eval(currentInterestNormalized);
-}
-
-const float UPerceptionTypeComponent::GetAudioPerceptionDistanceScalar(float currentInterestNormalized) const
-{
-	return m_AudioFalloffModifierByDistance.EditorCurveData.Eval(currentInterestNormalized);
-}
-
-const float UPerceptionTypeComponent::GetVisualDecayDelay() const
-{
-	return m_TimeBeforeVisualInterestDecayBegin;
-}
-
-const float UPerceptionTypeComponent::GetAudioDecayDelay() const
-{
-	return m_TimeBeforeAudioInterestDecayBegin;
-}
-
-const float UPerceptionTypeComponent::GetUncertaintyDistance(float currentInterestNormalized) const
-{
-	return m_UncertaintyDistanceByCurrentSuspicion.EditorCurveData.Eval(currentInterestNormalized);
-}
-
-const float UPerceptionTypeComponent::GetPerceptionDecay(float currentInterestNormalized) const
-{
-	return m_PerceptionDecay.EditorCurveData.Eval(currentInterestNormalized);
+	// convert sense ID to sense enum
+	if (senseID == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		return m_PerceptionTypeMap.Find(ESenseEnum::Sight);
+	}
+	if (senseID == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		return m_PerceptionTypeMap.Find(ESenseEnum::Hearing);
+	}
+	return m_PerceptionTypeMap.Find(ESenseEnum::Default);
 }
 

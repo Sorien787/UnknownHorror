@@ -25,7 +25,7 @@ void ALurkLocationActor::BeginPlay()
 	if (!pTension)
 		return;
 
-	pTension->RegisterLurkLocation(this);
+	//pTension->RegisterLurkLocation(this);
 }
 
 // Called every frame

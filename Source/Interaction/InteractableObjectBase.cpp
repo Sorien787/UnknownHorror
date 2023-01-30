@@ -1,7 +1,10 @@
 
 #include "InteractableObjectBase.h"
+
+#include "InteractionAlignmentComponent.h"
 #include "InteractionUserComponent.h"
 #include "InteractionPoint.h"
+#include "Common/UnrealUtilities.h"
 
 AInteractableObjectBase::AInteractableObjectBase()
 {
@@ -27,28 +30,28 @@ void AInteractableObjectBase::BeginPlay()
 		bool shouldEnable = m_EnabledInteractionPoints.Contains(pInteractionPoint->GetInteractorId());
 		pInteractionPoint->RegisterParent(this, shouldEnable);
 	}
+
+	TArray<UInteractionAlignmentComponent*> components;
+	GetComponents<UInteractionAlignmentComponent>(components);
+	
+	for (int i = 0; i < components.Num(); i++)
+    {
+    	m_pInteractionAlignmentPoints.Add(components[i]);
+    }
 }
 
-bool AInteractableObjectBase::IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)
-{
-	bool isAvailable = true;
-	Execute_IsInteractionAvailableOverride(this, interactorId, pInteractionUser, isAvailable);
-	return m_pCurrentUser == nullptr && isAvailable;
-}
-
-void AInteractableObjectBase::OnInteractionFinished(UInteractionUserComponent* pInteractionUser)
+void AInteractableObjectBase::OnInteractionFinished(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser)
 {
 	if (!m_pCurrentUser)
 		return;
-	m_pCurrentUser->OnInteractionFinished();
+	m_pCurrentUser->OnInteractionFinished(this);
 	m_pCurrentUser = nullptr;
 }
 
-void AInteractableObjectBase::OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId)
+void AInteractableObjectBase::OnInteractionStarted(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId)
 {
-	m_pCurrentUser = pInteractionUser;
 	bool result;
-	Execute_OnInteractWithInteractorId2(this, interactorId, pInteractionUser, result);
+	Execute_OnInteractWithInteractorId(this, interactorId, pInteractionUser, result);
 }
 
 FTransform AInteractableObjectBase::GetInteractionPointTransform_Implementation(const int interactorId)
@@ -60,17 +63,19 @@ FTransform AInteractableObjectBase::GetInteractionPointTransform_Implementation(
 		
 		return m_pInteractionPoints[i]->GetInteractorTransform();
 	}
+
+	for (int i = 0; i < m_pInteractionAlignmentPoints.Num(); i++)
+	{
+		if (m_pInteractionAlignmentPoints[i]->GetInteractorId() != interactorId)
+			continue;
+		return m_pInteractionAlignmentPoints[i]->GetComponentTransform();
+	}
 	return GetActorTransform();
 }
 
-FTransform AInteractableObjectBase::GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser)
+FTransform AInteractableObjectBase::GetDesiredTransformForInteraction_Implementation(const int interactorId, const InteractionUserType pInteractionUser)
 {
 	return GetInteractionPointTransform(interactorId);
-}
-
-bool AInteractableObjectBase::IsFastInteraction() const
-{
-	return m_bIsFastInteraction;
 }
 
 float AInteractableObjectBase::GetCameraYawTolerance() const
@@ -110,9 +115,44 @@ IInteractionTriggerInterface* AInteractableObjectBase::FindInteractionPointById(
 
 void AInteractableObjectBase::OnAnimationFinished_Implementation()
 {
-	OnInteractionFinished(m_pCurrentUser);
+	if (!m_pCurrentUser)
+		return;
+	m_pCurrentUser->OnInteractionFinished(this);
+	m_pCurrentUser = nullptr;
 }
 
+void AInteractableObjectBase::OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult)
+{
+	m_pCurrentUser = pInteractionUser;
+	m_pCurrentUser->OnInteractionStarted(this);
+}
+
+FVector AInteractableObjectBase::GetInteractableLocation_Implementation() const
+{
+	return GetActorLocation();
+}
+
+void AInteractableObjectBase::GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result)
+{
+	for (size_t nInteractionPointIndex = 0; nInteractionPointIndex < m_pInteractionPoints.Num(); nInteractionPointIndex++)
+	{
+		bool res = false;
+		int interactorID = m_pInteractionPoints[nInteractionPointIndex]->GetInteractorId();
+		Execute_IsInteractionAvailable(this, interactorID, pInteractionUser,res);
+		if (!res)
+			continue;
+		result.Push(interactorID);
+	}
+	for (size_t nInteractionAlignmentPoint = 0; nInteractionAlignmentPoint < m_pInteractionAlignmentPoints.Num(); nInteractionAlignmentPoint++)
+	{
+		bool res = false;
+		int interactorID = m_pInteractionAlignmentPoints[nInteractionAlignmentPoint]->GetInteractorId();
+		Execute_IsInteractionAvailable(this, interactorID, pInteractionUser,res);
+		if (!res)
+			continue;
+		result.Push(interactorID);
+	}
+}
 
 void AInteractableObjectBase::DisableInteractors_Implementation()
 {

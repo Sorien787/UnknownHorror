@@ -49,6 +49,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	virtual bool GetIsInterestedObjectVisible() = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnSearchObject(const AActor* pActor) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual AActor*  OnReceiveObjectSearchList(const TArray<AActor*>& inActors, bool& result) = 0;
 };
 
 UCLASS()
@@ -66,12 +72,12 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController, public IAICo
 	void OnReceiveNewStimulus(AActor* Actor, FAIStimulus Stimulus);
 	void StimulusLoadUpdate(float DeltaSeconds);
 	void OnAlertDataUpdate(float DeltaSeconds);
-	void OnBlackboardVarsUpdate();
+	void OnBlackboardVarsUpdate(float DeltaSeconds);
 	void OnVisibleActorUpdate();
 	void TickAlertData(FActorAlertData& alertData, float DeltaTime);
 	void OnBestActorAlertDataUpdate();
 	
-	void TryExchangeAlertData(AActor* pBestActor, ISharedActorAlertData* bestActorAlertData, AActor* pNewActor, FActorAlertData& newActorAlertData) const;
+	void TryExchangeAlertData(AActor* &pBestActor, ISharedActorAlertData* &bestActorAlertData, AActor* pNewActor, FActorAlertData& newActorAlertData) const;
 	void DebugDrawAlertData(const FActorAlertData& AlertData) const;
 	bool ShouldRemovePerceptionData(const FActorAlertData& AlertData) const;
 
@@ -89,6 +95,7 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController, public IAICo
 	UFUNCTION(BlueprintCallable)
 	FVector GetLastDetectionLocation(EAIAlertLevel alertLevel);
 	
+
 	//////////////////////////////////////////////////////////////////
 	//IAIControllerShared
 	UFUNCTION(BlueprintCallable)
@@ -102,6 +109,13 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController, public IAICo
 	
 	UFUNCTION(BlueprintCallable)
 	virtual bool GetIsInterestedObjectVisible() override;
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void OnSearchObject(const AActor* pActor) override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual AActor* OnReceiveObjectSearchList(const TArray<AActor*>& inActors, bool& result) override;
+	
 	//~IAIControllerShared
 	//////////////////////////////////////////////////////////////////
 	///
@@ -112,18 +126,22 @@ class DEEPSEAHORROR_API ASchismAIController : public AAIController, public IAICo
 	TMap<TObjectKey<AActor>, FActorAlertData> m_VisualAlertData;
 	TSet<TObjectKey<AActor>> m_LostInterestSet;
 	TMap<EAIAlertLevel, FVector> m_LastActorDetectionLocations;
-
+	TMap<TObjectKey<AActor>, float> m_HidingSpotSearchList;
 	FDefaultActorAlertData m_DefaultAlertData;
 	ISharedActorAlertData* m_BestActorAlertData;
 	AActor* m_BestActorOfInterest = nullptr;
 	bool m_bActorVisible = false;
-
-
+	float m_ObservedByPlayerTime = 0.0f;
+	float m_NotObservedByPlayerTime = 0.0f;
 	
 public:
+	
 	 UPROPERTY(EditAnywhere)
 	 UAIPerceptionComponent* m_pMyPerceptionComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
+	float m_ResearchTimeoutTime;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	FName m_EyeSocketName;
 	
@@ -148,6 +166,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
 	FName SearchProbabilityByPerceptionBlackboardKey;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName ObservedByPlayerScaleBlackboardKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behaviour")
+	FName NotObservedByPlayerScaleBlackboardKey;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	FRuntimeFloatCurve m_AngleFromCenterToVisualFalloffModifier;
 	
@@ -168,10 +192,5 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Perception")
 	TMap<EAIAlertLevel, FAlertLevelDetectionThreshold> m_AlertLevelThresholds;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
-	class UAISenseConfig_Hearing* m_pHearingConfig = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
-	class UAISenseConfig_Sight* m_pSightConfig = nullptr;
 };

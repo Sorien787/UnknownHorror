@@ -157,6 +157,26 @@ void ASchism::BeginPlay()
 	
 }
 
+bool ASchism::CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor, const bool* bWasVisible, int32* UserData) const
+{
+	ECollisionChannel DefaultSightCollisionChannel = ECollisionChannel::ECC_Visibility;
+	UWorld* pWorld = GetWorld();
+	const FName TraceTag("VisiblityTraceTag");
+	pWorld->DebugDrawTraceTag = TraceTag;
+	FCollisionQueryParams params = FCollisionQueryParams(SCENE_QUERY_STAT(AILineOfSight), true, IgnoreActor);
+	params.TraceTag = TraceTag;
+	FHitResult HitResult;
+	const bool bHit = pWorld->LineTraceSingleByChannel(HitResult, ObserverLocation, GetActorLocation()
+		, DefaultSightCollisionChannel
+		, params);
+	if (bHit && HitResult.GetActor() == this)
+	{
+		OutSeenLocation = HitResult.Location;
+		return true;
+	}
+	return false;
+}
+
 // Called every frame
 void ASchism::Tick(float DeltaTime)
 {

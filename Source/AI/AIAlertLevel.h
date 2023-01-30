@@ -53,17 +53,11 @@ public:
  float EventTimeoutValue {0.0f};
  float EventTime{0.0f};
  float CurrentPerceptionStrength{0.0f};
- 
- virtual EAIAlertLevel GetMaximumAlertLevel() const = 0;
- virtual float GetMaximumPerceptionStrength() const = 0;
 };
 
 struct FDefaultActorAlertData : public ISharedActorAlertData
 {
  FDefaultActorAlertData() : ISharedActorAlertData(0.0f, 0.0f, FVector::ZeroVector, FAISenseID()){};
- 
- virtual EAIAlertLevel GetMaximumAlertLevel() const override {return EAIAlertLevel::IDLE;}
- virtual float GetMaximumPerceptionStrength() const override {return 0.0f;}
 };
 
 
@@ -72,9 +66,6 @@ struct FActorAlertData : public ISharedActorAlertData
  FActorAlertData(UPerceptionTypeComponent* _pPerceptionComponent, FAISenseID _SenseID, float _InitPerceptionStrength, float _EventTime, FVector _EventLocation) : ISharedActorAlertData(_InitPerceptionStrength, _EventTime, _EventLocation, _SenseID), pPerceptionComponent(_pPerceptionComponent){}
 
  UPerceptionTypeComponent* pPerceptionComponent;
- 
- virtual EAIAlertLevel GetMaximumAlertLevel() const override;
- virtual float GetMaximumPerceptionStrength() const override;
 };
 
 

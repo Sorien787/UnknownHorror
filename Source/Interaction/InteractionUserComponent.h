@@ -3,93 +3,48 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "Components/BoxComponent.h"
 #include "InteractionTriggerInterface.h"
 #include "InteractableObjectBase.h"
+#include "InteractionComponentInterface.h"
 #include "InteractionUserComponent.generated.h"
 
 
-class AInteractableObject;
-
-
-UENUM(BlueprintType)
-enum class InteractionUserType : uint8
-{
-	Undefined UMETA(DisplayName = "Undefined", Hidden),
-	PlayerSneak UMETA(DisplayName = "Player Sneak"),
-	Player UMETA(DisplayName = "Player"),
-	PlayerSprint UMETA(DisplayName = "Sprinting Player"),
-	Schism UMETA(DisplayName = "Schism")
-
-};
-
-UINTERFACE(MinimalAPI, NotBlueprintable)
-class UInteractingCharacter : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class DEEPSEAHORROR_API IInteractingCharacter
-{
-	GENERATED_BODY()
-public:
-	UFUNCTION(BlueprintCallable)
-	virtual void IsInteractionAvailableOverride(const int interactorId, bool& returnResult) = 0;
-	
-	UFUNCTION(BlueprintCallable)
-	virtual void GetPossibleAvailableInteractions(TArray<int>& result) = 0;
-	
-	UFUNCTION(BlueprintCallable)
-	virtual void OnInteractWithInteractor(const int interactorId, bool& returnResult) = 0;
-
-	UFUNCTION(BlueprintCallable)
-	virtual FTransform GetDesiredTransformForInteraction(const int interactorId) = 0;
-
-	UFUNCTION(BlueprintCallable)
-	virtual void TryStopInteracting() = 0;
-};
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class DEEPSEAHORROR_API UInteractionUserComponent : public UActorComponent
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
+class DEEPSEAHORROR_API UInteractionPlayerComponent : public UInteractionComponentBase
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UInteractionUserComponent();
+	UInteractionPlayerComponent();
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
+	// UActorComponent
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	// ~UActorComponent
 
-	bool IsCurrentlyInInteractionAnimation() const;
+	// UInteractionComponentBase
+	virtual void OnInteractionStarted(const TScriptInterface<IInteractableInterface> interf) override;
 
+	virtual void OnInteractionFinished(const TScriptInterface<IInteractableInterface> interf) override;
+	// ~UInteractionComponentBase
+	
 	float GetAnimCameraYaw() const;
 
 	float GetAnimCameraPitch() const;
 	
-	void OnInteractionFinished();
-
-	void OnInteractWithFocusedInteractable();
-
-	void DisableInteractions();
-
-	void EnableInteractions();
-
-	void SetInteractionUserType(InteractionUserType userType);
-	
-	IInteractionTriggerInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false) const;
+	const float GetInteractionRange() const;
 
 	void AddInteractionEnterShape(UShapeComponent* pBox);
 
 	void AddInteractionExitShape(UShapeComponent* pBox);
 
-	const float GetInteractionRange() const;
+	void SetInteractionUserType(InteractionUserType userType);
+	
 private:
 
 	UFUNCTION()
@@ -111,19 +66,18 @@ private:
 	void RevealInteractionUpdate();
 	
 	void SetNewFocusedInteractable(IInteractionTriggerInterface* pNewInteractable);
+	
+	void OnInteractWithFocusedInteractable();
+
+	void DisableInteractions();
+
+	void EnableInteractions();
+
+	IInteractionTriggerInterface* ClosestInteractionQuery(bool ignoreCurrentInteractable = false);
 
 public:
 	UFUNCTION()
 		void OnInteractButtonPressed();
-
-	UPROPERTY(EditAnywhere)
-		bool m_bShouldTriggerWidgets{ true };
-
-	UPROPERTY(EditAnywhere)
-		bool m_bNeedsRaycastToDetectInteractionProximity{true};
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		bool m_bIsPlayerInteractionUser{true};
 	
 	UPROPERTY(EditAnywhere)
 		float m_fInteractionRange{3000.0f};
@@ -134,9 +88,6 @@ public:
 	UPROPERTY(EditAnywhere)
 		UShapeComponent* m_pExitShape;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		InteractionUserType m_UserType;
-	
 	UPROPERTY(EditAnywhere)
 		FVector m_DefaultHandOffset;
 
@@ -145,7 +96,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		float m_DefaultCameraPitchTolerance = 20.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		bool m_bIsCurrentlyInInteractionAnimation = false;
 };

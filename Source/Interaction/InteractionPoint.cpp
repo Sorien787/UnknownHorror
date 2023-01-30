@@ -2,9 +2,17 @@
 
 #include "InteractionPoint.h"
 
-#include "InteractionUserComponent.h"
+#include "InteractionComponentInterface.h"
 #include "../Common/UnrealUtilities.h"
 #include "Kismet/KismetMathLibrary.h"
+
+
+static TAutoConsoleVariable<int32> InteractionPointDebug(
+	TEXT("InteractionPointDebug"),
+	0,
+	TEXT("InteractionPointDebug.\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
 
 AInteractionPoint::AInteractionPoint()
 {
@@ -23,16 +31,16 @@ AInteractionPoint::AInteractionPoint()
 	check(m_pInteractWidget != nullptr);
 	m_pInteractWidget->SetupAttachment(m_WidgetAttachmentPoint);
 
-	m_TriggerBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Trigger Box"));
-	check(m_TriggerBoxComponent != nullptr);
-	m_TriggerBoxComponent->SetupAttachment(GetRootComponent());
+	m_InitialTriggerBoxComponent= CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Trigger Start Box"));
+	check(m_InitialTriggerBoxComponent != nullptr);
+	m_InitialTriggerBoxComponent->SetupAttachment(GetRootComponent());
+
 }
 
 // Called when the game starts or when spawned
 void AInteractionPoint::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AInteractionPoint::TryRevealWidget()
@@ -41,6 +49,9 @@ void AInteractionPoint::TryRevealWidget()
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	Execute_InteractionWidgetReveal(this);
+	
+	if (GEngine && InteractionPointDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Trying Revealing Widget"));
 }
 
 void AInteractionPoint::TryHideWidget()
@@ -49,6 +60,10 @@ void AInteractionPoint::TryHideWidget()
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
 	Execute_InteractionWidgetHide(this);
+
+		
+	if (GEngine && InteractionPointDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Trying Hiding Widget"));
 }
 
 void AInteractionPoint::TryFocusWidget()
@@ -57,6 +72,11 @@ void AInteractionPoint::TryFocusWidget()
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Interactable;
 	Execute_InteractionWidgetFocus(this);
+	
+	m_InitialTriggerBoxComponent->SetWorldScale3D(FVector(1.1f));	
+	
+	if (GEngine && InteractionPointDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Trying Focusing Widget"));
 }
 
 void AInteractionPoint::TryUnfocusWidget()
@@ -65,6 +85,11 @@ void AInteractionPoint::TryUnfocusWidget()
 		return;
 	m_CurrentWidgetState = CurrentWidgetState::Revealed;
 	Execute_InteractionWidgetUnfocus(this);
+
+	m_InitialTriggerBoxComponent->SetWorldScale3D(FVector(1.0f));	
+	
+	if (GEngine && InteractionPointDebug.GetValueOnGameThread())
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Trying Unfocusing Widget"));
 }
 
 bool AInteractionPoint::GetActorTriggerConditionMet(FTransform actorTransform, FVector actorVelocity) const
@@ -89,18 +114,26 @@ void AInteractionPoint::Tick(float DeltaSeconds)
 	const FQuat iconRotation =  rotatorQuat * playerCameraTransform.GetRotation();
 	
 	m_pInteractWidget->SetWorldRotation(iconRotation);
+
+	if (!InteractionPointDebug.GetValueOnGameThread())
+		return;
+
+	FColor enterBoxColor = FColor::White;
+	if (m_CurrentWidgetState != CurrentWidgetState::Interactable)
+	{
+		enterBoxColor = FColor::Green;
+	}
+	DrawDebugBox(GetWorld(), m_InitialTriggerBoxComponent->GetComponentLocation(), m_InitialTriggerBoxComponent->GetScaledBoxExtent(), enterBoxColor);
 }
 
-void AInteractionPoint::TryInteract(UInteractionUserComponent* pUser)
+void AInteractionPoint::TryInteract(IInteractionComponentInterface* pUser)
 {
-	if (m_pInteractableInterface->IsFastInteraction())
-	{
-		Execute_InteractionWidgetInteractFast(this);
-		m_pInteractableInterface->OnInteractionStarted(pUser, GetActorLocation(), FQuat(GetActorRotation()), m_interactorId);
-		return;
-	}
 	Execute_InteractionWidgetInteractSlow(this);
 	m_CurrentWidgetState = CurrentWidgetState::Hidden;
-	m_pInteractableInterface->OnInteractionStarted(pUser, GetActorLocation(), FQuat(GetActorRotation()),  m_interactorId);
+	TScriptInterface<IInteractionComponentInterface> result;
+	result.SetInterface(pUser);
+	result.SetObject(pUser->GetComponentObject());
+	m_pInteractableInterface->OnInteractionStarted(result, GetActorLocation(), FQuat(GetActorRotation()),  m_interactorId);
+    
 }
 	

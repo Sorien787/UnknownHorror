@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
-#include "InteractionPoint.h"
 #include "InteractionTriggerInterface.h"
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
+
+class UInteractionAlignmentComponent;
 
 UCLASS(Abstract)
 class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
@@ -22,18 +23,32 @@ public:
 
 	virtual void BeginPlay() override;
 	// no implementation in the base
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId) override;
+	virtual void OnInteractionFinished(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser) override;
 
-	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) override;
-
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) override;
+	virtual void OnInteractionStarted(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) override;
 	
-	virtual bool IsFastInteraction() const override;
+	virtual FTransform GetInteractionPointTransform_Implementation(const int interactorId) override;
 
+	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const InteractionUserType pInteractionUser) override;
+
+	virtual void OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult) override;
+	
+	virtual FVector GetInteractableLocation_Implementation() const override;
+
+	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result) override;
+	
 	virtual float GetCameraYawTolerance() const override;
 
 	virtual float GetCameraPitchTolerance() const override;
 
+	virtual UObject* GetThisObject() override{return this;}
+	
+	void OnAnimationFinished_Implementation() override;
+
+	void DisableInteractors_Implementation() override;
+
+	void OnInteractorIdEnabledSet_Implementation(int id) override;
+	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
 	
@@ -45,24 +60,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		float m_DefaultCameraPitchTolerance = 20.0f;
-	
-	void OnAnimationFinished_Implementation() override;
 
-	void DisableInteractors_Implementation() override;
-
-	void OnInteractorIdEnabledSet_Implementation(int id) override;
-
-	virtual FTransform GetInteractionPointTransform_Implementation(const int interactorId) override;
-
-	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser) override;
-	
 	IInteractionTriggerInterface* FindInteractionPointById(int id);
 
-	// void OnInteractorIdsEnabledSet_Implementation(TArray<int> ids) override;
-	
-	UInteractionUserComponent* m_pCurrentUser {nullptr};
+	TScriptInterface<IInteractionComponentInterface> m_pCurrentUser {nullptr};
 
 	TArray<IInteractionTriggerInterface*> m_pInteractionPoints;
-
+	
+	TArray<UInteractionAlignmentComponent*> m_pInteractionAlignmentPoints;
+	
 	TSet<int> m_EnabledInteractionPoints;
 };

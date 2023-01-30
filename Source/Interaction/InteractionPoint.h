@@ -57,7 +57,7 @@ public:
 	
 	virtual void TryUnfocusWidget() override;
 
-	virtual void TryInteract(UInteractionUserComponent* pUser) override;
+	virtual void TryInteract(IInteractionComponentInterface* pUser) override;
 
 	bool m_bIsForcedFocused{false};
 	
@@ -65,8 +65,8 @@ public:
 	UWidgetComponent* m_pInteractWidget;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
-	UBoxComponent* m_TriggerBoxComponent;
-	
+	UBoxComponent* m_InitialTriggerBoxComponent;
+
 	UPROPERTY(EditAnywhere, Category = "Components")
 	USceneComponent* m_RootComponent;
 	

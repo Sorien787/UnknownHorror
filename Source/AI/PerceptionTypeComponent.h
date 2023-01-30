@@ -8,6 +8,46 @@
 #include "PerceptionTypeComponent.generated.h"
 
 
+USTRUCT()
+struct FPerceptionTypeModifier
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere)
+	float m_PerceptionModifier;
+	
+	UPROPERTY(EditAnywhere)
+	float m_PerceptionDecayModifier;
+
+	UPROPERTY(EditAnywhere)
+	float m_TimeBeforePerceptionDecayBegin;
+		
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_NewPerceptionFalloffModifierByDistance;
+	
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_PerceptionDecayMultiplierByCurrentPerception;
+
+	UPROPERTY(EditAnywhere)
+	FRuntimeFloatCurve m_PerceptionDecayMultiplierByLifetime;
+	
+	UPROPERTY(EditAnywhere)
+	EAIAlertLevel m_MaxAlertLevel{EAIAlertLevel::IDLE};
+	
+	UPROPERTY(EditAnywhere)
+	float m_MaxInterest{0.0f};
+};
+
+UENUM()
+enum class ESenseEnum : uint8
+{
+	Default,
+	Sight,
+	Hearing,
+	Touch,
+	COUNT
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UPerceptionTypeComponent : public UActorComponent
 {
@@ -15,55 +55,22 @@ class DEEPSEAHORROR_API UPerceptionTypeComponent : public UActorComponent
 
 	UPerceptionTypeComponent();
 
-	UPROPERTY(EditAnywhere)
-	EAIAlertLevel m_MaxAlertLevel{EAIAlertLevel::IDLE};
-	
+
+
 	UPROPERTY(EditAnywhere)
 	uint8 m_Priority{0};
 
-	UPROPERTY(EditAnywhere)
-	float m_MaxInterest{0.0f};
 
 	UPROPERTY(EditAnywhere)
-	float m_VisualPerceptionModifier{10.0f};
+	TMap<ESenseEnum, FPerceptionTypeModifier> m_PerceptionTypeMap;
 	
 	UPROPERTY(EditAnywhere)
-	FRuntimeFloatCurve m_VisualFalloffModifierByDistance;
-	
-	UPROPERTY(EditAnywhere)
-	FRuntimeFloatCurve m_AudioFalloffModifierByDistance;
-
-	UPROPERTY(EditAnywhere)
-	float m_TimeBeforeAudioInterestDecayBegin;
-
-	UPROPERTY(EditAnywhere)
-	float m_TimeBeforeVisualInterestDecayBegin;
-	
-	UPROPERTY(EditAnywhere)
-	FRuntimeFloatCurve m_UncertaintyDistanceByCurrentSuspicion;
-
-	UPROPERTY(EditAnywhere)
-	FRuntimeFloatCurve m_PerceptionDecay;
-	
+	bool m_CanBeIgnored{false};
 public:
-	
-	EAIAlertLevel GetMaximumAlertLevel() const;
 
-	float GetMaximumInterest() const;
-	
 	uint8 GetPriority() const;
 
-	const float GetVisualPerceptionModifier() const;
+	bool GetCanBeIgnored() const;
 
-	const float GetVisualPerceptionDistanceScalar(float currentInterestNormalized) const;
-
-	const float GetAudioPerceptionDistanceScalar(float currentInterestNormalized) const;
-	
-	const float GetVisualDecayDelay() const;
-
-	const float GetAudioDecayDelay() const;
-	
-	const float GetUncertaintyDistance(float currentInterestNormalized) const;
-
-	const float GetPerceptionDecay(float currentInterestNormalized) const;
+	const FPerceptionTypeModifier* GetPerceptionTypeModifierForSense(FAISenseID senseID) const;
 };

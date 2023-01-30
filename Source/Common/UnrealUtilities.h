@@ -55,7 +55,7 @@ public:
 	};
 	
 	static FVector RaycastActorToWorldPosition(const UWorld* world, const float range, const AActor* pIgnoreActor);
-	static TArray<FHitResult> RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor);
+	static TArray<FHitResult> RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor, uint32 queryTypes = ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic);
 	static FRotator GetRotationMatrixToPlayer(const UWorld* world, const FVector objectLocation);
 	static FTransform GetPlayerCameraTransform(const UWorld* world);
 	FVector VectorSpringInterpCD(FVector Current, FVector Target, FVector& Velocity, float DeltaTime, float InterpSpeed,
@@ -156,7 +156,7 @@ public:
 		}	
 	}
 	
-	
+
 	bool IsWorldInputWithinGrid(FVector input) const
 	{
 		return IsInputWithinGrid(ConvertFloatInputToGridInput(input));

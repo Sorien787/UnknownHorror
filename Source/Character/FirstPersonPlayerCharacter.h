@@ -10,10 +10,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Haze/HazeEffectComponent.h"
 #include "Interaction/InteractionUserComponent.h"
+#include "Perception/AISightTargetInterface.h"
 #include "FirstPersonPlayerCharacter.generated.h"
 
 UCLASS()
-class DEEPSEAHORROR_API AFirstPersonPlayerCharacter : public ACharacter
+class DEEPSEAHORROR_API AFirstPersonPlayerCharacter : public ACharacter, public IAISightTargetInterface
 {
 	GENERATED_BODY()
 private:
@@ -36,7 +37,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void PawnClientRestart() override;
-
+	
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = nullptr, const bool* bWasVisible = nullptr, int32* UserData = nullptr) const override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -142,7 +144,7 @@ public:
 		USpringArmComponent* m_pCameraBoomArm;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-		UInteractionUserComponent* m_InteractionUserComponent;
+		UInteractionPlayerComponent* m_InteractionPlayerComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 		UHazeEffectComponent* m_pHazeEffectComponent;

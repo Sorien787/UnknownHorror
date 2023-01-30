@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "InteractableInterface.h"
+#include "InteractionComponentInterface.h"
 #include "InteractionTriggerInterface.generated.h"
+
 
 // This class does not need to be modified.
 class UInteractionUserComponent;
@@ -30,9 +32,7 @@ protected:
 public:
 	
 	bool GetHasLinkedInteractable() const {return m_pInteractableInterface != nullptr;}
-	
-	bool GetIsFastInteractable() const {return m_pInteractableInterface && m_pInteractableInterface->IsFastInteraction();}
-	
+
 	bool GetIsEnabled() const {return m_bIsCurrentlyActive; }
 	
 	float GetCameraYawTolerance() const{return m_pInteractableInterface->GetCameraYawTolerance();}
@@ -51,7 +51,7 @@ public:
 
 	virtual bool GetActorTriggerConditionMet(FTransform actorTransform, FVector actorVelocity) const = 0;
 	
-	bool GetCanInteract(const UInteractionUserComponent* pUser) const;
+	bool GetCanInteract(IInteractionComponentInterface* pUser);
 
 	virtual int GetInteractorId() const = 0;
 	
@@ -63,7 +63,7 @@ public:
 	
 	virtual void TryUnfocusWidget(){}
 
-	virtual void TryInteract(UInteractionUserComponent* pUser){}
+	virtual void TryInteract(IInteractionComponentInterface* pUser){}
 
 	void RegisterParent(IInteractableInterface* pInteractableInterface, bool shouldBeEnabled) {m_pInteractableInterface = pInteractableInterface; SetIsEnabled(shouldBeEnabled);}
 	

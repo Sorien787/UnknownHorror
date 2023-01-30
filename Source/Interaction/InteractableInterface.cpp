@@ -5,28 +5,37 @@
 
 // Add default functionality here for any IInteractableInterface functions that are not pure virtual.
 
-void IInteractableInterface::IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& result)//const UInteractionUserComponent* pInteractionUser, const int interactorId)
+FVector IInteractableInterface::GetInteractableLocation_Implementation() const
+{
+	return FVector::Zero();
+}
+
+void IInteractableInterface::IsInteractionAvailable_Implementation(const int interactorId, const InteractionUserType pInteractionUser,  bool& result)//const UInteractionUserComponent* pInteractionUser, const int interactorId)
 {
 	return;
 }
 
-void IInteractableInterface::GetPossibleAvailableInteractions_Implementation(const UInteractionUserComponent* pInteractionUser, TArray<int>& result)
+void IInteractableInterface::OnInteractWithUsingInteractable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser)
 {
 	return;
 }
 
-void IInteractableInterface::OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& result)
+void IInteractableInterface::GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result)
 {
 	return;
 }
 
-FTransform IInteractableInterface::GetDesiredTransformForInteraction_Implementation(const int interactorId,
-	const UInteractionUserComponent* pInteractionUser)
+void IInteractableInterface::OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& result)
+{
+	return;
+}
+
+FTransform IInteractableInterface::GetDesiredTransformForInteraction_Implementation(const int interactorId,const InteractionUserType pInteractionUser)
 {
 	return FTransform::Identity;
 }
 
-bool IInteractableInterface::TryCancelInteraction_Implementation()
+bool IInteractableInterface::TryCancelInteraction_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser)
 {
 	return false;
 }

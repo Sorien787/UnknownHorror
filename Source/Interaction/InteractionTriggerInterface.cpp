@@ -3,14 +3,16 @@
 
 #include "InteractionTriggerInterface.h"
 #include "InteractionUserComponent.h"
-
 // Add default functionality here for any IInteractionTriggerInterface functions that are not pure virtual.
-bool IInteractionTriggerInterface::GetCanInteract(const UInteractionUserComponent* pUser) const
+bool IInteractionTriggerInterface::GetCanInteract(IInteractionComponentInterface* pUser)
 {
-	if (!m_bIsCurrentlyActive || !GetActorTriggerConditionMet(pUser->GetOwner()->GetTransform(), pUser->GetOwner()->GetVelocity()))
+	AActor* pOwner = pUser->GetInteractionOwner();
+	if (!m_bIsCurrentlyActive || !GetActorTriggerConditionMet(pOwner->GetTransform(), pOwner->GetVelocity()))
 		return false;
 
-	return m_pInteractableInterface->IsInteractionAvailable(pUser, GetInteractorId());
+	bool result = false;
+	m_pInteractableInterface->Execute_IsInteractionAvailable(m_pInteractableInterface->GetThisObject() ,GetInteractorId(), pUser->GetInteractionUserType(), result);
+	return result;
 }
 
 

@@ -8,12 +8,13 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Haze/HazeComponent.h"
-#include "Interaction/InteractionUserComponent.h"
+#include "Interaction/InteractionAI.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Perception/AISightTargetInterface.h"
 #include "Schism.generated.h"
 
 UCLASS()
-class DEEPSEAHORROR_API ASchism : public APawn
+class DEEPSEAHORROR_API ASchism : public APawn, public IAISightTargetInterface
 {
 	GENERATED_BODY()
 	
@@ -46,6 +47,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = nullptr, const bool* bWasVisible = nullptr, int32* UserData = nullptr) const override;
 
 public:	
 	// Called every frame
@@ -82,7 +84,7 @@ public:
 	UHazeComponent* m_pHazeSource;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	UInteractionUserComponent* m_pInteractionuser;
+	UInteractionAIComponent* m_pInteractionuser;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Animation | Body Rotation Parameters")
 	float m_LegAlignmentBodyRotationYawSensitivity;

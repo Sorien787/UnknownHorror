@@ -84,7 +84,7 @@ FVector UnrealUtilities::RaycastActorToWorldPosition(const UWorld* world, const 
 	return  hit.Location;
 }
 
-TArray<FHitResult> UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor)
+TArray<FHitResult> UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const float range, const AActor* pIgnoreActor, uint32 queryTypes)// = ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic)
 {
 	FVector playerViewPointLocation;
 	FRotator playerRotationInformation;
@@ -103,7 +103,7 @@ TArray<FHitResult> UnrealUtilities::RaycastActorToWorldHit(UWorld* world, const 
 		OUT outHits,
 		playerViewPointLocation,
 		lineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic | ECollisionChannel::ECC_WorldDynamic),
+		FCollisionObjectQueryParams(queryTypes),
 		traceParams);
 	
 	return outHits;

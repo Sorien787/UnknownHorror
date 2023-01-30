@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionComponentInterface.h"
 #include "UObject/Interface.h"
 #include "InteractableInterface.generated.h"
 
-class UInteractionUserComponent;
 enum InteractableObjectType;
 
 // This class does not need to be modified.
@@ -24,35 +24,39 @@ class DEEPSEAHORROR_API IInteractableInterface
 	GENERATED_BODY()
 
 public:
-	virtual void OnInteractionStarted(UInteractionUserComponent* pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) = 0;
-
-	virtual bool IsInteractionAvailable(const UInteractionUserComponent* pInteractionUser, int interactorId)  = 0;
-
-	virtual bool IsCombinedInteractionAvailable(const UInteractionUserComponent* pInteractionUser, InteractableObjectType combinedType) { return false; }
-
-	virtual void OnInteractionFinished(UInteractionUserComponent* pInteractionUser) = 0;
+	virtual void OnInteractionStarted(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector pointRelativePosition, FQuat pointRelativeRotation, int interactorId) = 0;
 	
-	virtual bool IsFastInteraction() const = 0;
+	virtual void OnInteractionFinished(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser) = 0;
 
 	virtual float GetCameraYawTolerance() const = 0;
 
 	virtual float GetCameraPitchTolerance() const = 0;
-	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void IsInteractionAvailableOverride(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
-	void IsInteractionAvailableOverride_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+
+	virtual UObject* GetThisObject() = 0;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void GetPossibleAvailableInteractions(const UInteractionUserComponent* pInteractionUser, TArray<int>& result);
-	void GetPossibleAvailableInteractions_Implementation(const UInteractionUserComponent* pInteractionUser, TArray<int>& result);
+	FVector GetInteractableLocation() const;
+	virtual FVector GetInteractableLocation_Implementation() const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnInteractWithInteractorId2(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
-	void OnInteractWithInteractorId2_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser, bool& returnResult);
+	void IsInteractionAvailable(const int interactorId,const InteractionUserType InteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+	void IsInteractionAvailable_Implementation(const int interactorId, const InteractionUserType InteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	FTransform GetDesiredTransformForInteraction(const int interactorId, const UInteractionUserComponent* pInteractionUser);
-	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const UInteractionUserComponent* pInteractionUser);
+	void OnInteractWithUsingInteractable(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
+	virtual void OnInteractWithUsingInteractable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void GetPossibleAvailableInteractions(const InteractionUserType pInteractionUser, TArray<int>& result);
+	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+void OnInteractWithInteractorId(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
+	virtual void OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FTransform GetDesiredTransformForInteraction(const int interactorId, const InteractionUserType pInteractionUser);
+	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const InteractionUserType pInteractionUser);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FTransform GetInteractionPointTransform(const int interactorId);
@@ -67,6 +71,6 @@ public:
 	void OnInteractorIdEnabledSet(int id);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	bool TryCancelInteraction();
-	virtual bool TryCancelInteraction_Implementation();
+	bool TryCancelInteraction(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
+	virtual bool TryCancelInteraction_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
 };

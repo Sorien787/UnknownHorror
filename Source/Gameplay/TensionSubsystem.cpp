@@ -26,26 +26,75 @@ float UTensionSubsystem::GetCurrentTension() const
 	return m_fCurrentTension / m_fMaximumTension;
 }
 
-void UTensionSubsystem::RegisterLurkLocation(ALurkLocationActor* pLurkActor)
+void UTensionSubsystem::RegisterLurkLocation(const TScriptInterface<IInteractableInterface>& pLurkActor)
 {
-	m_LurkLocations.push_back(pLurkActor);
+	m_LurkLocations.push_back(pLurkActor.GetInterface());
 }
 
-ALurkLocationActor* UTensionSubsystem::GetLurkLocation(uint8 type, FVector location) const
+void UTensionSubsystem::RegisterEscapeLocation(const TScriptInterface<IInteractableInterface>& pEscapeActor)
 {
-	ALurkLocationActor* returnActor = nullptr;
+	m_EscapeLocations.push_back(pEscapeActor.GetInterface());
+}
+
+TScriptInterface<IInteractableInterface> UTensionSubsystem::GetLurkLocation(InteractionUserType type, FVector location) const
+{
+	IInteractableInterface* returnActor = nullptr;
 	float bestDistance = FLT_MAX;
+	TArray<int> possibleAvailableInteractions;
 	for (size_t nLurkLocIndex = 0; nLurkLocIndex < m_LurkLocations.size(); nLurkLocIndex++)
 	{
-		ALurkLocationActor* pLurkActor = m_LurkLocations[nLurkLocIndex];
-		if (!pLurkActor->IsValidLurkType((EAIType(type))))
+		IInteractableInterface* pLurkActor = m_LurkLocations[nLurkLocIndex];
+
+		pLurkActor->Execute_GetPossibleAvailableInteractions(pLurkActor->GetThisObject(), type ,possibleAvailableInteractions);
+
+		if (possibleAvailableInteractions.Num() == 0)
 			continue;
-		
-		const float dist = (pLurkActor->GetActorLocation()-location).Length();
+
+		const float dist = (pLurkActor->Execute_GetInteractableLocation(pLurkActor->GetThisObject()) -location).Length();
 		if (dist > bestDistance)
 			continue;
 		returnActor = pLurkActor;
 		bestDistance = dist;
 	}
-	return returnActor;
+	TScriptInterface<IInteractableInterface> returnInterface;
+	if (returnActor)
+	{
+		returnInterface.SetInterface(returnActor);
+		returnInterface.SetObject(returnActor->GetThisObject());
+	}
+	return returnInterface;
+}
+
+TScriptInterface<IInteractableInterface> UTensionSubsystem::GetEscapeLocation(InteractionUserType type,
+	FVector location) const
+{
+	IInteractableInterface* returnActor = nullptr;
+	float bestDistance = FLT_MAX;
+	TArray<int> possibleAvailableInteractions;
+	for (size_t nLurkLocIndex = 0; nLurkLocIndex < m_EscapeLocations.size(); nLurkLocIndex++)
+	{
+		IInteractableInterface* pEscapeActor = m_EscapeLocations[nLurkLocIndex];
+
+		pEscapeActor->Execute_GetPossibleAvailableInteractions(pEscapeActor->GetThisObject(), type ,possibleAvailableInteractions);
+
+		if (possibleAvailableInteractions.Num() == 0)
+			continue;
+
+		const float dist = (pEscapeActor->Execute_GetInteractableLocation(pEscapeActor->GetThisObject()) -location).Length();
+		if (dist > bestDistance)
+			continue;
+		returnActor = pEscapeActor;
+		bestDistance = dist;
+	}
+	TScriptInterface<IInteractableInterface> returnInterface;
+	if (returnActor)
+	{
+		returnInterface.SetInterface(returnActor);
+		returnInterface.SetObject(returnActor->GetThisObject());
+	}
+	return returnInterface;
+}
+
+void UTensionSubsystem::OnEntityEscaped(AActor* entity)
+{
 }
