@@ -24,3 +24,8 @@ bool UInteractionComponentBase::TryCancelCurrentInteraction_Implementation()
 
 	return m_pCurrentlyInteractingInterface->Execute_TryCancelInteraction(m_pCurrentlyInteractingInterface->GetThisObject(), this);
 }
+
+int UInteractionComponentBase::GetPriority() const
+{
+	return m_ItemControlPriority;
+}

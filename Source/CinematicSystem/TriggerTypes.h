@@ -5,7 +5,7 @@
 
 class ACinematicEvent;
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UITriggerType : public UObject
 {
 	GENERATED_BODY()
@@ -59,17 +59,7 @@ public:
 	virtual void Initialize_Internal();
 };
 
-inline uint8 UITriggerType::GetTriggerGroup() const
-{
-	return m_TriggerGroup;
-}
-
-inline ETriggerPriority UITriggerType::GetTriggerPriority() const
-{
-	return m_TriggerPriority;
-}
-
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UTriggerStageTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -78,7 +68,7 @@ class UTriggerStageTriggerType : public UITriggerType
 	ETriggerStage m_TriggerStage = ETriggerStage::First;
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UColliderTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -98,14 +88,14 @@ class UColliderTriggerType : public UITriggerType
 	virtual void Initialize_Internal() override;
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UGameStateTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
 	
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UDelayTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -122,7 +112,7 @@ class UDelayTriggerType : public UITriggerType
 	virtual void OnTriggerBecomeInvalid_Internal() override;
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UObjectTraceTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -135,7 +125,7 @@ class UObjectTraceTriggerType : public UITriggerType
 	virtual void Tick(float tickSeconds) override;
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UObjectOnScreenTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -151,7 +141,7 @@ class UObjectOnScreenTriggerType : public UITriggerType
 };
 
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UObjectRecentlyRenderedTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
@@ -169,14 +159,14 @@ class UObjectRecentlyRenderedTriggerType : public UITriggerType
 	virtual void OnTriggerBecomeValid_Internal() override;
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class USchismStateTriggerType : public UITriggerType
 {
 	GENERATED_BODY()
 	
 };
 
-UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+UCLASS(DefaultToInstanced, BlueprintType, Blueprintable, EditInlineNew)
 class UPlayerInteractingTriggerType : public UITriggerType
 {
 	GENERATED_BODY()

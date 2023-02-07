@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "UObject/Interface.h"
 #include "InteractionComponentInterface.generated.h"
 
@@ -58,7 +59,7 @@ public:
 };
 
 UCLASS(ClassGroup=(Custom), NotBlueprintable)
-class DEEPSEAHORROR_API UInteractionComponentBase: public UActorComponent, public IInteractionComponentInterface
+class DEEPSEAHORROR_API UInteractionComponentBase: public UActorComponent, public IInteractionComponentInterface, public IItemControlRequester
 {
 	GENERATED_BODY()
 
@@ -84,12 +85,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual UObject* GetComponentObject() override {return this;}
 
+	virtual void OnItemControlGranted() override{}
+	
+	virtual void OnItemControlLost() override{}
+	
+	virtual int GetPriority() const override;
+
 	UPROPERTY(EditAnywhere)
 	InteractionUserType m_UserType;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool m_bIsInteracting = false;
 
+	UPROPERTY(EditAnywhere)
+	int m_ItemControlPriority = 0;
+	
 	UPROPERTY(BlueprintReadOnly)
 	TScriptInterface<IInteractableInterface> m_pCurrentlyInteractingInterface;
 };

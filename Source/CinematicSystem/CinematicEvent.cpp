@@ -12,6 +12,31 @@ ACinematicEvent::ACinematicEvent()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 }
 
+void ACinematicEvent::RegisterOngoingEvent(UIEffectItemType* effect)
+{
+	// register an ongoing event here
+	// relinquish control first, though, to remove old ones.
+	RelinquishControlForActor(effect->GetControlledItem());
+	OngoingEffects.Add(effect);
+}
+
+void ACinematicEvent::RelinquishControlForActor(AActor* pActor)
+{
+	for (auto& effect : OngoingEffects)
+	{
+		if (effect->GetControlledItem() != pActor)
+			continue;
+		// im pretty sure there should only be one?
+		effect->CancelItemControl();
+		return;
+	}
+}
+
+int ACinematicEvent::GetDefaultItemPriority() const
+{
+	return m_DefaultItemPriority;
+}
+
 // Called when the game starts or when spawned
 void ACinematicEvent::BeginPlay()
 {
@@ -25,7 +50,7 @@ void ACinematicEvent::BeginPlay()
 		}
 		for(size_t nIndexEvent = 0; nIndexEvent < EventCollection.EffectsWhenTriggered.Num(); nIndexEvent++)
 		{
-			EventCollection.EffectsWhenTriggered[nIndexEvent]->Initialize();
+			EventCollection.EffectsWhenTriggered[nIndexEvent]->Initialize(this);
 		}
 	}
 	LoadNextEventCollections();

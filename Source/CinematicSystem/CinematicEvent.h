@@ -43,22 +43,32 @@ class DEEPSEAHORROR_API ACinematicEvent : public AActor
 	TSet<int> TriggeredEvents; 
 	
 	TArray<UITriggerType*> TickableEvents;
+
+	TArray<UIEffectItemType*> OngoingEffects;
+
+	TArray<FCinematicEventCollection*> RelevantEvents;
+
 public:
 	// Sets default values for this actor's properties
 	ACinematicEvent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FCinematicEventCollection> Events;
+
+	UPROPERTY(EditAnywhere)
+	int m_DefaultItemPriority = 0;
 	
-	TArray<FCinematicEventCollection*> RelevantEvents;
+	void RegisterOngoingEvent(UIEffectItemType* effect);
+
+	void RelinquishControlForActor(AActor* pActor);
+
+	int GetDefaultItemPriority() const;
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
-	
 public:
 	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
 	void LoadNextEventCollections();

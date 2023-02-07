@@ -32,7 +32,9 @@ public:
 	virtual FTransform GetDesiredTransformForInteraction_Implementation(const int interactorId, const InteractionUserType pInteractionUser) override;
 
 	virtual void OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult) override;
-	
+
+	virtual void IsInteractionAvailable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser,  bool& returnResult) override;//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+
 	virtual FVector GetInteractableLocation_Implementation() const override;
 
 	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result) override;
@@ -51,14 +53,17 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Components")
+		UItemControlComponent* m_pItemControlComponent;
+	
+	UPROPERTY(EditAnywhere, Category = "Implementation Details")
 		bool m_bIsFastInteraction;
 
-	UPROPERTY(EditAnywhere, Category = "Components")
+	UPROPERTY(EditAnywhere, Category = "Implementation Details")
 		float m_DefaultCameraYawTolerance = 20.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Components")
+	UPROPERTY(EditAnywhere, Category = "Implementation Details")
 		float m_DefaultCameraPitchTolerance = 20.0f;
 
 	IInteractionTriggerInterface* FindInteractionPointById(int id);

@@ -7,6 +7,7 @@
 bool IInteractionTriggerInterface::GetCanInteract(IInteractionComponentInterface* pUser)
 {
 	AActor* pOwner = pUser->GetInteractionOwner();
+	
 	if (!m_bIsCurrentlyActive || !GetActorTriggerConditionMet(pOwner->GetTransform(), pOwner->GetVelocity()))
 		return false;
 

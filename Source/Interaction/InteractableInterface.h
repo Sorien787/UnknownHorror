@@ -39,8 +39,8 @@ public:
 	virtual FVector GetInteractableLocation_Implementation() const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void IsInteractionAvailable(const int interactorId,const InteractionUserType InteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
-	void IsInteractionAvailable_Implementation(const int interactorId, const InteractionUserType InteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+	void IsInteractionAvailable(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser, bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
+	virtual void IsInteractionAvailable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser,  bool& returnResult);//const UInteractionUserComponent* pInteractionUser, const int interactorId);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractWithUsingInteractable(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
@@ -51,7 +51,7 @@ public:
 	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-void OnInteractWithInteractorId(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
+	void OnInteractWithInteractorId(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
 	virtual void OnInteractWithInteractorId_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
@@ -61,6 +61,10 @@ void OnInteractWithInteractorId(const int interactorId, const TScriptInterface<I
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FTransform GetInteractionPointTransform(const int interactorId);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	bool CheckItemControlPriority(const AActor* requester) const;
+	virtual bool CheckItemControlPriority_Implementation(const AActor* requester) const;
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();
 

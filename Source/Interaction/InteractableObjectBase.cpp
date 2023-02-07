@@ -5,12 +5,16 @@
 #include "InteractionUserComponent.h"
 #include "InteractionPoint.h"
 #include "Common/UnrealUtilities.h"
+#include "ItemControl/ItemControllerComponent.h"
 
 AInteractableObjectBase::AInteractableObjectBase()
 {
 	m_pRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	check(m_pRootComponent != nullptr);
 	RootComponent = m_pRootComponent;
+
+	m_pItemControlComponent = CreateDefaultSubobject<UItemControlComponent>(TEXT("Item Control"));
+	check (m_pItemControlComponent != nullptr);
 }
 
 void AInteractableObjectBase::BeginPlay()
@@ -52,6 +56,12 @@ void AInteractableObjectBase::OnInteractionStarted(const TScriptInterface<IInter
 {
 	bool result;
 	Execute_OnInteractWithInteractorId(this, interactorId, pInteractionUser, result);
+}
+
+void AInteractableObjectBase::OnInteractWithInteractorId_Implementation(const int interactorId,
+	const TScriptInterface<>& pInteractionUser, bool& returnResult)
+{
+	IInteractableInterface::OnInteractWithInteractorId_Implementation(interactorId, pInteractionUser, returnResult);
 }
 
 FTransform AInteractableObjectBase::GetInteractionPointTransform_Implementation(const int interactorId)
@@ -118,6 +128,8 @@ void AInteractableObjectBase::OnAnimationFinished_Implementation()
 	if (!m_pCurrentUser)
 		return;
 	m_pCurrentUser->OnInteractionFinished(this);
+	UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(m_pCurrentUser->GetInteractionOwner());
+	m_pItemControlComponent->RequestItemControl(pItemController);
 	m_pCurrentUser = nullptr;
 }
 
@@ -125,6 +137,19 @@ void AInteractableObjectBase::OnInteractWithInteractorId_Implementation(const in
 {
 	m_pCurrentUser = pInteractionUser;
 	m_pCurrentUser->OnInteractionStarted(this);
+	UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(pInteractionUser->GetInteractionOwner());
+	m_pItemControlComponent->RequestItemControl(pItemController);
+}
+
+void AInteractableObjectBase::IsInteractionAvailable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser, bool& returnResult)
+{
+	UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(InteractionUser->GetInteractionOwner());
+	if (!pItemController)
+	{
+		returnResult = false;
+		return;
+	}
+	returnResult = m_pItemControlComponent->WouldItemControlBeGainedByRequester(pItemController);
 }
 
 FVector AInteractableObjectBase::GetInteractableLocation_Implementation() const

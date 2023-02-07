@@ -114,13 +114,18 @@ void AFirstPersonPlayerCharacter::BeginPlay()
 
 	m_DroneAudioComponent->SetVolumeMultiplier(0.0f);
 	m_RingingAudioComponent->SetVolumeMultiplier(0.0f);
+
+	m_eCurrentMovementState = EMovementState::Walking;
+	m_eForcedMovementState = EMovementState::None;
+	m_eDesiredMovementState = EMovementState::Walking;
+	OnEnterMovementState(m_eCurrentMovementState);
 }
 
 // Called every frame
 void AFirstPersonPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	SprintStateUpdate(DeltaTime);
+	MovementStateUpdate(DeltaTime);
 	LookStateUpdate(DeltaTime);
 	CrouchStateUpdate(DeltaTime);
 	InteractionStateUpdate(DeltaTime);
@@ -256,12 +261,14 @@ void AFirstPersonPlayerCharacter::LookUp(const FInputActionValue& value)
 
 void AFirstPersonPlayerCharacter::BeginCrouch()
 {
-	m_bWantsToCrouch = true;
+	m_eDesiredMovementState = EMovementState::Crouching;
+	EvaluateNewMovementState();
 }
 
 void AFirstPersonPlayerCharacter::EndCrouch()
 {
-	m_bWantsToCrouch = false;
+	m_eDesiredMovementState = EMovementState::Walking;
+	EvaluateNewMovementState();
 }
 
 void AFirstPersonPlayerCharacter::ToggleCrouch()
@@ -269,26 +276,36 @@ void AFirstPersonPlayerCharacter::ToggleCrouch()
 	if (m_bIsInputLocked)
 		return;
 	
-	m_bWantsToCrouch = !m_bWantsToCrouch;
+	if (m_eDesiredMovementState == EMovementState::Crouching)
+		m_eDesiredMovementState = EMovementState::Walking;
+	else
+		m_eDesiredMovementState = EMovementState::Crouching;
+	EvaluateNewMovementState();
 }
 
 void AFirstPersonPlayerCharacter::ToggleProne()
 {
 	if (m_bIsInputLocked)
 		return;
-	
-	m_bWantsToCrouch = !m_bWantsToCrouch;
+
+	if (m_eDesiredMovementState == EMovementState::Prone)
+		m_eDesiredMovementState = EMovementState::Walking;
+	else
+		m_eDesiredMovementState = EMovementState::Prone;
+	EvaluateNewMovementState();
 }
 
 
 void AFirstPersonPlayerCharacter::StartSprint()
 {
-	m_bWantsToSprint = true;
+	m_eDesiredMovementState = EMovementState::Sprinting;
+	EvaluateNewMovementState();
 }
 
 void AFirstPersonPlayerCharacter::StopSprint()
 {
-	m_bWantsToSprint = false;
+	m_eDesiredMovementState = EMovementState::Walking;
+	EvaluateNewMovementState();
 }
 
 void AFirstPersonPlayerCharacter::StartJump()
@@ -468,11 +485,7 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 	}
 
 	const FQuat currentHeadQuat = FQuat(m_CharacterCamera->GetComponentRotation());
-	
-	const float pitch2 = targetHeadQuat.Euler().Y;
-	const float quat2 = targetHeadQuat.Euler().Z;
-	if (pitch2>quat2)
-	{int i = 0; i++;}
+
 	FQuat actualHeadQuat = UnrealUtilities::QuatSpringInterpCD(currentHeadQuat, targetHeadQuat, m_currentHeadVelocity, DeltaTime, m_CameraLookNormalizedSpeed, 100000.0f);
 
 	m_CharacterCamera->SetWorldRotation(actualHeadQuat);
@@ -480,62 +493,38 @@ void AFirstPersonPlayerCharacter::LookStateUpdate(float DeltaTime)
 
 void AFirstPersonPlayerCharacter::CrouchStateUpdate(float DeltaTime)
 {
-	UCharacterMovementComponent* pCharacterMovement = GetCharacterMovement();
-	m_bForcedToCrouch = false;
-
 	// if we're not crouching, check if we need to crouch to move underneath something that we're near
-	if (!pCharacterMovement->IsCrouching())
-	{
-		// init params
-		const UCapsuleComponent* MyCapsuleComponent = GetCapsuleComponent();
-		const float SweepInflation =15.0f;
-		const UWorld* MyWorld = GetWorld();
-		const float UnscaledHalfHeight = MyCapsuleComponent->GetUnscaledCapsuleHalfHeight();
-		const float ComponentScale = MyCapsuleComponent->GetShapeScale();
-		const float ScaledHalfHeightAdjust = UnscaledHalfHeight * ComponentScale;
+	if (m_eForcedMovementState != EMovementState::None && m_eForcedMovementState != EMovementState::Crouching)
+		return;
+	// init params
+	const UCapsuleComponent* MyCapsuleComponent = GetCapsuleComponent();
+	constexpr float SweepInflation =15.0f;
+	const UWorld* MyWorld = GetWorld();
+	const float UnscaledHalfHeight = MyCapsuleComponent->GetUnscaledCapsuleHalfHeight();
+	const float ComponentScale = MyCapsuleComponent->GetShapeScale();
+	const float ScaledHalfHeightAdjust = UnscaledHalfHeight * ComponentScale;
+
+	float Radius, HalfHeight;
+	MyCapsuleComponent->GetScaledCapsuleSize(Radius, HalfHeight);
+	const FVector PawnLocation = GetActorLocation() + FVector(0, 0, SweepInflation);// + HalfHeight;// + SweepInflation;
 	
-		float Radius, HalfHeight;
-		MyCapsuleComponent->GetScaledCapsuleSize(Radius, HalfHeight);
-		const FVector PawnLocation = GetActorLocation() + FVector(0, 0, SweepInflation);// + HalfHeight;// + SweepInflation;
-		
-		FVector CapsuleExtent(Radius, Radius, ScaledHalfHeightAdjust);
+	FVector CapsuleExtent(Radius, Radius, ScaledHalfHeightAdjust);
 
-		// generate collision params
-		FCollisionShape CapsuleCollision = FCollisionShape::MakeCapsule(CapsuleExtent);
+	// generate collision params
+	FCollisionShape CapsuleCollision = FCollisionShape::MakeCapsule(CapsuleExtent);
 
-		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CrouchTrace), false, this);
-		CapsuleParams.bDebugQuery = true;
-		FCollisionResponseParams ResponseParam;
-		GetMesh()->InitSweepCollisionParams(CapsuleParams, ResponseParam);
-		//DrawDebugCapsule(MyWorld, PawnLocation, CapsuleExtent.Z, CapsuleExtent.X, FQuat::Identity, FColor::Emerald);
-		// make the overlap test
-		m_bForcedToCrouch = MyWorld->OverlapBlockingTestByChannel(PawnLocation, FQuat::Identity, ECC_WorldStatic, CapsuleCollision, CapsuleParams, ResponseParam);
-	}
-	pCharacterMovement->bWantsToCrouch = m_bWantsToCrouch || m_bForcedToCrouch;
+	FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CrouchTrace), false, this);
+	CapsuleParams.bDebugQuery = true;
+	FCollisionResponseParams ResponseParam;
+	GetMesh()->InitSweepCollisionParams(CapsuleParams, ResponseParam);
+	//DrawDebugCapsule(MyWorld, PawnLocation, CapsuleExtent.Z, CapsuleExtent.X, FQuat::Identity, FColor::Emerald);
+	// make the overlap test
+	const bool needToCrouch = MyWorld->OverlapBlockingTestByChannel(PawnLocation, FQuat::Identity, ECC_WorldStatic, CapsuleCollision, CapsuleParams, ResponseParam);
+
+	m_eForcedMovementState = needToCrouch ? EMovementState::Crouching : EMovementState::None;
 }
 
 
-void AFirstPersonPlayerCharacter::SprintStateUpdate(float DeltaTime)
-{
-	if (m_bWantsToSprint && !m_bForcedToCrouch)
-	{
-		GetCharacterMovement()->bWantsToCrouch = false;
-	}
-
-	const bool bCanEnterSprint = CanEnterSprint();
-	if (m_bWantsToSprint && !m_bIsSprinting && bCanEnterSprint)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = m_SprintSpeed;
-		m_bIsSprinting = true;
-		m_InteractionPlayerComponent->SetInteractionUserType(InteractionUserType::PlayerSprint);
-	}
-	if (m_bIsSprinting && (!m_bWantsToSprint || !bCanEnterSprint))
-	{
-		GetCharacterMovement()->MaxWalkSpeed = m_DefaultSpeed;
-		m_bIsSprinting = false;
-		m_InteractionPlayerComponent->SetInteractionUserType(InteractionUserType::Player);
-	}
-}
 
 void AFirstPersonPlayerCharacter::LockCamera(float maxYaw, float maxPitch)
 {
@@ -554,9 +543,73 @@ void AFirstPersonPlayerCharacter::UnlockCamera()
 	m_currentMaxYawOffset = m_MaxHeadYaw;
 }
 
+void AFirstPersonPlayerCharacter::OnEnterMovementState(EMovementState newState)
+{
+	switch (newState)
+	{
+	case(EMovementState::Sprinting):
+		GetCharacterMovement()->MaxWalkSpeed = m_SprintSpeed;
+		m_InteractionPlayerComponent->SetInteractionUserType(InteractionUserType::PlayerSprint);
+		break;
+	case(EMovementState::Prone):
+		GetCharacterMovement()->MaxWalkSpeed = m_ProneSpeed;
+		break;
+	case (EMovementState::Walking):
+		GetCharacterMovement()->MaxWalkSpeed = m_DefaultSpeed;
+		break;
+	case(EMovementState::Crouching):
+		GetCharacterMovement()->MaxWalkSpeed = m_DefaultCrouchSpeed;
+		GetCharacterMovement()->bWantsToCrouch = true;
+		break;
+	default:
+		break;
+	}
+}
+
+void AFirstPersonPlayerCharacter::OnExitMovementState(EMovementState oldState)
+{
+	switch (oldState)
+	{
+	case(EMovementState::Sprinting):
+		m_InteractionPlayerComponent->SetInteractionUserType(InteractionUserType::Player);
+		break;
+	case(EMovementState::Crouching):
+		GetCharacterMovement()->bWantsToCrouch = false;
+		break;
+	default:
+		break;
+	}
+}
+
+void AFirstPersonPlayerCharacter::EvaluateNewMovementState()
+{
+	const EMovementState movementStateToSet = GetMovementStateToSet();
+
+	if (movementStateToSet == m_eCurrentMovementState)
+		return;
+
+	OnExitMovementState(m_eCurrentMovementState);
+	m_eCurrentMovementState = movementStateToSet;
+	OnEnterMovementState(m_eCurrentMovementState);
+}
+
+AFirstPersonPlayerCharacter::EMovementState AFirstPersonPlayerCharacter::GetMovementStateToSet()
+{
+	if (m_eForcedMovementState != EMovementState::None)
+		return m_eForcedMovementState;
+
+	switch (m_eDesiredMovementState)
+	{
+	case (EMovementState::Sprinting):
+		return CanEnterSprint() ? EMovementState::Sprinting : EMovementState::Walking;
+	default:
+		return m_eDesiredMovementState;
+	}
+}
+
 bool AFirstPersonPlayerCharacter::CanEnterSprint() const
 {
-	if (!GetCharacterMovement()->IsMovingOnGround() || m_bForcedToCrouch)
+	if (!GetCharacterMovement()->IsMovingOnGround() || m_eForcedMovementState != EMovementState::None)
 		return false;
 	
 	FVector movementVector = GetCharacterMovement()->GetPawnOwner()->GetVelocity();
@@ -573,6 +626,12 @@ bool AFirstPersonPlayerCharacter::CanEnterSprint() const
 	const float angle = FMath::RadiansToDegrees(acos(FVector::DotProduct(movementVector, forwardVector)));
 	
 	return angle < 60;
+}
+
+void AFirstPersonPlayerCharacter::MovementStateUpdate(float DeltaTime)
+{
+	CrouchStateUpdate(DeltaTime);
+	EvaluateNewMovementState();
 }
 
 

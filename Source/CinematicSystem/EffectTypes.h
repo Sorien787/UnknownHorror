@@ -1,19 +1,51 @@
 #pragma once
 #include "Gameplay/LightModifierComponent.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "EffectTypes.generated.h"
+
+
+class ACinematicEvent;
 
 UCLASS(Blueprintable, BlueprintType, EditInlineNew)
 class UIEffectType : public UObject
 {
 	GENERATED_BODY()
+protected:
+	ACinematicEvent* m_pParentEvent;
 public:
-	void Initialize();
+	void Initialize(ACinematicEvent* pParentEvent);
 	
-	virtual void Initialize_Internal() {};
+	virtual void Initialize_Internal() {}
 
-	virtual void OnEffectTriggered() {};
-	
+	virtual void OnEffectTriggered() {}
+
+	virtual void OnCancelEffect() {}
+
 	virtual void Reset() {}
+};
+
+UCLASS(Blueprintable, BlueprintType, EditInlineNew)
+class UIEffectItemType : public UIEffectType, public IItemControlRequester
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere)
+	AActor* pControlledActor = nullptr;
+
+	virtual void OnEffectTriggered() override;
+
+	virtual int GetPriority() const override;
+
+	virtual AActor* GetControlledItem() const;
+
+	void CancelItemControl();
+};
+	
+UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+class URelinquishItemControlEffectType : public UIEffectType
+{
+	GENERATED_BODY()
+
 };
 
 UCLASS(BlueprintType, Blueprintable, EditInlineNew)
@@ -60,6 +92,20 @@ class USoundEffectType : public UIEffectType
 
 	UPROPERTY()
 	float VolumeModifier = 0.0f;
+};
+
+UCLASS(BlueprintType, Blueprintable, EditInlineNew)
+class UHazeStrengthEffectType : public UIEffectType
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	AActor* pRelevantActor;
+
+	virtual void OnEffectTriggered() override;
+
+	UPROPERTY()
+	float HazeStrength = 0.0f;
 };
 
 UCLASS(BlueprintType, Blueprintable, EditInlineNew)

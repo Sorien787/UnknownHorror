@@ -86,10 +86,8 @@ public:
 	
 	bool CanEnterSprint() const;
 
-	void SprintStateUpdate(float DeltaTime);
-
+	void MovementStateUpdate(float DeltaTime);
 	void CrouchStateUpdate(float DeltaTime);
-
 	void LookStateUpdate(float DeltaTime);
 
 	void InteractionStateUpdate(float DeltaTime);
@@ -214,6 +212,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
 		float m_CameraShoulderReturnSpeeds;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Movement Setup")
+		float m_ProneSpeed;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Movement Setup")
 		float m_DefaultCrouchSpeed;
 
@@ -246,18 +248,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Camera Setup")
 		FName m_HeadBoneName;
+
+	enum class EMovementState
+	{
+		None,
+		Prone,
+		Crouching,
+		Walking,
+		Sprinting,
+		Count
+	};
+
+	EMovementState m_eDesiredMovementState;
+	EMovementState m_eCurrentMovementState;
+	EMovementState m_eForcedMovementState;
+
+	void OnEnterMovementState(EMovementState newState);
+	void OnExitMovementState(EMovementState oldState);
+	void EvaluateNewMovementState();
+	EMovementState GetMovementStateToSet();
 	
-	bool m_bWantsToSprint;
-
-	bool m_bIsSprinting;
-
-	bool m_bWantsToCrouch;
-
-	bool m_bForcedToCrouch;
-
-
 	bool m_bForcedIntoStaticCamera;
-
 	bool m_bMouseInputToActorRotation;
 
 	float m_currentYawOffset;

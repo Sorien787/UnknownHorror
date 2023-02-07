@@ -21,6 +21,16 @@ bool UITriggerType::IsConsideredTriggered() const
 	return m_IsTriggered ^ invertTriggerOutput;
 }
 
+uint8 UITriggerType::GetTriggerGroup() const
+{
+	return m_TriggerGroup;
+}
+
+ETriggerPriority UITriggerType::GetTriggerPriority() const
+{
+	return m_TriggerPriority;
+}
+
 void UITriggerType::OnTriggerBecomeValid(ACinematicEvent* parent)
 {
 	OnTriggerBecomeValid_Internal();

@@ -10,9 +10,8 @@ FVector IInteractableInterface::GetInteractableLocation_Implementation() const
 	return FVector::Zero();
 }
 
-void IInteractableInterface::IsInteractionAvailable_Implementation(const int interactorId, const InteractionUserType pInteractionUser,  bool& result)//const UInteractionUserComponent* pInteractionUser, const int interactorId)
+void IInteractableInterface::IsInteractionAvailable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser, bool& returnResult)
 {
-	return;
 }
 
 void IInteractableInterface::OnInteractWithUsingInteractable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser)

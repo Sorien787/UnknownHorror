@@ -1,16 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include <algorithm>
 #include "ItemControl/ItemControlComponent.h"
 
-// Sets default values for this component's properties
-UItemControlComponent::UItemControlComponent()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+#include "Common/UnrealUtilities.h"
 
-	// ...
+bool IItemControlRequester::RequestControlFromActor(AActor* pActor)
+{
+	return UnrealUtilities::GetComponentFromActor<UItemControlComponent>(pActor)->RequestItemControl(this);
+}
+
+bool IItemControlRequester::HasItemControl() const
+{
+	return m_bHasItemControl;
 }
 
 
@@ -18,17 +20,53 @@ UItemControlComponent::UItemControlComponent()
 void UItemControlComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
+	const IItemControlRequester* pDefault = (&m_sDefaultItemControl);
+	m_pendingItemControlRequests.push_back(const_cast<IItemControlRequester*>(pDefault));
 }
 
-
-// Called every frame
-void UItemControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+bool UItemControlComponent::RequestItemControl(IItemControlRequester* requester)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	IItemControlRequester* currentControl =  m_pendingItemControlRequests.back();
+	m_pendingItemControlRequests.push_back(requester);
+	std::sort(m_pendingItemControlRequests.begin(), m_pendingItemControlRequests.end(), [](IItemControlRequester* left, IItemControlRequester* right)
+	{
+		return left->GetPriority() > right->GetPriority();
+	});
+	// maintained control as before
+	if (currentControl == m_pendingItemControlRequests.back())
+		return requester == currentControl;
 
-	// ...
+	// new control is different (somehow) but not our new requester.
+	if (requester != m_pendingItemControlRequests.back())
+		return false;
+	currentControl->OnItemControlLost();
+	m_pendingItemControlRequests.back()->OnItemControlGranted();
+	return true;
+}
+
+bool UItemControlComponent::ReleaseItemControl(IItemControlRequester* requester)
+{
+	const IItemControlRequester* currentControl = m_pendingItemControlRequests.back();
+	const auto it = std::find(m_pendingItemControlRequests.begin(), m_pendingItemControlRequests.end(), requester);
+	if (it == m_pendingItemControlRequests.end())
+		return false;
+	m_pendingItemControlRequests.erase(it);
+	
+	if (currentControl != requester)
+		return false;
+	
+	requester->OnItemControlLost();
+	m_pendingItemControlRequests.back()->OnItemControlGranted();
+	return true;
+}
+
+bool UItemControlComponent::IsItemControlledByRequester(const IItemControlRequester* requester) const
+{
+	return m_pendingItemControlRequests.back() == requester;
+}
+
+bool UItemControlComponent::WouldItemControlBeGainedByRequester(const IItemControlRequester* requester) const
+{
+	return requester->GetPriority() > m_pendingItemControlRequests.back()->GetPriority();
 }
 

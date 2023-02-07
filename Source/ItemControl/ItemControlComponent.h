@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Common/ListenerUtils.h"
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ItemControlComponent.generated.h"
@@ -9,40 +10,46 @@
 
 class IItemControlRequester
 {
+	bool m_bHasItemControl = false;
+
+public:
 	virtual void OnItemControlGranted() = 0;
 	virtual void OnItemControlLost() = 0;
+	virtual int GetPriority() const = 0;
+	
+	bool RequestControlFromActor(AActor* pActor);
+	bool HasItemControl() const;
 
-	int priority = 0;
+	IItemControlRequester() {}
+	virtual ~IItemControlRequester() {}
 };
 
-class DefaultItemControl : IItemControlRequester
+class DefaultItemControl : public IItemControlRequester
 {
 	virtual void OnItemControlGranted() override{};
 	virtual void OnItemControlLost() override {};
+	virtual int GetPriority() const override {return 0;}
 };
+
+
+
+static constexpr DefaultItemControl m_sDefaultItemControl = DefaultItemControl();
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DEEPSEAHORROR_API UItemControlComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	
+	std::vector<IItemControlRequester*> m_pendingItemControlRequests;
 
 public:	
-	// Sets default values for this component's properties
-	UItemControlComponent();
-
-protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	std::vector<IItemControlRequester> m_pendingItemControlRequests;
 	
 	bool RequestItemControl(IItemControlRequester* requester);
 
 	bool ReleaseItemControl(IItemControlRequester* requester);
 
 	bool IsItemControlledByRequester(const IItemControlRequester* requester) const;
+
+	bool WouldItemControlBeGainedByRequester(const IItemControlRequester* requester) const;
 };
