@@ -1,5 +1,6 @@
 #include "EffectTypes.h"
 
+#include "CinematicEvent.h"
 #include "Common/UnrealUtilities.h"
 #include "Components/AudioComponent.h"
 #include "Haze/HazeComponent.h"
@@ -13,8 +14,8 @@ void UIEffectType::Initialize(ACinematicEvent* pParentEvent)
 
 void UIEffectItemType::OnEffectTriggered()
 {
-	m_pParentEvent->RegisterOngoingEvent();
-	UItemControlComponent* pComponent = UnrealUtilities::GetComponentFromActor<UItemControlComponent>(pControlledActor);
+	m_pParentEvent->RegisterOngoingEvent(this);
+	UItemControlComponent* pComponent = UnrealUtilities::GetComponentFromActor<UItemControlComponent>(m_pControlledActor);
 	pComponent->RequestItemControl(this);
 }
 
@@ -25,13 +26,18 @@ int UIEffectItemType::GetPriority() const
 
 AActor* UIEffectItemType::GetControlledItem() const
 {
-	return pControlledActor;
+	return m_pControlledActor;
 }
 
 void UIEffectItemType::CancelItemControl()
 {
-	UItemControlComponent* pComponent = UnrealUtilities::GetComponentFromActor<UItemControlComponent>(pControlledActor);
+	UItemControlComponent* pComponent = UnrealUtilities::GetComponentFromActor<UItemControlComponent>(m_pControlledActor);
 	pComponent->ReleaseItemControl(this);
+}
+
+void URelinquishItemControlEffectType::OnEffectTriggered()
+{
+	m_pParentEvent->RelinquishControlForActor(m_pControlledActor);
 }
 
 void ULightModifierEffectType::OnEffectTriggered()

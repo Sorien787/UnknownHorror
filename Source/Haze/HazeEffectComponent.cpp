@@ -115,6 +115,18 @@ void UHazeEffectComponent::OnRefreshHazeGridPosition()
 	m_CurrentHazeStrength = 0.0f;
 }
 
+void UHazeEffectComponent::OnItemControlGranted()
+{
+}
+
+void UHazeEffectComponent::OnItemControlLost()
+{
+}
+
+int UHazeEffectComponent::GetPriority() const
+{
+}
+
 void UHazeEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

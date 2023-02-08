@@ -28,9 +28,11 @@ UCLASS(Blueprintable, BlueprintType, EditInlineNew)
 class UIEffectItemType : public UIEffectType, public IItemControlRequester
 {
 	GENERATED_BODY()
+	
 public:
+	
 	UPROPERTY(EditAnywhere)
-	AActor* pControlledActor = nullptr;
+	AActor* m_pControlledActor = nullptr;
 
 	virtual void OnEffectTriggered() override;
 
@@ -46,6 +48,12 @@ class URelinquishItemControlEffectType : public UIEffectType
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere)
+	AActor* m_pControlledActor;
+	
+public:
+	
+	virtual void OnEffectTriggered() override;
 };
 
 UCLASS(BlueprintType, Blueprintable, EditInlineNew)

@@ -70,3 +70,20 @@ bool UItemControlComponent::WouldItemControlBeGainedByRequester(const IItemContr
 	return requester->GetPriority() > m_pendingItemControlRequests.back()->GetPriority();
 }
 
+AItemActorBase::AItemActorBase()
+{
+	m_pItemControlComponent = CreateDefaultSubobject<UItemControlComponent>(TEXT("Item Control Component"));
+	check(m_pItemControlComponent != nullptr)
+}
+
+void AItemActorBase::BeginPlay()
+{
+	Super::BeginPlay();
+	m_pItemControlComponent->RequestItemControl(this);
+}
+
+int AItemActorBase::GetPriority() const
+{
+	return m_ItemPriority;
+}
+

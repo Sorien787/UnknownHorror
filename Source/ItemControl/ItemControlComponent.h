@@ -32,7 +32,6 @@ class DefaultItemControl : public IItemControlRequester
 };
 
 
-
 static constexpr DefaultItemControl m_sDefaultItemControl = DefaultItemControl();
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -52,4 +51,23 @@ public:
 	bool IsItemControlledByRequester(const IItemControlRequester* requester) const;
 
 	bool WouldItemControlBeGainedByRequester(const IItemControlRequester* requester) const;
+};
+
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class DEEPSEAHORROR_API AItemActorBase : public AActor, public IItemControlRequester
+{
+	GENERATED_BODY()
+
+	AItemActorBase();
+
+	virtual void BeginPlay() override;
+
+	virtual int GetPriority() const override;
+
+	UPROPERTY(EditAnywhere)
+	int m_ItemPriority;
+
+	UPROPERTY(EditAnywhere)
+	UItemControlComponent* m_pItemControlComponent;
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HazeUtils.h"
 #include "Components/ActorComponent.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "HazeEffectComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeStart);
@@ -12,13 +13,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeFinish);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHazeEvent);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public HazeListener
+class DEEPSEAHORROR_API UHazeEffectComponent : public UActorComponent, public HazeListener, public IItemControlRequester
 {
 	GENERATED_BODY()
 
 public:	
 
 	UHazeEffectComponent();
+	
 	ListenerUtils<HazeComponentListener> m_HazeComponentListeners;
 	
 private:
@@ -26,13 +28,17 @@ private:
 	std::unordered_map<int, float> m_HazeIdToSeed;
 
 	float m_CurrentHazeStrength{0.0f};
+	
 	float m_HazeNoisePollLocation{0.0f};
+	
 	bool m_HazeReachedThreshold{false};
+	
 	int m_HazeID{-1};
+	
 	FVector m_LastPolledLocation{FVector::ZeroVector};
 
 protected:
-	// Called when the game starts
+
 	virtual void BeginPlay() override;
 
 	virtual void OnRefreshHazeGridPosition() override;
@@ -62,10 +68,17 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnHazeEvent m_OnHazeEvent;
 
+	// IItemControlRequester
+	virtual void OnItemControlGranted() override;
+	
+	virtual void OnItemControlLost() override;
 
-	// Called every frame
+	virtual int GetPriority() const override;
+	// ~IItemControlRequester
+	
+	// UActorComponent
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	// ~UActorComponent
 	bool IsHazeActive() const;
 
 	float GetCurrentHazeModifier(int index = 0);
@@ -73,6 +86,8 @@ public:
 	float GetNoiseFrequency() const;
 	
 	float GetCurrentHazeStrength() const;
+
+private:
 	
 	void UpdateHazeMultiplierValue(float deltaTime);
 
