@@ -20,7 +20,7 @@ class UInteractionTriggerInterface : public UInterface
 /**
  * 
  */
-class DEEPSEAHORROR_API IInteractionTriggerInterface : public IItemCon
+class DEEPSEAHORROR_API IInteractionTriggerInterface
 {
 	GENERATED_BODY()
 protected:

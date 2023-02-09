@@ -12,7 +12,10 @@ bool IInteractionTriggerInterface::GetCanInteract(IInteractionComponentInterface
 		return false;
 
 	bool result = false;
-	m_pInteractableInterface->Execute_IsInteractionAvailable(m_pInteractableInterface->GetThisObject() ,GetInteractorId(), pUser->GetInteractionUserType(), result);
+	TScriptInterface<IInteractionComponentInterface> interface;
+	interface.SetInterface(pUser);
+	interface.SetObject(pUser->GetComponentObject());
+	m_pInteractableInterface->Execute_IsInteractionAvailable(m_pInteractableInterface->GetThisObject() ,GetInteractorId(), interface, result);
 	return result;
 }
 

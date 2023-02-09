@@ -1,18 +1,43 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include <algorithm>
-#include "ItemControl/ItemControlComponent.h"
 
+#include "ItemControl/ItemControlComponent.h"
+#include <algorithm>
 #include "Common/UnrealUtilities.h"
 
 bool IItemControlRequester::RequestControlFromActor(AActor* pActor)
 {
+	check(!m_bHasRequestedItemControl)
+	m_bHasRequestedItemControl = true;
 	return UnrealUtilities::GetComponentFromActor<UItemControlComponent>(pActor)->RequestItemControl(this);
 }
 
-bool IItemControlRequester::HasItemControl() const
+bool IItemControlRequester::RelinquishControlFromActor(AActor* pActor)
 {
-	return m_bHasItemControl;
+	check(m_bHasRequestedItemControl)
+	m_bHasRequestedItemControl = false;
+	return UnrealUtilities::GetComponentFromActor<UItemControlComponent>(pActor)->ReleaseItemControl(this);
+}
+
+void IItemControlRequester::OnItemControlGranted_Implementation(AActor* pControlledActor)
+{
+	check(m_pControllingActor == nullptr)
+	m_bHasItemControl = true;
+	m_pControllingActor = pControlledActor;
+}
+
+void IItemControlRequester::OnItemControlLost_Implementation(AActor* pControlledActor)
+{
+	check(pControlledActor == pControlledActor)
+	m_bHasItemControl = false;
+	m_pControllingActor = nullptr;
+}
+
+std::optional<AActor*> IItemControlRequester::GetItemControl() const
+{
+	if (!m_bHasItemControl)
+		return std::optional<AActor*>();
+	return std::optional<AActor*>();
 }
 
 
@@ -20,18 +45,23 @@ bool IItemControlRequester::HasItemControl() const
 void UItemControlComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	const IItemControlRequester* pDefault = (&m_sDefaultItemControl);
-	m_pendingItemControlRequests.push_back(const_cast<IItemControlRequester*>(pDefault));
 }
 
 bool UItemControlComponent::RequestItemControl(IItemControlRequester* requester)
 {
 	IItemControlRequester* currentControl =  m_pendingItemControlRequests.back();
+	
+	// item control already requested
+	const auto it = std::find(m_pendingItemControlRequests.begin(), m_pendingItemControlRequests.end(), requester);
+	if (it == m_pendingItemControlRequests.end())
+		return false;
+	
 	m_pendingItemControlRequests.push_back(requester);
 	std::sort(m_pendingItemControlRequests.begin(), m_pendingItemControlRequests.end(), [](IItemControlRequester* left, IItemControlRequester* right)
 	{
 		return left->GetPriority() > right->GetPriority();
 	});
+	
 	// maintained control as before
 	if (currentControl == m_pendingItemControlRequests.back())
 		return requester == currentControl;
@@ -39,8 +69,8 @@ bool UItemControlComponent::RequestItemControl(IItemControlRequester* requester)
 	// new control is different (somehow) but not our new requester.
 	if (requester != m_pendingItemControlRequests.back())
 		return false;
-	currentControl->OnItemControlLost();
-	m_pendingItemControlRequests.back()->OnItemControlGranted();
+	currentControl->OnItemControlLost(GetOwner());
+	m_pendingItemControlRequests.back()->OnItemControlGranted(GetOwner());
 	return true;
 }
 
@@ -50,13 +80,14 @@ bool UItemControlComponent::ReleaseItemControl(IItemControlRequester* requester)
 	const auto it = std::find(m_pendingItemControlRequests.begin(), m_pendingItemControlRequests.end(), requester);
 	if (it == m_pendingItemControlRequests.end())
 		return false;
+	// item control wasnt requested
 	m_pendingItemControlRequests.erase(it);
 	
 	if (currentControl != requester)
 		return false;
 	
-	requester->OnItemControlLost();
-	m_pendingItemControlRequests.back()->OnItemControlGranted();
+	requester->OnItemControlLost(GetOwner());
+	m_pendingItemControlRequests.back()->OnItemControlGranted(GetOwner());
 	return true;
 }
 

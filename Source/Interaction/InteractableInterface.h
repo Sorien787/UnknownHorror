@@ -47,8 +47,8 @@ public:
 	virtual void OnInteractWithUsingInteractable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void GetPossibleAvailableInteractions(const InteractionUserType pInteractionUser, TArray<int>& result);
-	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result);
+	void GetPossibleAvailableInteractions(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, TArray<int>& result);
+	virtual void GetPossibleAvailableInteractions_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, TArray<int>& result);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractWithInteractorId(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, bool& returnResult);
@@ -63,7 +63,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool CheckItemControlPriority(const AActor* requester) const;
-	virtual bool CheckItemControlPriority_Implementation(const AActor* requester) const;
+	virtual bool CheckItemControlPriority_Implementation(const AActor* requester) const {return false;}
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnAnimationFinished();

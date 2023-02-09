@@ -36,7 +36,7 @@ void UTensionSubsystem::RegisterEscapeLocation(const TScriptInterface<IInteracta
 	m_EscapeLocations.push_back(pEscapeActor.GetInterface());
 }
 
-TScriptInterface<IInteractableInterface> UTensionSubsystem::GetLurkLocation(InteractionUserType type, FVector location) const
+TScriptInterface<IInteractableInterface> UTensionSubsystem::GetLurkLocation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector location) const
 {
 	IInteractableInterface* returnActor = nullptr;
 	float bestDistance = FLT_MAX;
@@ -45,7 +45,7 @@ TScriptInterface<IInteractableInterface> UTensionSubsystem::GetLurkLocation(Inte
 	{
 		IInteractableInterface* pLurkActor = m_LurkLocations[nLurkLocIndex];
 
-		pLurkActor->Execute_GetPossibleAvailableInteractions(pLurkActor->GetThisObject(), type ,possibleAvailableInteractions);
+		pLurkActor->Execute_GetPossibleAvailableInteractions(pLurkActor->GetThisObject(), pInteractionUser ,possibleAvailableInteractions);
 
 		if (possibleAvailableInteractions.Num() == 0)
 			continue;
@@ -65,7 +65,7 @@ TScriptInterface<IInteractableInterface> UTensionSubsystem::GetLurkLocation(Inte
 	return returnInterface;
 }
 
-TScriptInterface<IInteractableInterface> UTensionSubsystem::GetEscapeLocation(InteractionUserType type,
+TScriptInterface<IInteractableInterface> UTensionSubsystem::GetEscapeLocation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser,
 	FVector location) const
 {
 	IInteractableInterface* returnActor = nullptr;
@@ -75,7 +75,7 @@ TScriptInterface<IInteractableInterface> UTensionSubsystem::GetEscapeLocation(In
 	{
 		IInteractableInterface* pEscapeActor = m_EscapeLocations[nLurkLocIndex];
 
-		pEscapeActor->Execute_GetPossibleAvailableInteractions(pEscapeActor->GetThisObject(), type ,possibleAvailableInteractions);
+		pEscapeActor->Execute_GetPossibleAvailableInteractions(pEscapeActor->GetThisObject(), pInteractionUser ,possibleAvailableInteractions);
 
 		if (possibleAvailableInteractions.Num() == 0)
 			continue;

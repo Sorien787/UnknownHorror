@@ -20,8 +20,6 @@ void UItemControllerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
 }
 
 

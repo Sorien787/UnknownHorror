@@ -35,10 +35,10 @@ public:
 	void RegisterEscapeLocation(const TScriptInterface<IInteractableInterface>& pEscapeActor);
 	
 	UFUNCTION(BlueprintCallable)
-	TScriptInterface<IInteractableInterface> GetLurkLocation(InteractionUserType type, FVector location) const;
+	TScriptInterface<IInteractableInterface> GetLurkLocation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector location) const;
 
 	UFUNCTION(BlueprintCallable)
-	TScriptInterface<IInteractableInterface> GetEscapeLocation(InteractionUserType type, FVector location) const;
+	TScriptInterface<IInteractableInterface> GetEscapeLocation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, FVector location) const;
 	
 	UFUNCTION(BlueprintCallable)
 	void OnEntityEscaped(AActor* entity);

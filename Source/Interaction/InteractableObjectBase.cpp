@@ -9,6 +9,7 @@
 
 AInteractableObjectBase::AInteractableObjectBase()
 {
+	AItemActorBase::AItemActorBase();
 	m_pRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	check(m_pRootComponent != nullptr);
 	RootComponent = m_pRootComponent;
@@ -56,12 +57,6 @@ void AInteractableObjectBase::OnInteractionStarted(const TScriptInterface<IInter
 {
 	bool result;
 	Execute_OnInteractWithInteractorId(this, interactorId, pInteractionUser, result);
-}
-
-void AInteractableObjectBase::OnInteractWithInteractorId_Implementation(const int interactorId,
-	const TScriptInterface<>& pInteractionUser, bool& returnResult)
-{
-	IInteractableInterface::OnInteractWithInteractorId_Implementation(interactorId, pInteractionUser, returnResult);
 }
 
 FTransform AInteractableObjectBase::GetInteractionPointTransform_Implementation(const int interactorId)
@@ -129,7 +124,7 @@ void AInteractableObjectBase::OnAnimationFinished_Implementation()
 		return;
 	m_pCurrentUser->OnInteractionFinished(this);
 	UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(m_pCurrentUser->GetInteractionOwner());
-	m_pItemControlComponent->RequestItemControl(pItemController);
+	m_pItemControlComponent->ReleaseItemControl(pItemController);
 	m_pCurrentUser = nullptr;
 }
 
@@ -143,13 +138,14 @@ void AInteractableObjectBase::OnInteractWithInteractorId_Implementation(const in
 
 void AInteractableObjectBase::IsInteractionAvailable_Implementation(const int interactorId, const TScriptInterface<IInteractionComponentInterface>& InteractionUser, bool& returnResult)
 {
-	UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(InteractionUser->GetInteractionOwner());
+	const UItemControllerComponent* pItemController = UnrealUtilities::GetComponentFromActor<UItemControllerComponent>(InteractionUser->GetInteractionOwner());
 	if (!pItemController)
 	{
 		returnResult = false;
 		return;
 	}
 	returnResult = m_pItemControlComponent->WouldItemControlBeGainedByRequester(pItemController);
+	returnResult = true;
 }
 
 FVector AInteractableObjectBase::GetInteractableLocation_Implementation() const
@@ -157,7 +153,7 @@ FVector AInteractableObjectBase::GetInteractableLocation_Implementation() const
 	return GetActorLocation();
 }
 
-void AInteractableObjectBase::GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result)
+void AInteractableObjectBase::GetPossibleAvailableInteractions_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, TArray<int>& result)
 {
 	for (size_t nInteractionPointIndex = 0; nInteractionPointIndex < m_pInteractionPoints.Num(); nInteractionPointIndex++)
 	{

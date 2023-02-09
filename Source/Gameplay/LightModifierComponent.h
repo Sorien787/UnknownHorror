@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "LightModifierFlickerStruct.h"
 #include "Components/ActorComponent.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "Components/LightComponent.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "LightModifierComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightIntensityDelegate, float, lightIntensity);
@@ -13,7 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightFlickerDelegate, bool, isFlick
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLightBreakDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class DEEPSEAHORROR_API ULightModifierComponent : public UActorComponent
+class DEEPSEAHORROR_API ULightModifierComponent : public UItemControlComponent, public IItemControlRequester
 {
 private:
 	GENERATED_BODY()
@@ -23,7 +25,15 @@ private:
 	FTimerHandle m_BreakTimerHandle;
 
 	FLightFlickerStateStruct m_CurrentLightFlickerState;
+	
+	UPROPERTY()
+	UMaterialInstanceDynamic* m_InstanceBulbMat;
 
+	UPROPERTY()
+	TArray<ULightComponent*> m_pLightComponentsArray;
+	
+	UPROPERTY()
+	TArray<UMeshComponent*> m_pMeshComponentsArray;
 protected:
 
 	virtual void BeginPlay() override;
@@ -36,6 +46,12 @@ public:
 	void AddMeshToControlGroup(UMeshComponent* pMeshComponent);
 
 	void OnFinishedBreaking();
+
+	virtual void OnItemControlGranted_Implementation(AActor* pControlledActor) override;
+
+	virtual void OnItemControlLost_Implementation(AActor* pControlledActor) override {};
+
+	virtual int GetPriority() const override {return 0;}
 	
 	void Break();
 
@@ -44,13 +60,13 @@ public:
 	void CancelFlickerStatusOverride();
 	
 UFUNCTION(BlueprintCallable)
-	void SwitchOn(bool force = false);
+	void PowerOn(bool force = false);
 
 UFUNCTION(BlueprintCallable)
-	void SwitchOff(bool force = false);
+	void PowerOff(bool force = false);
 	
 UFUNCTION(BlueprintCallable)	
-	void SetLightIntensity(float intensity = 1.0f);
+	void SetIntensityScalar(float intensity = 1.0f);
 
 public:	
 
@@ -76,7 +92,7 @@ public:
 	FLightBreakDelegate m_LightBreakDelegate;
 
 	UPROPERTY(EditAnywhere, Category = "Material Setup");
-	UMaterialInterface* Material;
+	UMaterialInterface* m_BulbMaterial;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material Setup")
 	FRuntimeFloatCurve m_LightIntensityToEmissivity;
@@ -99,14 +115,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LightSetting");
 	bool m_ApplyFrequencyScalar;
 	
-	UPROPERTY()
-	UMaterialInstanceDynamic* m_InstancedMat;
 
-	UPROPERTY()
-	TArray<ULightComponent*> m_pLightComponentsArray;
-	
-	UPROPERTY()
-	TArray<UMeshComponent*> m_pMeshComponentsArray;
 	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 };

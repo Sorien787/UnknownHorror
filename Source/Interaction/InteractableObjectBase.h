@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractableInterface.h"
+#include "ItemControl/ItemControlComponent.h"
 #include "InteractionTriggerInterface.h"
 #include "Components/WidgetComponent.h"
 #include "InteractableObjectBase.generated.h"
@@ -12,7 +13,7 @@
 class UInteractionAlignmentComponent;
 
 UCLASS(Abstract)
-class DEEPSEAHORROR_API AInteractableObjectBase : public AActor, public IInteractableInterface
+class DEEPSEAHORROR_API AInteractableObjectBase : public AItemActorBase, public IInteractableInterface
 {
 	GENERATED_BODY()
 private:
@@ -37,7 +38,7 @@ public:
 
 	virtual FVector GetInteractableLocation_Implementation() const override;
 
-	virtual void GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result) override;
+	virtual void GetPossibleAvailableInteractions_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, TArray<int>& result) override;
 	
 	virtual float GetCameraYawTolerance() const override;
 
@@ -53,9 +54,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 		USceneComponent* m_pRootComponent;
-
-	UPROPERTY(EditAnywhere, Category = "Components")
-		UItemControlComponent* m_pItemControlComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "Implementation Details")
 		bool m_bIsFastInteraction;

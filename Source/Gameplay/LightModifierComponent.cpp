@@ -18,12 +18,12 @@ void ULightModifierComponent::BeginPlay()
 	SetComponentTickEnabled(false);
 	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 	m_IsFlickering = false;
-	m_InstancedMat = UMaterialInstanceDynamic::Create(Material, this);
+	m_InstanceBulbMat = UMaterialInstanceDynamic::Create(m_BulbMaterial, this);
 	
 	if (m_DefaultOn)
-		SwitchOn(true);
+		PowerOn(true);
 	else
-		SwitchOff(true);
+		PowerOff(true);
 
 	TArray<ULightComponent*> Lights;
 	GetOwner()->GetComponents<ULightComponent>(Lights);
@@ -45,7 +45,7 @@ void ULightModifierComponent::BeginPlay()
 		if (!Meshes[i]->ComponentHasTag(FName("BulbMesh")))
 			continue;
 		
-		Meshes[i]->SetMaterial(0, m_InstancedMat);
+		Meshes[i]->SetMaterial(0, m_InstanceBulbMat);
 		
 		hasFoundBulbMesh = true;
 		
@@ -61,8 +61,8 @@ void ULightModifierComponent::BeginPlay()
 void ULightModifierComponent::Break()
 {
 	m_IsBroken = true;
-	SwitchOff();
-	SetLightIntensity(m_BrightnessWhenBreaking);
+	PowerOff();
+	SetIntensityScalar(m_BrightnessWhenBreaking);
 	m_LightBreakDelegate.Broadcast();
 	GetWorld()->GetTimerManager().SetTimer(m_BreakTimerHandle, this, &ULightModifierComponent::OnFinishedBreaking, m_LengthOfBreakFlash, false, m_LengthOfBreakFlash);
 }
@@ -77,27 +77,29 @@ void ULightModifierComponent::CancelFlickerStatusOverride()
 	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 }
 
-void ULightModifierComponent::SwitchOn(bool force /* = false */)
+void ULightModifierComponent::PowerOn(bool force /* = false */)
 {
 	if(m_IsOn && !force || m_IsBroken)
 		return;
 	m_IsOn = true;
 	SetComponentTickEnabled(true);
-	SetLightIntensity(1.0f);
+	SetIntensityScalar(1.0f);
 }
 
-void ULightModifierComponent::SwitchOff(bool force /* = false */)
+void ULightModifierComponent::PowerOff(bool force /* = false */)
 {
 	if (!m_IsOn && !force)
 		return;
 	m_IsOn = false;
 	SetComponentTickEnabled(false);
-	SetLightIntensity(0.0f);
+	SetIntensityScalar(0.0f);
 	m_IsFlickering = false;
 }
 
-void ULightModifierComponent::SetLightIntensity(float intensity)
+void ULightModifierComponent::SetIntensityScalar(float intensity)
 {
+	if (!m_IsOn && intensity > 0.0f)
+		return;
 	m_LightIntensityDelegate.Broadcast(intensity);
 	m_CurrentIntensity = intensity;
 	for (auto pLightComponent : m_pLightComponentsArray)
@@ -105,7 +107,7 @@ void ULightModifierComponent::SetLightIntensity(float intensity)
 		pLightComponent->SetIntensity(intensity * m_DefaultBrightness);
 	}
 	const float desiredStrength = m_LightIntensityToEmissivity.EditorCurveData.Eval(intensity);
-	m_InstancedMat->SetScalarParameterValue("Emissive_Strength", desiredStrength );
+	m_InstanceBulbMat->SetScalarParameterValue("Emissive_Strength", desiredStrength );
 }
 
 void ULightModifierComponent::AddLightToControlGroup(ULightComponent* pLightComponent)
@@ -121,7 +123,12 @@ void ULightModifierComponent::AddMeshToControlGroup(UMeshComponent* pMeshCompone
 
 void ULightModifierComponent::OnFinishedBreaking()
 {
-	SetLightIntensity(-10.0f);
+	SetIntensityScalar(-10.0f);
+}
+
+void ULightModifierComponent::OnItemControlGranted_Implementation(AActor* pControlledActor)
+{
+	m_CurrentLightFlickerState = m_DefaultLightFlickerState;
 }
 
 void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -148,11 +155,11 @@ void ULightModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 	if (m_IsFlickering)
 	{
-		SetLightIntensity(FMath::FRandRange(m_CurrentLightFlickerState.m_MinFlickerBrightness, m_CurrentLightFlickerState.m_MaxFlickerBrightness));	
+		SetIntensityScalar(FMath::FRandRange(m_CurrentLightFlickerState.m_MinFlickerBrightness, m_CurrentLightFlickerState.m_MaxFlickerBrightness));	
 	}
 	else
 	{
-		SetLightIntensity(1.0f);
+		SetIntensityScalar(1.0f);
 	}
 	
 	m_LightFlickerDelegate.Broadcast(m_IsFlickering);

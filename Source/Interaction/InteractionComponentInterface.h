@@ -85,9 +85,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual UObject* GetComponentObject() override {return this;}
 
-	virtual void OnItemControlGranted() override{}
+	virtual void OnItemControlGranted_Implementation(AActor* pActor) override{}
 	
-	virtual void OnItemControlLost() override{}
+	virtual void OnItemControlLost_Implementation(AActor* pActor) override{}
 	
 	virtual int GetPriority() const override;
 

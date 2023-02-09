@@ -51,6 +51,9 @@ public:
 	float m_HazeEffectThreshold{ 0.01f };
 
 	UPROPERTY(EditAnywhere)
+	int m_ItemControlPriority = 0;
+	
+	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve m_HazeStrengthToNoiseAmplitude;
 	
 	UPROPERTY(EditAnywhere)
@@ -69,9 +72,9 @@ public:
 	FOnHazeEvent m_OnHazeEvent;
 
 	// IItemControlRequester
-	virtual void OnItemControlGranted() override;
+	virtual void OnItemControlGranted_Implementation(AActor* pControlledActor) override;
 	
-	virtual void OnItemControlLost() override;
+	virtual void OnItemControlLost_Implementation(AActor* pControlledActor) override;
 
 	virtual int GetPriority() const override;
 	// ~IItemControlRequester

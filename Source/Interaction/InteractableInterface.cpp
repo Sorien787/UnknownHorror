@@ -19,7 +19,7 @@ void IInteractableInterface::OnInteractWithUsingInteractable_Implementation(cons
 	return;
 }
 
-void IInteractableInterface::GetPossibleAvailableInteractions_Implementation(const InteractionUserType pInteractionUser, TArray<int>& result)
+void IInteractableInterface::GetPossibleAvailableInteractions_Implementation(const TScriptInterface<IInteractionComponentInterface>& pInteractionUser, TArray<int>& result)
 {
 	return;
 }

@@ -23,6 +23,10 @@ protected:
 
 public:
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual int GetPriority() const override{return m_Priority;}
+
+	UPROPERTY(EditAnywhere)
+	int m_Priority;
 };
